@@ -1,0 +1,72 @@
+module WordWarZ {
+
+  // player
+  struct Player {
+    string username;
+    long wins;
+    boolean isLoggedIn;
+  };
+
+  // leaderboard
+  struct LeaderboardEntry {
+    string username;
+    long wins;
+  };
+
+  // list of leaderboard entries
+  typedef sequence<LeaderboardEntry> Leaderboard;
+
+  // exceptions
+  exception InvalidCredentials {};
+  exception AlreadyLoggedIn {};
+  exception NoOpponentFound {};
+  exception NotInGame {};
+  exception GameNotFound {};
+  exception AdminOnlyOperation {};
+  exception UsernameAlreadyExists {};
+  exception PlayerNotFound {};
+  exception PlayerNotInQueue {};
+
+  // admin operations
+  interface AdminServant {
+    void createPlayer(in string username, in string password) raises (AdminOnlyOperation, UsernameAlreadyExists);
+    void updatePlayer(in string username, in string newPassword) raises (AdminOnlyOperation, PlayerNotFound);
+    void deletePlayer(in string username) raises (AdminOnlyOperation, PlayerNotFound);
+    Player getPlayer(in string username) raises (AdminOnlyOperation, PlayerNotFound);
+    sequence<Player> searchPlayers(in string searchQuery) raises (AdminOnlyOperation);
+
+    void setGameWaitingTime(in long seconds) raises (AdminOnlyOperation);
+    void setGameRoundDuration(in long seconds) raises (AdminOnlyOperation);
+    long getGameWaitingTime() raises (AdminOnlyOperation);
+    long getGameRoundDuration() raises (AdminOnlyOperation);
+  };
+
+  // main game
+  interface GameServant {
+
+    // authentication
+    boolean login(in string username, in string password, in boolean isAdmin) raises (InvalidCredentials, AlreadyLoggedIn);
+    void logout(in string username);
+
+    // home options
+    void startGame(in string username) raises (NoOpponentFound);
+    Leaderboard getLeaderboard();
+
+    // queue management
+    void queueForGame(in string username) raises (AlreadyLoggedIn, PlayerNotInQueue);
+    void cancelQueue(in string username) raises (PlayerNotInQueue);
+    long getPlayersInLobby() raises (PlayerNotInQueue);
+    long getTimeUntilGameStart() raises (PlayerNotInQueue);
+    boolean isGameReady(in string username) raises (PlayerNotInQueue);
+
+    // gameplay
+    long getWordLength(in string username) raises (NotInGame, GameNotFound);
+    string guessLetter(in string username, in char letter) raises (NotInGame, GameNotFound);
+
+    // game status
+    boolean isGameOngoing(in string username);
+    long getRemainingGuesses(in string username) raises (NotInGame);
+    long getRemainingTime(in string username) raises (NotInGame);
+    string getCurrentProgress(in string username) raises (NotInGame);
+  };
+};
