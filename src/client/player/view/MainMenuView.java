@@ -20,7 +20,7 @@ public class MainMenuView extends Application {
         root.setPrefSize(1280, 760);
 
         // Background (cover entire window)
-        Image bg = new Image("file:res/Menu BG.png");
+        Image bg = new Image("file:res/images/backgrounds/menu bg.png");
         BackgroundSize bgSize = new BackgroundSize(
                 100, 100, true, true, false, true
         );
@@ -32,8 +32,8 @@ public class MainMenuView extends Application {
         )));
 
         // --- TOP‑RIGHT BUTTONS ---
-        Button soundBtn     = createImageButton("Sound Button.png", 110);
-        Button howToPlayBtn = createImageButton("How to Play Button.png", 110);
+        Button soundBtn     = createImageButton("sound button.png", 110);
+        Button howToPlayBtn = createImageButton("how to play button.png", 110);
         soundBtn.setOnAction(e -> toggleSound());
         howToPlayBtn.setOnAction(e -> showHowToPlay());
 
@@ -43,12 +43,12 @@ public class MainMenuView extends Application {
         root.setTop(topRight);
 
         // --- CENTER: BIGGER LOGO + MAIN BUTTONS
-        ImageView logo = new ImageView(new Image("file:res/Word War Z Logo.png"));
+        ImageView logo = new ImageView(new Image("file:res/images/others/word war z logo.png"));
         logo.setPreserveRatio(true);
         logo.setFitWidth(800);
 
-        Button playBtn = createImageButton("Play Button.png", 250);
-        Button quitBtn = createImageButton("Quit Button.png", 250);
+        Button playBtn = createImageButton("play button.png", 250);
+        Button quitBtn = createImageButton("quit button.png", 250);
         playBtn.setOnAction(e -> startGame());
         quitBtn.setOnAction(e -> Platform.exit());
 
@@ -62,7 +62,7 @@ public class MainMenuView extends Application {
         // --- SCENE & STAGE ---
         Scene scene = new Scene(root);
         primaryStage.setTitle("Word War Z");
-        primaryStage.getIcons().add(new Image("file:res/Word War Z Logo.png"));
+        primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
@@ -70,7 +70,7 @@ public class MainMenuView extends Application {
 
 
     private Button createImageButton(String imageName, double fitWidth) {
-        ImageView iv = new ImageView(new Image("file:res/" + imageName));
+        ImageView iv = new ImageView(new Image("file:res/images/buttons/menu buttons" + imageName));
         iv.setPreserveRatio(true);
         iv.setFitWidth(fitWidth);
 
