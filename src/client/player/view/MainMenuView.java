@@ -1,7 +1,6 @@
 package client.player.view;
 
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -19,7 +18,7 @@ public class MainMenuView extends Application {
         BorderPane root = new BorderPane();
         root.setPrefSize(1280, 760);
 
-        // Background (cover entire window)
+        // --- BACKGROUND (cover entire window) ---
         Image bg = new Image("file:res/images/backgrounds/menu bg.png");
         BackgroundSize bgSize = new BackgroundSize(
                 100, 100, true, true, false, true
@@ -31,82 +30,61 @@ public class MainMenuView extends Application {
                 bgSize
         )));
 
-        // --- TOP‑RIGHT BUTTONS ---
-        Button soundBtn     = createImageButton("sound button.png", 110);
-        Button howToPlayBtn = createImageButton("how to play button.png", 110);
-        soundBtn.setOnAction(e -> toggleSound());
-        howToPlayBtn.setOnAction(e -> showHowToPlay());
+        // --- TOP‑RIGHT IMAGES ---
+        // Replace "top1.png" and "top2.png" with your actual filenames
+        Image topImg1 = new Image("file:res/images/buttons/menu buttons/mute button.png");
+        ImageView topView1 = new ImageView(topImg1);
+        topView1.setPreserveRatio(true);
+        topView1.setFitWidth(70);
 
-        HBox topRight = new HBox(10, soundBtn, howToPlayBtn);
-        topRight.setAlignment(Pos.CENTER_RIGHT);
-        topRight.setPadding(new Insets(5, 5, 0, 0));
-        root.setTop(topRight);
+        Image topImg2 = new Image("file:res/images/buttons/menu buttons/how to play button.png");
+        ImageView topView2 = new ImageView(topImg2);
+        topView2.setPreserveRatio(true);
+        topView2.setFitWidth(70);
 
-        // --- CENTER: BIGGER LOGO + MAIN BUTTONS
-        ImageView logo = new ImageView(new Image("file:res/images/others/word war z logo.png"));
-        logo.setPreserveRatio(true);
-        logo.setFitWidth(800);
+        HBox topBox = new HBox(10, topView1, topView2);
+        topBox.setAlignment(Pos.TOP_RIGHT);
+        topBox.setPadding(new Insets(10));
+        topBox.setBackground(Background.EMPTY);
+        root.setTop(topBox);
 
-        Button playBtn = createImageButton("play button.png", 250);
-        Button quitBtn = createImageButton("quit button.png", 250);
-        playBtn.setOnAction(e -> startGame());
-        quitBtn.setOnAction(e -> Platform.exit());
+        // --- LOGO IMAGE (CENTER) ---
+        Image logoImg = new Image("file:res/images/others/word war z logo.png");
+        ImageView logoView = new ImageView(logoImg);
+        logoView.setPreserveRatio(true);
+        logoView.setFitWidth(800);
 
-        VBox centerBox = new VBox(20, logo, playBtn, quitBtn);
-        centerBox.setAlignment(Pos.CENTER);
+        // --- PLAY BUTTON ---
+        Image playImg = new Image("file:res/images/buttons/menu buttons/play button.png");
+        ImageView playView = new ImageView(playImg);
+        playView.setPreserveRatio(true);
+        playView.setFitWidth(200);
+        Button playBtn = new Button();
+        playBtn.setGraphic(playView);
+        playBtn.setBackground(Background.EMPTY);
+        playBtn.setPadding(Insets.EMPTY);
 
-        centerBox.setTranslateY(-60);
-        BorderPane.setAlignment(centerBox, Pos.CENTER);
+        // --- QUIT BUTTON ---
+        Image quitImg = new Image("file:res/images/buttons/menu buttons/quit button.png");
+        ImageView quitView = new ImageView(quitImg);
+        quitView.setPreserveRatio(true);
+        quitView.setFitWidth(200);
+        Button quitBtn = new Button();
+        quitBtn.setGraphic(quitView);
+        quitBtn.setBackground(Background.EMPTY);
+        quitBtn.setPadding(Insets.EMPTY);
+
+        // --- COMBINE LOGO & MAIN BUTTONS ---
+        VBox centerBox = new VBox(10, logoView, playBtn, quitBtn);
+        centerBox.setAlignment(Pos.TOP_CENTER);
+        centerBox.setPadding(new Insets(40, 0, 0, 0));
         root.setCenter(centerBox);
 
-        // --- SCENE & STAGE ---
+        // --- FINISH SETUP ---
         Scene scene = new Scene(root);
-        primaryStage.setTitle("Word War Z");
-        primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
+        primaryStage.setTitle("Main Menu");
         primaryStage.setScene(scene);
-        primaryStage.setResizable(false);
         primaryStage.show();
-    }
-
-
-    private Button createImageButton(String imageName, double fitWidth) {
-        ImageView iv = new ImageView(new Image("file:res/images/buttons/menu buttons" + imageName));
-        iv.setPreserveRatio(true);
-        iv.setFitWidth(fitWidth);
-
-        Button btn = new Button();
-        btn.setGraphic(iv);
-        btn.setBackground(Background.EMPTY);
-        btn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;");
-
-        // Hover effect
-        btn.setOnMouseEntered(e ->
-                btn.setStyle("-fx-cursor: hand; -fx-effect: dropshadow(gaussian, rgba(255,255,255,0.5), 0, 0, 0, 0)")
-        );
-        btn.setOnMouseExited(e ->
-                btn.setStyle("-fx-cursor: default; -fx-effect: null")
-        );
-
-        btn.setOnMousePressed(e ->
-                btn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;")
-        );
-        btn.setOnMouseReleased(e ->
-                btn.setStyle("-fx-background-color: transparent; -fx-border-color: transparent;")
-        );
-
-        return btn;
-    }
-
-    private void startGame() {
-        System.out.println("Launching Word War Z...");
-    }
-
-    private void showHowToPlay() {
-        System.out.println("Showing how to play...");
-    }
-
-    private void toggleSound() {
-        System.out.println("Toggling sound...");
     }
 
     public static void main(String[] args) {
