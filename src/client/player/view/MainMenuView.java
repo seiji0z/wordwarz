@@ -71,8 +71,22 @@ public class MainMenuView extends Application {
         howToPlayBtn.setBackground(Background.EMPTY);
         howToPlayBtn.setPadding(Insets.EMPTY);
 
+        // --- LEADERBOARD BUTTON ---
+        Image leaderboardImg = new Image("file:res/images/buttons/menu buttons/Leaderboard button.png");
+        ImageView leaderboardView = new ImageView(leaderboardImg);
+        leaderboardView.setPreserveRatio(true);
+        leaderboardView.setFitWidth(70);
+        Button leaderboardBtn = new Button();
+        leaderboardBtn.setGraphic(leaderboardView);
+        leaderboardBtn.setBackground(Background.EMPTY);
+        leaderboardBtn.setPadding(Insets.EMPTY);
+        leaderboardBtn.setOnAction(e -> {
+            System.out.println("Leaderboard button clicked!");
+            // Implement leaderboard functionality here
+        });
+
         // --- TOP BOX ---
-        HBox topBox = new HBox(10, soundButton, howToPlayBtn);
+        HBox topBox = new HBox(10, soundButton, howToPlayBtn, leaderboardBtn);
         topBox.setAlignment(Pos.TOP_RIGHT);
         topBox.setPadding(new Insets(10));
         topBox.setBackground(Background.EMPTY);
