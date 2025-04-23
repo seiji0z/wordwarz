@@ -1,5 +1,8 @@
 module WordWarZ {
 
+  typedef sequence<char> CharSequence;
+  typedef sequence<string> StringSequence;
+
   // player
   struct Player {
     string username;
@@ -13,21 +16,42 @@ module WordWarZ {
   exception InvalidCredentials {};
   exception NotLoggedIn {};
   exception AlreadyLoggedIn {};
+  exception PlayerCurrentlyLoggedIn {};
   exception NoOpponentFound {};
   exception NotInGame {};
   exception GameNotFound {};
   exception PlayerNotFound {};
   exception PlayerNotInQueue {};
   exception UsernameAlreadyExists {};
+  exception CharacterAlreadyGuessed {};
+  exception RoundNotFinished{};
+  exception GameNotFinished {};
+
+  // client-side interface callbacks
+  interface ClientCallback {
+    void onQueueUpdated(in long playerCount);
+    void onLeaderboardUpdated(in Leaderboard leaderboard);
+    void onGameCountdown(in long secondsLeft); // maybe called every second
+    void onRoundStarted(in StringSequence wordPlaceholder);
+    void onRoundEnded(in string roundResult, in string winner);
+    void onGameEnded(in string winnerUsername);
+  };
+
+
+  interface Login {
+    // authentication
+    string login(in string username, in string password, in boolean isAdmin) raises (InvalidCredentials, AlreadyLoggedIn);
+    void logout(in string token) raises (NotLoggedIn);
+  };
 
   // admin operations
   interface AdminService {
     // crud
     void createPlayer(in string username, in string password) raises (NotLoggedIn, UsernameAlreadyExists);
-    void updatePlayer(in string username, in string newPassword) raises (NotLoggedIn, PlayerNotFound);
-    void deletePlayer(in string username) raises (NotLoggedIn, PlayerNotFound);
+    void updatePlayer(in string username, in string newPassword) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
+    void deletePlayer(in string username) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
     Player getPlayer(in string username) raises (NotLoggedIn, PlayerNotFound);
-    sequence<Player> searchPlayers(in string searchQuery) raises (NotLoggedIn, PlayerNotFound);
+    Leaderboard searchPlayers(in string searchQuery) raises (NotLoggedIn, PlayerNotFound);
 
     // gameplay settings
     void setGameWaitingTime(in long seconds) raises (NotLoggedIn);
@@ -38,9 +62,6 @@ module WordWarZ {
 
   // main game
   interface GameService {
-    // authentication
-    string login(in string username, in string password, in boolean isAdmin) raises (InvalidCredentials, AlreadyLoggedIn);
-    void logout(in string token) raises (NotLoggedIn);
 
     // home options
     void startGame(in string token) raises (NotLoggedIn, NoOpponentFound);
@@ -53,15 +74,20 @@ module WordWarZ {
 
     // gameplay
     long startRound(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
-    sequence<char> guessLetter(in string token, in char letter) raises (NotLoggedIn, NotInGame, GameNotFound); // returns char array with a placeholder for unguessed letters
-    void displayWinnerByRound(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
-    void displayWinnerByGame(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
-    string displayLoserByTime(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
-    string displayLoserByGuess(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
-    string displayWins(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
+    CharSequence guessLetter(in string token, in char letter) raises (NotLoggedIn, NotInGame, GameNotFound); // returns char array with a placeholder for unguessed letters '_'
+    void displayWinnerByRound(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
+    void displayWinnerByGame(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
+    void endGame(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, GameNotFinished);
+    string displayLoserByTime(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished); // displays the guessed word along with the user
+    string displayLoserByGuess(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
+    string displayWins(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
 
     // game status
     long getRemainingGuesses(in string token) raises (NotLoggedIn, NotInGame);
     long getRemainingTime(in string token) raises (NotLoggedIn, NotInGame);
+
+    // callbacks
+    void registerCallback(in string token, in ClientCallback callback) raises (NotLoggedIn);
+    void unregisterCallback(in string token) raises (NotLoggedIn);
   };
 };
