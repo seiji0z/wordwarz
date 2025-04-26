@@ -40,7 +40,7 @@ module WordWarZ {
 
   interface Login {
     // authentication
-    string login(in string username, in string password, in boolean isAdmin) raises (InvalidCredentials, AlreadyLoggedIn);
+    string login(in string username, in string password) raises (InvalidCredentials, AlreadyLoggedIn);
     void logout(in string token) raises (NotLoggedIn);
   };
 

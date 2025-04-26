@@ -43,7 +43,7 @@ public class Server {
             // bind in naming
             ncRef.rebind(ncRef.to_name("GameService"), hrefGame);
             ncRef.rebind(ncRef.to_name("AdminService"), hrefAdmin);
-            ncRef.rebind(ncRef.to_name("LoginService"), hrefLogin);
+            ncRef.rebind(ncRef.to_name("Login"), hrefLogin);
 
             System.out.println("WordWarZ Server ready and waiting...");
 
