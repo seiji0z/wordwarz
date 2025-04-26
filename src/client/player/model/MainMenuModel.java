@@ -1,14 +1,13 @@
 package client.player.model;
 
-import WordWarZ.GameService;
-import WordWarZ.GameServiceHelper;
-import WordWarZ.Player;
+import WordWarZ.*;
 import util.helpers.CORBAConnector;
 import org.omg.CORBA.ORB;
 
 public class MainMenuModel {
     private final String playerToken;
     private GameService gameService;
+    private Login loginService;
 
     public MainMenuModel(String token, ORB orb) {
         this.playerToken = token;
@@ -19,6 +18,7 @@ public class MainMenuModel {
         try {
             CORBAConnector connector = new CORBAConnector(orb);
             gameService = connector.getService("GameService", GameServiceHelper::narrow);
+            loginService = connector.getService("Login", LoginHelper::narrow);
         } catch (Exception e) {
             System.out.println("Could not connect to GameService: " + e.getMessage());
         }
@@ -39,5 +39,14 @@ public class MainMenuModel {
             System.out.println("Error fetching leaderboard: " + e.getMessage());
         }
         return null;
+    }
+
+    public void logout() {
+        try {
+            loginService.logout(playerToken);
+        } catch (Exception e) {
+            System.out.println("Error logging out: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

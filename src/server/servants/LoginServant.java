@@ -26,6 +26,8 @@ public class LoginServant extends LoginPOA {
 
         boolean isAdmin = DBManager.isAdmin(username);
 
+        System.out.println("User " + username + " logged in.");
+
         // Create session and generate token
         String token = SessionManager.createSession(username, isAdmin);
         return token + ":" + isAdmin;
@@ -37,6 +39,7 @@ public class LoginServant extends LoginPOA {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
+        System.out.println("User " + SessionManager.getSession(token).getUsername() + " logged out.");
         SessionManager.removeSession(token);
     }
 }

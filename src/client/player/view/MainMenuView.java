@@ -31,6 +31,10 @@ public class MainMenuView extends Application {
     private Button soundButton;
     private Button closeHowToPlayBtn;
 
+    // Add these as class fields
+    private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/sound button.png");
+    private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/mute button.png");
+
     public MainMenuView() {
         // Initialize the view without showing it
         Platform.runLater(() -> {
@@ -61,8 +65,6 @@ public class MainMenuView extends Application {
         )));
 
         // --- SOUND BUTTON ---
-        Image soundOnImg = new Image("file:res/images/buttons/menu buttons/sound button.png");
-        Image soundOffImg = new Image("file:res/images/buttons/menu buttons/mute button.png");
         soundButtonView = new ImageView(soundOnImg);
         soundButtonView.setPreserveRatio(true);
         soundButtonView.setFitWidth(70);
@@ -70,17 +72,6 @@ public class MainMenuView extends Application {
         soundButton.setGraphic(soundButtonView);
         soundButton.setBackground(Background.EMPTY);
         soundButton.setPadding(Insets.EMPTY);
-
-        soundButton.setOnAction(e -> {
-            isMuted = !isMuted;
-            if (isMuted) {
-                soundButtonView.setImage(soundOffImg);
-                mediaPlayer.setMute(true);
-            } else {
-                soundButtonView.setImage(soundOnImg);
-                mediaPlayer.setMute(false);
-            }
-        });
 
         // --- HOW TO PLAY BUTTON ---
         Image howToPlayImg = new Image("file:res/images/buttons/menu buttons/how to play button.png");
@@ -138,7 +129,18 @@ public class MainMenuView extends Application {
         quitBtn.setGraphic(quitView);
         quitBtn.setBackground(Background.EMPTY);
         quitBtn.setPadding(Insets.EMPTY);
-        quitBtn.setOnAction(e -> primaryStage.close());
+        quitBtn.setOnAction(e -> {
+            if (quitButtonHandler != null) {
+                quitButtonHandler.handle();
+            }
+
+            Stage stage = (Stage) quitBtn.getScene().getWindow();
+            stage.close();
+
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+            }
+        });
 
         VBox centerBox = new VBox(10, logoView, playBtn, quitBtn);
         centerBox.setAlignment(Pos.TOP_CENTER);
@@ -236,7 +238,11 @@ public class MainMenuView extends Application {
         this.soundToggleHandler = handler;
         soundButton.setOnAction(e -> {
             isMuted = !isMuted;
-            handler.handle(isMuted);
+            mediaPlayer.setMute(isMuted);
+            soundButtonView.setImage(isMuted ? soundOffImg : soundOnImg);
+            if (handler != null) {
+                handler.handle(isMuted);
+            }
         });
     }
 

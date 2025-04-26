@@ -48,9 +48,16 @@ public class MainMenuController {
     }
 
     private void handleQuit() {
-        SessionManager.removeSession(playerToken);
-        System.exit(0);
+        try {
+            model.logout();
+
+            Platform.exit();
+        } catch (Exception e) {
+            System.err.println("Error during logout: " + e.getMessage());
+            Platform.exit();
+        }
     }
+
 
     private void handleSoundToggle(boolean isMuted) {
         System.out.println("Sound is now " + (isMuted ? "muted" : "unmuted"));

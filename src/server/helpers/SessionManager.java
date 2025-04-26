@@ -10,23 +10,26 @@ import java.util.concurrent.ConcurrentHashMap;
 public class SessionManager {
     private static final Map<String, Session> tokenMap = new ConcurrentHashMap<>();
     private static final Map<String, String> userToTokenMap = new ConcurrentHashMap<>();
+    private static Session session;
 
     public static String createSession(String username, boolean isAdmin) {
         String token = UUID.randomUUID().toString();
         Session data = new Session(username, token, isAdmin);
         tokenMap.put(token, data);
         userToTokenMap.put(username, token);
+        System.out.println("Session created for " + username);
         return token;
     }
 
     public static Session getSession(String token) throws NotLoggedIn {
-        Session session = tokenMap.get(token);
+        session = tokenMap.get(token);
         if (session == null) throw new NotLoggedIn();
         return session;
     }
 
     public static void removeSession(String token) {
-        Session session = tokenMap.remove(token);
+        session = tokenMap.remove(token);
+        System.out.println(userToTokenMap.get(session.getUsername()) + " removed.");
         if (session != null) {
             userToTokenMap.remove(session.getUsername());
         }
@@ -41,4 +44,3 @@ public class SessionManager {
         return userToTokenMap.containsKey(username);
     }
 }
-

@@ -1,7 +1,7 @@
 package client.player.model;
 
 import WordWarZ.*;
-import server.GameServant;
+import server.servants.GameServant;
 
 public class GameModel {
 
