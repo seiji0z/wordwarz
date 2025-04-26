@@ -1,4 +1,4 @@
-package server;
+package server.database;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -13,7 +13,7 @@ public class DBConnection {
         try {
             String url = "jdbc:mysql://localhost:3306/wordwarz";
             String user = "root";
-            String password = "francescute";
+            String password = "";
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             con = DriverManager.getConnection(url, user, password);

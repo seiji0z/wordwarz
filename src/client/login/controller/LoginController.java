@@ -50,7 +50,7 @@ public class LoginController {
             if (isAdmin) {  // Check if user is admin
                 new AdminDashboardController(new AdminDashboardView(), new AdminDashboardModel(), orb, token);
             } else {
-                new MainMenuController(new AdminDashboardView(), new AdminDashboardModel(), orb, token);
+                new MainMenuController(token, orb);
             }
 
         } catch (AlreadyLoggedIn e) {

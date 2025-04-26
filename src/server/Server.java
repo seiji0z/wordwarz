@@ -4,6 +4,9 @@ import WordWarZ.*;
 import org.omg.CORBA.*;
 import org.omg.PortableServer.*;
 import org.omg.CosNaming.*;
+import server.servants.AdminServant;
+import server.servants.GameServant;
+import server.servants.LoginServant;
 
 public class Server {
 

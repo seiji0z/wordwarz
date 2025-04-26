@@ -1,4 +1,4 @@
-package server;
+package server.servants;
 
 import WordWarZ.*;
 import org.omg.CORBA.ORB;

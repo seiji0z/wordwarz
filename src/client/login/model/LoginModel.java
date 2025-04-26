@@ -2,28 +2,19 @@ package client.login.model;
 
 import WordWarZ.Login;
 import WordWarZ.LoginHelper;
+import server.helpers.SessionManager;
+import util.helpers.CORBAConnector;
 import org.omg.CORBA.ORB;
-import org.omg.CosNaming.NamingContextExt;
-import org.omg.CosNaming.NamingContextExtHelper;
 
 public class LoginModel {
     private Login loginStub;
 
     public LoginModel(ORB orb) {
         try {
-            // Resolve the NameService reference
-            org.omg.CORBA.Object objRef = orb.resolve_initial_references("NameService");
-
-            // Narrow the object reference to NamingContextExt
-            NamingContextExt ncRef = NamingContextExtHelper.narrow(objRef);
-
-            // Resolve the "Login" object from the NamingContext
-            org.omg.CORBA.Object loginRef = ncRef.resolve_str("Login");
-
-            // Narrow the Login reference to the correct type (Login)
-            loginStub = LoginHelper.narrow(loginRef);
+            CORBAConnector connector = new CORBAConnector(orb);
+            loginStub = connector.getService("Login", LoginHelper::narrow);
         } catch (Exception e) {
-            System.out.println("Could not connect to Login service: " + e.getMessage());
+            System.out.println("Error connecting to Login service: " + e.getMessage());
         }
     }
 
@@ -32,6 +23,7 @@ public class LoginModel {
     }
 
     public void logout(String token) throws Exception {
+        SessionManager.removeSession(token);
         loginStub.logout(token);
     }
 }

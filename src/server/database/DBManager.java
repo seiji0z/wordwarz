@@ -1,4 +1,4 @@
-package server;
+package server.database;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

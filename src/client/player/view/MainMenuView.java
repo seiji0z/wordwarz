@@ -1,6 +1,7 @@
 package client.player.view;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -16,10 +17,30 @@ import java.io.File;
 
 public class MainMenuView extends Application {
 
+    // Media controls
     private MediaPlayer mediaPlayer;
     private boolean isMuted = false;
+
+    // UI Components
     private ImageView soundButtonView;
     private StackPane overlayPane;
+    private Button playBtn;
+    private Button leaderboardBtn;
+    private Button howToPlayBtn;
+    private Button quitBtn;
+    private Button soundButton;
+    private Button closeHowToPlayBtn;
+
+    public MainMenuView() {
+        // Initialize the view without showing it
+        Platform.runLater(() -> {
+            try {
+                start(new Stage());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
 
     @Override
     public void start(Stage primaryStage) {
@@ -45,7 +66,7 @@ public class MainMenuView extends Application {
         soundButtonView = new ImageView(soundOnImg);
         soundButtonView.setPreserveRatio(true);
         soundButtonView.setFitWidth(70);
-        Button soundButton = new Button();
+        soundButton = new Button();
         soundButton.setGraphic(soundButtonView);
         soundButton.setBackground(Background.EMPTY);
         soundButton.setPadding(Insets.EMPTY);
@@ -66,7 +87,7 @@ public class MainMenuView extends Application {
         ImageView howToPlayView = new ImageView(howToPlayImg);
         howToPlayView.setPreserveRatio(true);
         howToPlayView.setFitWidth(70);
-        Button howToPlayBtn = new Button();
+        howToPlayBtn = new Button();
         howToPlayBtn.setGraphic(howToPlayView);
         howToPlayBtn.setBackground(Background.EMPTY);
         howToPlayBtn.setPadding(Insets.EMPTY);
@@ -76,7 +97,7 @@ public class MainMenuView extends Application {
         ImageView leaderboardView = new ImageView(leaderboardImg);
         leaderboardView.setPreserveRatio(true);
         leaderboardView.setFitWidth(70);
-        Button leaderboardBtn = new Button();
+        leaderboardBtn = new Button();
         leaderboardBtn.setGraphic(leaderboardView);
         leaderboardBtn.setBackground(Background.EMPTY);
         leaderboardBtn.setPadding(Insets.EMPTY);
@@ -103,7 +124,7 @@ public class MainMenuView extends Application {
         ImageView playView = new ImageView(playImg);
         playView.setPreserveRatio(true);
         playView.setFitWidth(200);
-        Button playBtn = new Button();
+        playBtn = new Button();
         playBtn.setGraphic(playView);
         playBtn.setBackground(Background.EMPTY);
         playBtn.setPadding(Insets.EMPTY);
@@ -113,7 +134,7 @@ public class MainMenuView extends Application {
         ImageView quitView = new ImageView(quitImg);
         quitView.setPreserveRatio(true);
         quitView.setFitWidth(200);
-        Button quitBtn = new Button();
+        quitBtn = new Button();
         quitBtn.setGraphic(quitView);
         quitBtn.setBackground(Background.EMPTY);
         quitBtn.setPadding(Insets.EMPTY);
@@ -137,7 +158,7 @@ public class MainMenuView extends Application {
         howToPlayFullScreen.setFitHeight(650);
         howToPlayFullScreen.setPreserveRatio(false);
 
-        Button closeHowToPlayBtn = new Button("Close");
+        closeHowToPlayBtn = new Button("Close");
         closeHowToPlayBtn.setStyle("-fx-font-size: 16px; -fx-padding: 8px 16px;");
         closeHowToPlayBtn.setOnAction(ev -> overlayPane.setVisible(false));
 
@@ -162,7 +183,64 @@ public class MainMenuView extends Application {
         primaryStage.show();
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    // Add these methods to your MainMenuView class:
+
+    // Event handler interfaces
+    public interface PlayButtonHandler {
+        void handle();
+    }
+
+    public interface LeaderboardButtonHandler {
+        void handle();
+    }
+
+    public interface HowToPlayButtonHandler {
+        void handle();
+    }
+
+    public interface QuitButtonHandler {
+        void handle();
+    }
+
+    public interface SoundToggleHandler {
+        void handle(boolean isMuted);
+    }
+
+    private PlayButtonHandler playButtonHandler;
+    private LeaderboardButtonHandler leaderboardButtonHandler;
+    private HowToPlayButtonHandler howToPlayButtonHandler;
+    private QuitButtonHandler quitButtonHandler;
+    private SoundToggleHandler soundToggleHandler;
+
+    public void setPlayButtonHandler(PlayButtonHandler handler) {
+        this.playButtonHandler = handler;
+        playBtn.setOnAction(e -> handler.handle());
+    }
+
+    public void setLeaderboardButtonHandler(LeaderboardButtonHandler handler) {
+        this.leaderboardButtonHandler = handler;
+        leaderboardBtn.setOnAction(e -> handler.handle());
+    }
+
+    public void setHowToPlayButtonHandler(HowToPlayButtonHandler handler) {
+        this.howToPlayButtonHandler = handler;
+        howToPlayBtn.setOnAction(e -> handler.handle());
+    }
+
+    public void setQuitButtonHandler(QuitButtonHandler handler) {
+        this.quitButtonHandler = handler;
+        quitBtn.setOnAction(e -> handler.handle());
+    }
+
+    public void setSoundToggleHandler(SoundToggleHandler handler) {
+        this.soundToggleHandler = handler;
+        soundButton.setOnAction(e -> {
+            isMuted = !isMuted;
+            handler.handle(isMuted);
+        });
+    }
+
+    public void showHowToPlay() {
+        overlayPane.setVisible(true);
     }
 }

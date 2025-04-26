@@ -1,4 +1,4 @@
-package server;
+package server.helpers;
 
 import WordWarZ.NotLoggedIn;
 import server.objects.Session;

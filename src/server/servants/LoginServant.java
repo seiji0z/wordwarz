@@ -1,7 +1,10 @@
-package server;
+package server.servants;
 
 import WordWarZ.*;
 import org.omg.CORBA.ORB;
+import server.database.DBConnection;
+import server.database.DBManager;
+import server.helpers.SessionManager;
 
 public class LoginServant extends LoginPOA {
     private ORB orb;
