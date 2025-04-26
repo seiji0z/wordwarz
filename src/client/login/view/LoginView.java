@@ -1,9 +1,10 @@
 package client.login.view;
 
-import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -17,10 +18,18 @@ import javafx.stage.Stage;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
-public class LoginView extends Application {
+public class LoginView {
+    private TextField usernameField;
+    private PasswordField passwordField;
+    private Button playButton;
+    private Stage stage; // keep reference to stage
 
-    @Override
-    public void start(Stage primaryStage) throws FileNotFoundException {
+    public LoginView() throws FileNotFoundException {
+        this.stage = new Stage();
+        initialize(stage);
+    }
+
+    public void initialize(Stage primaryStage) throws FileNotFoundException {
         // Main root container
         StackPane root = new StackPane();
         root.setPrefSize(1280, 760);
@@ -78,7 +87,7 @@ public class LoginView extends Application {
         usernameLabel.setFont(pressStartFont);
         usernameLabel.setFill(Color.WHITE);
 
-        TextField usernameField = new TextField();
+        usernameField = new TextField();
         usernameField.setFont(pressStartFont);
         usernameField.setPrefHeight(50);
         usernameField.setMinWidth(350);
@@ -92,7 +101,7 @@ public class LoginView extends Application {
         passwordLabel.setFont(pressStartFont);
         passwordLabel.setFill(Color.WHITE);
 
-        PasswordField passwordField = new PasswordField();
+        passwordField = new PasswordField();
         passwordField.setFont(pressStartFont);
         passwordField.setPrefHeight(50);
         passwordField.setMinWidth(350);
@@ -102,12 +111,47 @@ public class LoginView extends Application {
                 "-fx-border-width: 2px;");
 
         // PLAY Button
-        Button playButton = new Button("PLAY");
+        playButton = new Button("PLAY");
         playButton.setFont(pressStartFont);
         playButton.setTextFill(Color.WHITE);
         playButton.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
         playButton.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
         playButton.setPadding(new Insets(10, 80, 10, 80));
+        playButton.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        playButton.setOnMouseEntered(e -> playButton.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        playButton.setOnMouseExited(e -> playButton.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        playButton.setOnMousePressed(e -> playButton.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        playButton.setOnMouseReleased(e -> playButton.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
         playButton.setOnAction(e -> {
             System.out.println("Login attempted with: " + usernameField.getText());
             // Add your login logic here
@@ -141,7 +185,40 @@ public class LoginView extends Application {
         primaryStage.show();
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    public void start() {
+        stage.show();
     }
+
+    public void close() {
+        stage = (Stage) playButton.getScene().getWindow();
+        stage.close();
+    }
+
+    public void showError(String message) {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Login Error");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+    // Add these getters at the bottom of the LoginView class:
+    public TextField getUsernameField() {
+        return usernameField;
+    }
+
+    public PasswordField getPasswordField() {
+        return passwordField;
+    }
+
+    public Button getPlayButton() {
+        return playButton;
+    }
+
+    public void setOnPlay(Runnable action) {
+        playButton.setOnAction(e -> action.run());
+    }
+
 }
