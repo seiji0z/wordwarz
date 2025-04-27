@@ -39,8 +39,9 @@ public class SessionManager {
         return tokenMap.containsKey(token);
     }
 
-
     public static boolean isUserLoggedIn(String username) {
         return userToTokenMap.containsKey(username);
     }
+
+    public static String getTokenByUsername(String username) {return userToTokenMap.get(username);}
 }

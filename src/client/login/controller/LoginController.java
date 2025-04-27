@@ -6,7 +6,6 @@ import client.admin.view.AdminDashboardView;
 import client.login.model.LoginModel;
 import client.login.view.LoginView;
 import WordWarZ.InvalidCredentials;
-import WordWarZ.AlreadyLoggedIn;
 import client.player.controller.MainMenuController;
 import org.omg.CORBA.ORB;
 
@@ -37,30 +36,27 @@ public class LoginController {
         String username = view.getUsernameField().getText();
         String password = view.getPasswordField().getText();
 
+        view.clearError();
+
         try {
             String tokenResponse = model.login(username, password);
             String[] parts = tokenResponse.split(":");
             String token = parts[0];
             boolean isAdmin = Boolean.parseBoolean(parts[1]);
 
-            // Close login view
             view.close();
 
-            // Route based on admin status
-            if (isAdmin) {  // Check if user is admin
+            if (isAdmin) {
                 new AdminDashboardController(new AdminDashboardView(), new AdminDashboardModel(), orb, token);
             } else {
                 new MainMenuController(token, orb);
             }
 
-        } catch (AlreadyLoggedIn e) {
-            view.showError("User already logged in");
         } catch (InvalidCredentials e) {
-            view.showError("Invalid username or password");
+            view.showError(e.reason != null ? e.reason : "Invalid credentials");
         } catch (Exception e) {
-            view.showError("Login failed: " + e.getMessage());
+            view.showError("Login failed. Please try again later.");
             System.out.println(e.getMessage());
         }
     }
-
 }

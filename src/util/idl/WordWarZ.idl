@@ -13,19 +13,18 @@ module WordWarZ {
   typedef sequence<Player> Leaderboard;
 
   // exceptions
-  exception InvalidCredentials {};
-  exception NotLoggedIn {};
-  exception AlreadyLoggedIn {};
-  exception PlayerCurrentlyLoggedIn {};
-  exception NoOpponentFound {};
-  exception NotInGame {};
-  exception GameNotFound {};
-  exception PlayerNotFound {};
-  exception PlayerNotInQueue {};
-  exception UsernameAlreadyExists {};
-  exception CharacterAlreadyGuessed {};
-  exception RoundNotFinished{};
-  exception GameNotFinished {};
+  exception InvalidCredentials { string reason; };
+  exception NotLoggedIn { string reason; };
+  exception PlayerCurrentlyLoggedIn { string reason; };
+  exception NoOpponentFound { string reason; };
+  exception NotInGame { string reason; };
+  exception GameNotFound { string reason; };
+  exception PlayerNotFound { string reason; };
+  exception PlayerNotInQueue { string reason; };
+  exception UsernameAlreadyExists { string reason; };
+  exception CharacterAlreadyGuessed { string reason; };
+  exception RoundNotFinished{ string reason; };
+  exception GameNotFinished { string reason; };
 
   // client-side interface callbacks
   interface ClientCallback {
@@ -35,12 +34,12 @@ module WordWarZ {
     void onRoundStarted(in StringSequence wordPlaceholder);
     void onRoundEnded(in string roundResult, in string winner);
     void onGameEnded(in string winnerUsername);
+    void onForceLogout();
   };
-
 
   interface Login {
     // authentication
-    string login(in string username, in string password) raises (InvalidCredentials, AlreadyLoggedIn);
+    string login(in string username, in string password) raises (InvalidCredentials);
     void logout(in string token) raises (NotLoggedIn);
   };
 

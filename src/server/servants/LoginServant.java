@@ -15,21 +15,28 @@ public class LoginServant extends LoginPOA {
     }
 
     @Override
-    public String login(String username, String password) throws InvalidCredentials, AlreadyLoggedIn {
-        if (SessionManager.isUserLoggedIn(username)) {
-            throw new AlreadyLoggedIn();
+    public String login(String username, String password) throws InvalidCredentials {
+        if (!DBManager.userExists(username)) {
+            throw new InvalidCredentials("User not found. Please try again.");
         }
 
         if (!DBManager.validateCredentials(username, password)) {
-            throw new InvalidCredentials();
+            throw new InvalidCredentials("Wrong password. Please try again.");
         }
 
         boolean isAdmin = DBManager.isAdmin(username);
 
-        System.out.println("User " + username + " logged in.");
+        // If user is already logged in, remove old session
+        if (SessionManager.isUserLoggedIn(username)) {
+            String oldToken = SessionManager.getTokenByUsername(username);
+            SessionManager.removeSession(oldToken);
+            System.out.println("User " + username + " was already logged in. Old session removed.");
+        }
 
-        // Create session and generate token
+        // Create session and generate new token
         String token = SessionManager.createSession(username, isAdmin);
+        System.out.println("User " + username + " logged in with new session.");
+
         return token + ":" + isAdmin;
     }
 

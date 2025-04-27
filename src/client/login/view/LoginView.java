@@ -1,10 +1,10 @@
 package client.login.view;
 
+import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -15,6 +15,8 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 
@@ -23,6 +25,7 @@ public class LoginView {
     private PasswordField passwordField;
     private Button playButton;
     private Stage stage; // keep reference to stage
+    private Text errorText;
 
     public LoginView() throws FileNotFoundException {
         this.stage = new Stage();
@@ -157,8 +160,25 @@ public class LoginView {
             // Add your login logic here
         });
 
-        loginPanel.getChildren().addAll(usernameLabel, usernameField,
-                passwordLabel, passwordField, playButton);
+        errorText = new Text();
+        errorText.setFont(Font.loadFont(new FileInputStream("res/fonts/PressStart2P-Regular.ttf"), 12));
+        errorText.setFill(Color.RED);
+        errorText.setVisible(false);
+        errorText.setWrappingWidth(400);
+
+        // Create a container for the error message to prevent layout shifts
+        StackPane errorContainer = new StackPane(errorText);
+        errorContainer.setPadding(new Insets(0, 0, 0, 0));
+        errorContainer.setAlignment(Pos.CENTER);
+
+        // Modify the loginPanel VBox to include the error container
+        loginPanel.getChildren().addAll(
+                usernameLabel, usernameField,
+                passwordLabel, passwordField,
+                errorContainer,
+                playButton
+        );
+
         leftSide.getChildren().addAll(titleText, loginPanel);
 
         // --- RIGHT SIDE (Logo) ---
@@ -181,6 +201,7 @@ public class LoginView {
         // --- SCENE SETUP ---
         Scene scene = new Scene(root);
         primaryStage.setTitle("WordWar Z - Login");
+        primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
         primaryStage.show();
     }
@@ -194,14 +215,45 @@ public class LoginView {
         stage.close();
     }
 
+    // Update the showError method
     public void showError(String message) {
         Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Login Error");
-            alert.setHeaderText(null);
-            alert.setContentText(message);
-            alert.showAndWait();
+            errorText.setText(message);
+            errorText.setVisible(true);
+
+            // Clear the password field for security
+            passwordField.clear();
+
+            // Add pulsing red border effect
+            usernameField.setStyle("-fx-background-color: transparent; " +
+                    "-fx-text-fill: white; " +
+                    "-fx-border-color: red; " +
+                    "-fx-border-width: 2px;");
+            passwordField.setStyle("-fx-background-color: transparent; " +
+                    "-fx-text-fill: white; " +
+                    "-fx-border-color: red; " +
+                    "-fx-border-width: 2px;");
+
+            // Reset the border colors after a short delay
+            PauseTransition pause = new PauseTransition(Duration.seconds(3));
+            pause.setOnFinished(e -> {
+                usernameField.setStyle("-fx-background-color: transparent; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-border-color: white; " +
+                        "-fx-border-width: 2px;");
+                passwordField.setStyle("-fx-background-color: transparent; " +
+                        "-fx-text-fill: white; " +
+                        "-fx-border-color: white; " +
+                        "-fx-border-width: 2px;");
+                clearError();
+            });
+            pause.play();
         });
+    }
+
+    // Add a method to clear errors
+    public void clearError() {
+        errorText.setVisible(false);
     }
 
     // Add these getters at the bottom of the LoginView class:
@@ -218,7 +270,17 @@ public class LoginView {
     }
 
     public void setOnPlay(Runnable action) {
-        playButton.setOnAction(e -> action.run());
+        playButton.setOnAction(e -> {
+            String username = usernameField.getText().trim();
+            String password = passwordField.getText().trim();
+
+            if (username.isEmpty() || password.isEmpty()) {
+                showError("Fields cannot be empty.");
+            } else {
+                clearError();
+                action.run();
+            }
+        });
     }
 
 }
