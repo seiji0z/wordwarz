@@ -1,7 +1,5 @@
 package client.player.view;
 
-import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,7 +13,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import java.io.File;
 
-public class MainMenuView extends Application {
+public class MainMenuView {
 
     // Media controls
     private MediaPlayer mediaPlayer;
@@ -35,8 +33,7 @@ public class MainMenuView extends Application {
     private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/Sound On.png");
     private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/Mute.png");
 
-    @Override
-    public void start(Stage primaryStage) {
+    public void initializeUI(Stage primaryStage) {
         // Main root container
         StackPane root = new StackPane();
         root.setPrefSize(1280, 760);
@@ -239,4 +236,5 @@ public class MainMenuView extends Application {
     public void showHowToPlay() {
         overlayPane.setVisible(true);
     }
+
 }

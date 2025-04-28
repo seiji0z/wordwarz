@@ -8,7 +8,6 @@ import client.login.view.LoginView;
 import WordWarZ.InvalidCredentials;
 import client.player.controller.MainMenuController;
 import org.omg.CORBA.ORB;
-
 import java.io.FileNotFoundException;
 
 public class LoginController {

@@ -2,8 +2,16 @@ package server.servants;
 
 import WordWarZ.*;
 import org.omg.CORBA.ORB;
+import server.helpers.QueueManager;
+import server.helpers.SessionManager;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class GameServant extends GameServicePOA {
+    private static final ConcurrentHashMap<String, ClientCallback> clientCallbacks = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, Long> waitingPlayers = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     private ORB orb;
 
@@ -12,8 +20,41 @@ public class GameServant extends GameServicePOA {
     }
 
     @Override
-    public void startGame(String token) throws NotLoggedIn, NoOpponentFound {
+    public void registerCallback(String token, WordWarZ.ClientCallback callback) throws NotLoggedIn {
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+        clientCallbacks.put(token, (ClientCallback) callback);
+        System.out.println("Callback registered for " + SessionManager.getSession(token).getUsername());
+    }
 
+    @Override
+    public void unregisterCallback(String token) throws NotLoggedIn {
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+        clientCallbacks.remove(token);
+    }
+
+    private void notifyAllCallbacks(Runnable notification) {
+        clientCallbacks.forEach((token, callback) -> {
+            try {
+                notification.run();
+            } catch (Exception e) {
+                System.err.println("Error notifying callback for token " + token + ": " + e.getMessage());
+                clientCallbacks.remove(token);
+            }
+        });
+    }
+
+    @Override
+    public void startGame(String token) throws NotLoggedIn {
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+
+        String username = SessionManager.getSession(token).getUsername();
+        QueueManager.joinQueue(username);
     }
 
     @Override
@@ -21,19 +62,68 @@ public class GameServant extends GameServicePOA {
         return new Player[0];
     }
 
+    // Add these methods to the GameServant class
     @Override
     public void cancelQueue(String token) throws NotLoggedIn, PlayerNotInQueue {
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
 
+        String username = SessionManager.getSession(token).getUsername();
+        if (!QueueManager.isInQueue(username)) {
+            throw new PlayerNotInQueue();
+        }
+
+        QueueManager.leaveQueue(username);
     }
 
     @Override
     public int getPlayersInQueue(String token) throws NotLoggedIn, PlayerNotInQueue {
-        return 0;
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+
+        String username = SessionManager.getSession(token).getUsername();
+        if (!QueueManager.isInQueue(username)) {
+            throw new PlayerNotInQueue();
+        }
+
+        return QueueManager.getQueueSize();
     }
 
     @Override
     public int getTimeUntilGameStart(String token) throws NotLoggedIn, PlayerNotInQueue {
-        return 0;
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+
+        String username = SessionManager.getSession(token).getUsername();
+        if (!QueueManager.isInQueue(username)) {
+            throw new PlayerNotInQueue();
+        }
+
+        return QueueManager.getRemainingTime();
+    }
+
+    // Add these helper methods to GameServant
+    public static void notifyQueueUpdate(int playerCount) {
+        clientCallbacks.forEach((token, callback) -> {
+            try {
+                callback.onQueueUpdated(playerCount);
+            } catch (Exception e) {
+                System.err.println("Error notifying queue update: " + e.getMessage());
+            }
+        });
+    }
+
+    public static void notifyCountdownUpdate(int secondsLeft) {
+        clientCallbacks.forEach((token, callback) -> {
+            try {
+                callback.onGameCountdown(secondsLeft);
+            } catch (Exception e) {
+                System.err.println("Error notifying countdown: " + e.getMessage());
+            }
+        });
     }
 
     @Override
@@ -86,13 +176,4 @@ public class GameServant extends GameServicePOA {
         return 0;
     }
 
-    @Override
-    public void registerCallback(String token, ClientCallback callback) throws NotLoggedIn {
-
-    }
-
-    @Override
-    public void unregisterCallback(String token) throws NotLoggedIn {
-
-    }
 }

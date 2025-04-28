@@ -1,6 +1,7 @@
 package client.player.view;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
@@ -12,20 +13,22 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
 
-
 public class QueueView extends Application {
     private Pane root; // Store the root pane for resetting the game
+    private Text timerText;
+    private Text playerCountText;
+    private Pane usernamesPane; // Reserved for usernames (future)
 
     @Override
     public void start(Stage primaryStage) {
         // --- ROOT LAYOUT ---
         root = new Pane();
 
-        // Load the custom font
+        // Load custom font
         Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 25);
         if (customFont == null) {
             System.out.println("Failed to load custom font, falling back to default.");
-            customFont = new Font("System", 30); // Fallback font
+            customFont = new Font("System", 30);
         }
 
         // Background
@@ -44,30 +47,26 @@ public class QueueView extends Application {
         logoView.setY(30);
         root.getChildren().add(logoView);
 
-        Rectangle timerRect = new Rectangle();
-        timerRect.setWidth(200);
-        timerRect.setHeight(52);
+        // Timer background
+        Rectangle timerRect = new Rectangle(200, 52, Color.BLACK);
+        timerRect.setOpacity(0.5);
         timerRect.setX(535);
         timerRect.setY(318);
-        timerRect.setFill(Color.BLACK);
-        timerRect.setOpacity(0.5);
         root.getChildren().add(timerRect);
 
-        // Timer
-        Text timerText = new Text("00:10");
+        // Timer text
+        timerText = new Text("00:10");
         timerText.setFont(customFont);
         timerText.setFill(Color.WHITE);
         timerText.setX(570);
         timerText.setY(360);
         root.getChildren().add(timerText);
 
-        Rectangle queueRect = new Rectangle();
-        queueRect.setWidth(690);
-        queueRect.setHeight(320);
+        // Queue background
+        Rectangle queueRect = new Rectangle(690, 320, Color.BLACK);
+        queueRect.setOpacity(0.5);
         queueRect.setX(300);
         queueRect.setY(380);
-        queueRect.setFill(Color.BLACK);
-        queueRect.setOpacity(0.5);
         root.getChildren().add(queueRect);
 
         // Waiting message
@@ -79,15 +78,15 @@ public class QueueView extends Application {
         root.getChildren().add(waitingText);
 
         // Player count
-        Text playerCountText = new Text("Player count: 0");
+        playerCountText = new Text("Player count: 0");
         playerCountText.setFont(customFont);
         playerCountText.setFill(Color.WHITE);
         playerCountText.setX(380);
         playerCountText.setY(480);
         root.getChildren().add(playerCountText);
 
-        // Usernames pane
-        Pane usernamesPane = new Pane();
+        // Usernames pane (reserved for expansion)
+        usernamesPane = new Pane();
         usernamesPane.setLayoutX(540);
         usernamesPane.setLayoutY(320);
         root.getChildren().add(usernamesPane);
@@ -105,7 +104,7 @@ public class QueueView extends Application {
         root.getChildren().add(cancelButton);
 
         // --- SCENE & STAGE ---
-        Scene scene = new Scene(root, 1280, 760); // Explicitly set size
+        Scene scene = new Scene(root, 1280, 760);
         primaryStage.setTitle("Word War Z - Queue");
         primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
@@ -115,5 +114,20 @@ public class QueueView extends Application {
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    // --- NEW METHODS FOR UPDATING ---
+
+    public void updateTimer(int secondsLeft) {
+        Platform.runLater(() -> {
+            String formatted = String.format("00:%02d", secondsLeft);
+            timerText.setText(formatted);
+        });
+    }
+
+    public void updatePlayerCount(int count) {
+        Platform.runLater(() -> {
+            playerCountText.setText("Player count: " + count);
+        });
     }
 }

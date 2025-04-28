@@ -57,4 +57,32 @@ public class DBManager {
         }
         return false;
     }
+
+    public static int[] loadGameConfig() {
+        String query = "SELECT waiting_time, round_duration FROM gameconfig WHERE config_id = 50001";
+        int[] config = new int[2];
+        config[0] = 10; // default waiting time
+        config[1] = 30; // default round duration
+
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+            if (rs.next()) {
+                config[0] = rs.getInt("waiting_time");
+                config[1] = rs.getInt("round_duration");
+            }
+        } catch (SQLException e) {
+            System.out.println("Error loading game config: " + e.getMessage());
+        }
+
+        return config;
+    }
+
+    public static void updateGameConfig(int newWaitingTime, int newRoundDuration) throws SQLException {
+        String query = "UPDATE gameconfig SET waiting_time = ?, round_duration = ? WHERE config_id = 50001";
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setInt(1, newWaitingTime);
+            stmt.setInt(2, newRoundDuration);
+            stmt.executeUpdate();
+        }
+    }
 }
