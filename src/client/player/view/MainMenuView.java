@@ -32,19 +32,8 @@ public class MainMenuView extends Application {
     private Button closeHowToPlayBtn;
 
     // Add these as class fields
-    private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/sound button.png");
-    private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/mute button.png");
-
-    public MainMenuView() {
-        // Initialize the view without showing it
-        Platform.runLater(() -> {
-            try {
-                start(new Stage());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
+    private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/Sound On.png");
+    private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/Mute.png");
 
     @Override
     public void start(Stage primaryStage) {
@@ -67,38 +56,24 @@ public class MainMenuView extends Application {
         // --- SOUND BUTTON ---
         soundButtonView = new ImageView(soundOnImg);
         soundButtonView.setPreserveRatio(true);
-        soundButtonView.setFitWidth(70);
+        soundButtonView.setFitWidth(90);
         soundButton = new Button();
         soundButton.setGraphic(soundButtonView);
         soundButton.setBackground(Background.EMPTY);
         soundButton.setPadding(Insets.EMPTY);
 
         // --- HOW TO PLAY BUTTON ---
-        Image howToPlayImg = new Image("file:res/images/buttons/menu buttons/how to play button.png");
+        Image howToPlayImg = new Image("file:res/images/buttons/menu buttons/How to Play.png");
         ImageView howToPlayView = new ImageView(howToPlayImg);
         howToPlayView.setPreserveRatio(true);
-        howToPlayView.setFitWidth(70);
+        howToPlayView.setFitWidth(90);
         howToPlayBtn = new Button();
         howToPlayBtn.setGraphic(howToPlayView);
         howToPlayBtn.setBackground(Background.EMPTY);
         howToPlayBtn.setPadding(Insets.EMPTY);
 
-        // --- LEADERBOARD BUTTON ---
-        Image leaderboardImg = new Image("file:res/images/buttons/menu buttons/Leaderboard button.png");
-        ImageView leaderboardView = new ImageView(leaderboardImg);
-        leaderboardView.setPreserveRatio(true);
-        leaderboardView.setFitWidth(70);
-        leaderboardBtn = new Button();
-        leaderboardBtn.setGraphic(leaderboardView);
-        leaderboardBtn.setBackground(Background.EMPTY);
-        leaderboardBtn.setPadding(Insets.EMPTY);
-        leaderboardBtn.setOnAction(e -> {
-            System.out.println("Leaderboard button clicked!");
-            // Implement leaderboard functionality here
-        });
-
         // --- TOP BOX ---
-        HBox topBox = new HBox(10, soundButton, howToPlayBtn, leaderboardBtn);
+        HBox topBox = new HBox(10, soundButton, howToPlayBtn);
         topBox.setAlignment(Pos.TOP_RIGHT);
         topBox.setPadding(new Insets(10));
         topBox.setBackground(Background.EMPTY);
@@ -108,10 +83,10 @@ public class MainMenuView extends Application {
         Image logoImg = new Image("file:res/images/others/word war z logo.png");
         ImageView logoView = new ImageView(logoImg);
         logoView.setPreserveRatio(true);
-        logoView.setFitWidth(750);
+        logoView.setFitWidth(300);
 
         // --- PLAY BUTTON ---
-        Image playImg = new Image("file:res/images/buttons/menu buttons/play button.png");
+        Image playImg = new Image("file:res/images/buttons/menu buttons/Start 1.png");
         ImageView playView = new ImageView(playImg);
         playView.setPreserveRatio(true);
         playView.setFitWidth(200);
@@ -120,8 +95,22 @@ public class MainMenuView extends Application {
         playBtn.setBackground(Background.EMPTY);
         playBtn.setPadding(Insets.EMPTY);
 
+        // --- LEADERBOARD BUTTON ---
+        Image leaderboardImg = new Image("file:res/images/buttons/menu buttons/Leaderboard 1.png");
+        ImageView leaderboardView = new ImageView(leaderboardImg);
+        leaderboardView.setPreserveRatio(true);
+        leaderboardView.setFitWidth(200);
+        leaderboardBtn = new Button();
+        leaderboardBtn.setGraphic(leaderboardView);
+        leaderboardBtn.setBackground(Background.EMPTY);
+        leaderboardBtn.setPadding(Insets.EMPTY);
+        leaderboardBtn.setOnAction(e -> {
+            System.out.println("Leaderboard button clicked!");
+            // Implement leaderboard functionality here
+        });
+
         // --- QUIT BUTTON ---
-        Image quitImg = new Image("file:res/images/buttons/menu buttons/quit button.png");
+        Image quitImg = new Image("file:res/images/buttons/menu buttons/Quit 1.png");
         ImageView quitView = new ImageView(quitImg);
         quitView.setPreserveRatio(true);
         quitView.setFitWidth(200);
@@ -142,7 +131,8 @@ public class MainMenuView extends Application {
             }
         });
 
-        VBox centerBox = new VBox(10, logoView, playBtn, quitBtn);
+        // --- CENTER BOX ---
+        VBox centerBox = new VBox(10, logoView, playBtn, leaderboardBtn, quitBtn);
         centerBox.setAlignment(Pos.TOP_CENTER);
         centerBox.setPadding(new Insets(10, 0, 0, 0));
         mainContent.setCenter(centerBox);
