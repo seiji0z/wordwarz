@@ -2,6 +2,7 @@ package server.servants;
 
 import WordWarZ.*;
 import org.omg.CORBA.ORB;
+import server.database.DBManager;
 
 public class AdminServant extends AdminServicePOA {
 
@@ -13,7 +14,21 @@ public class AdminServant extends AdminServicePOA {
 
     @Override
     public void createPlayer(String username, String password) throws NotLoggedIn, UsernameAlreadyExists {
+        if (username == null || password == null || username.isEmpty() || password.isEmpty()) {
+            throw new NotLoggedIn("Username or Password is empty. You must be logged in as Admin.");
+        }
 
+        if (DBManager.userExists(username)) {
+            throw new UsernameAlreadyExists("Username already exists. Choose a different username.");
+        }
+
+        boolean created = DBManager.createUser(username, password);
+
+        if (!created) {
+            throw new NotLoggedIn("Failed to create player. Try again.");
+        }
+
+        System.out.println("Player " + username + " created successfully.");
     }
 
     @Override

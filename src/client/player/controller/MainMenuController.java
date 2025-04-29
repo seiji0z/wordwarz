@@ -3,6 +3,7 @@ package client.player.controller;
 import client.player.model.MainMenuModel;
 import client.player.view.MainMenuView;
 import javafx.application.Platform;
+import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
 import server.helpers.SessionManager;
 
@@ -25,6 +26,9 @@ public class MainMenuController {
     }
 
     private void initializeView() {
+        // Initialize the view before setting handlers
+        view.initializeUI(new Stage());
+        setupEventHandlers();
     }
 
     private void setupEventHandlers() {

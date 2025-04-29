@@ -47,7 +47,9 @@ public class LoginController {
             view.close();
 
             if (isAdmin) {
-                new AdminDashboardController(new AdminDashboardView(), new AdminDashboardModel(), orb, token);
+                AdminDashboardView adminView = new AdminDashboardView();
+                AdminDashboardModel adminModel = new AdminDashboardModel(token, orb);
+                new AdminDashboardController(adminView, adminModel, orb, token);
             } else {
                 new MainMenuController(token, orb);
             }

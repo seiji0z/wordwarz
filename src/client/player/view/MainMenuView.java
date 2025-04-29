@@ -15,7 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 import java.io.File;
 
-public class MainMenuView extends Application {
+public class MainMenuView {
 
     // Media controls
     private MediaPlayer mediaPlayer;
@@ -35,8 +35,8 @@ public class MainMenuView extends Application {
     private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/Sound On.png");
     private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/Mute.png");
 
-    @Override
-    public void start(Stage primaryStage) {
+
+    public void initializeUI(Stage primaryStage) {
         // Main root container
         StackPane root = new StackPane();
         root.setPrefSize(1280, 760);
