@@ -30,4 +30,8 @@
                 System.out.println("Error starting game: " + e.getMessage());
             }
         }
+
+        public GameService getGameService() {
+            return gameService;
+        }
     }

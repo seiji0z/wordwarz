@@ -15,19 +15,25 @@ public class QueueManager {
     public static synchronized void joinQueue(String username) {
         if (!waitingPlayers.contains(username)) {
             waitingPlayers.add(username);
+            System.out.println("Player " + username + " joined queue. Current size: " + waitingPlayers.size());
             broadcastQueueUpdate();
 
             if (!countdownStarted) {
+                System.out.println("Starting countdown for queue");
                 startCountdown();
             }
+        } else {
+            System.out.println("Player " + username + " already in queue");
         }
     }
 
     public static synchronized void leaveQueue(String username) {
         if (waitingPlayers.remove(username)) {
+            System.out.println("Player " + username + " left queue. Current size: " + waitingPlayers.size());
             broadcastQueueUpdate();
 
             if (waitingPlayers.isEmpty() && countdownStarted) {
+                System.out.println("Queue empty, canceling countdown");
                 cancelCountdown();
             }
         }
@@ -39,9 +45,11 @@ public class QueueManager {
 
         countdownTask = scheduler.scheduleAtFixedRate(() -> {
             remainingTime--;
+            System.out.println("Countdown: " + remainingTime + " seconds remaining");
             broadcastCountdownUpdate();
 
             if (remainingTime <= 0) {
+                System.out.println("Countdown finished, starting game");
                 startGame();
                 countdownTask.cancel(false);
             }
@@ -54,12 +62,15 @@ public class QueueManager {
         }
         countdownStarted = false;
         remainingTime = 0;
+        System.out.println("Countdown canceled");
     }
 
     private static void startGame() {
         if (waitingPlayers.size() >= 2) {
+            System.out.println("Starting game with players: " + waitingPlayers);
             createNewGame(new ArrayList<>(waitingPlayers));
         } else if (!waitingPlayers.isEmpty()) {
+            System.out.println("No opponent found for " + waitingPlayers.get(0));
             notifyNoOpponent(waitingPlayers.get(0));
         }
 
@@ -68,22 +79,22 @@ public class QueueManager {
     }
 
     private static void notifyNoOpponent(String username) {
-        // Implement notification logic
-        System.out.println("No opponent found for " + username);
+        System.out.println("Notifying no opponent for " + username);
+        // Task 3
     }
 
     private static void createNewGame(List<String> players) {
-        // Implement game creation logic
-        System.out.println("Starting game with players: " + players);
+        System.out.println("Creating new game with players: " + players);
+        // Task 4
     }
 
     private static void broadcastQueueUpdate() {
-        // Notify all waiting players about queue changes
+        System.out.println("Broadcasting queue update: " + waitingPlayers.size() + " players");
         GameServant.notifyQueueUpdate(waitingPlayers.size());
     }
 
     private static void broadcastCountdownUpdate() {
-        // Notify all waiting players about countdown
+        System.out.println("Broadcasting countdown update: " + remainingTime + " seconds");
         GameServant.notifyCountdownUpdate(remainingTime);
     }
 

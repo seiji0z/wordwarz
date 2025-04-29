@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class GameServant extends GameServicePOA {
-    private static final ConcurrentHashMap<String, ClientCallback> clientCallbacks = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, WordWarZ.ClientCallback> clientCallbacks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Long> waitingPlayers = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
@@ -24,8 +24,8 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
-        clientCallbacks.put(token, (ClientCallback) callback);
-        System.out.println("Callback registered for " + SessionManager.getSession(token).getUsername());
+        clientCallbacks.put(token, callback);
+        System.out.println("Callback registered for token: " + token + ", username: " + SessionManager.getSession(token).getUsername());
     }
 
     @Override
@@ -52,8 +52,8 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
-
         String username = SessionManager.getSession(token).getUsername();
+        System.out.println("Starting game for token: " + token + ", username: " + username);
         QueueManager.joinQueue(username);
     }
 
@@ -107,21 +107,27 @@ public class GameServant extends GameServicePOA {
 
     // Add these helper methods to GameServant
     public static void notifyQueueUpdate(int playerCount) {
+        System.out.println("Notifying " + clientCallbacks.size() + " clients of queue update: " + playerCount + " players");
         clientCallbacks.forEach((token, callback) -> {
             try {
                 callback.onQueueUpdated(playerCount);
+                System.out.println("Notified token: " + token + " with player count: " + playerCount);
             } catch (Exception e) {
-                System.err.println("Error notifying queue update: " + e.getMessage());
+                System.err.println("Error notifying queue update for token " + token + ": " + e.getMessage());
+                clientCallbacks.remove(token);
             }
         });
     }
 
     public static void notifyCountdownUpdate(int secondsLeft) {
+        System.out.println("Notifying " + clientCallbacks.size() + " clients of countdown update: " + secondsLeft + " seconds");
         clientCallbacks.forEach((token, callback) -> {
             try {
                 callback.onGameCountdown(secondsLeft);
+                System.out.println("Notified token: " + token + " with countdown: " + secondsLeft);
             } catch (Exception e) {
-                System.err.println("Error notifying countdown: " + e.getMessage());
+                System.err.println("Error notifying countdown for token " + token + ": " + e.getMessage());
+                clientCallbacks.remove(token);
             }
         });
     }
