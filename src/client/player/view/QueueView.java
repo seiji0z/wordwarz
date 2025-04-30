@@ -2,6 +2,8 @@ package client.player.view;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.image.Image;
@@ -18,6 +20,7 @@ public class QueueView extends Application {
     private Text timerText;
     private Text playerCountText;
     private Pane usernamesPane;
+    private Button cancelButton;
 
     @Override
     public void start(Stage primaryStage) {
@@ -80,15 +83,12 @@ public class QueueView extends Application {
         usernamesPane.setLayoutY(320);
         root.getChildren().add(usernamesPane);
 
-        Button cancelButton = new Button("CANCEL QUEUE");
+        cancelButton = new Button("CANCEL QUEUE");
         cancelButton.setFont(customFont);
         cancelButton.setTextFill(Color.WHITE);
         cancelButton.setStyle("-fx-background-color: transparent; -fx-border-color: red; -fx-border-width: 2;");
         cancelButton.setLayoutX(470);
         cancelButton.setLayoutY(650);
-        cancelButton.setOnAction(event -> {
-            // Task 2: Add functionality
-        });
         root.getChildren().add(cancelButton);
 
         Scene scene = new Scene(root, 1280, 760);
@@ -97,6 +97,10 @@ public class QueueView extends Application {
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
+    }
+
+    public void setCancelButtonHandler(EventHandler<ActionEvent> handler) {
+        cancelButton.setOnAction(handler);
     }
 
     public void updateTimer(int secondsLeft) {

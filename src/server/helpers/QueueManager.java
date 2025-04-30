@@ -74,6 +74,10 @@ public class QueueManager {
             notifyNoOpponent(waitingPlayers.get(0));
         }
 
+        // Clear callbacks for players no longer in queue
+        List<String> currentPlayers = new ArrayList<>(waitingPlayers);
+        GameServant.clearCallbacksExcept(currentPlayers);
+
         waitingPlayers.clear();
         countdownStarted = false;
     }
@@ -99,6 +103,7 @@ public class QueueManager {
     }
 
     public static synchronized int getQueueSize() {
+        System.out.println("Queue size requested. Current players: " + waitingPlayers);
         return waitingPlayers.size();
     }
 

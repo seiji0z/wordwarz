@@ -11,6 +11,7 @@ public class MainMenuController {
     private final MainMenuView view;
     private final String playerToken;
     private final ORB orb;
+    private final Stage stage;
 
     public MainMenuController(String token, ORB orb) {
         this.orb = orb;
@@ -18,13 +19,13 @@ public class MainMenuController {
         this.model = new MainMenuModel(token, orb);
         this.view = new MainMenuView();
 
-        // Initialize the view before setting handlers
-        view.initializeUI(new Stage());
+        // Initialize the view with a new stage
+        this.stage = new Stage();
+        view.initializeUI(stage);
         setupEventHandlers();
     }
 
     private void setupEventHandlers() {
-        // Connect the play button to startGame
         view.setPlayButtonHandler(() -> {
             System.out.println("Play button clicked - starting game");
             startGame();
@@ -38,8 +39,7 @@ public class MainMenuController {
 
     private void startGame() {
         System.out.println("Attempting to start game...");
-        new QueueController(playerToken, orb);
-
+        new QueueController(playerToken, orb, stage); // Pass the stage, QueueController handles closing
     }
 
     private void handleLeaderboard() {
@@ -53,7 +53,6 @@ public class MainMenuController {
     private void handleQuit() {
         try {
             model.logout();
-
             Platform.exit();
         } catch (Exception e) {
             System.err.println("Error during logout: " + e.getMessage());

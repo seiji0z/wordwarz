@@ -4,6 +4,8 @@ import WordWarZ.*;
 import org.omg.CORBA.ORB;
 import server.helpers.QueueManager;
 import server.helpers.SessionManager;
+
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -34,17 +36,7 @@ public class GameServant extends GameServicePOA {
             throw new NotLoggedIn();
         }
         clientCallbacks.remove(token);
-    }
-
-    private void notifyAllCallbacks(Runnable notification) {
-        clientCallbacks.forEach((token, callback) -> {
-            try {
-                notification.run();
-            } catch (Exception e) {
-                System.err.println("Error notifying callback for token " + token + ": " + e.getMessage());
-                clientCallbacks.remove(token);
-            }
-        });
+        System.out.println("Callback unregistered for token: " + token);
     }
 
     @Override
@@ -58,22 +50,14 @@ public class GameServant extends GameServicePOA {
     }
 
     @Override
-    public Player[] getLeaderboard(String token) throws NotLoggedIn {
-        return new Player[0];
-    }
-
-    // Add these methods to the GameServant class
-    @Override
     public void cancelQueue(String token) throws NotLoggedIn, PlayerNotInQueue {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
-
         String username = SessionManager.getSession(token).getUsername();
         if (!QueueManager.isInQueue(username)) {
             throw new PlayerNotInQueue();
         }
-
         QueueManager.leaveQueue(username);
     }
 
@@ -82,12 +66,10 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
-
         String username = SessionManager.getSession(token).getUsername();
         if (!QueueManager.isInQueue(username)) {
             throw new PlayerNotInQueue();
         }
-
         return QueueManager.getQueueSize();
     }
 
@@ -96,40 +78,73 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
-
         String username = SessionManager.getSession(token).getUsername();
         if (!QueueManager.isInQueue(username)) {
             throw new PlayerNotInQueue();
         }
-
         return QueueManager.getRemainingTime();
     }
 
-    // Add these helper methods to GameServant
     public static void notifyQueueUpdate(int playerCount) {
         System.out.println("Notifying " + clientCallbacks.size() + " clients of queue update: " + playerCount + " players");
-        clientCallbacks.forEach((token, callback) -> {
+        clientCallbacks.entrySet().removeIf(entry -> {
+            String token = entry.getKey();
             try {
+                if (!SessionManager.isTokenValid(token)) {
+                    System.out.println("Removing invalid callback for token: " + token + " (session expired)");
+                    return true;
+                }
+                WordWarZ.ClientCallback callback = entry.getValue();
                 callback.onQueueUpdated(playerCount);
                 System.out.println("Notified token: " + token + " with player count: " + playerCount);
+                return false;
             } catch (Exception e) {
                 System.err.println("Error notifying queue update for token " + token + ": " + e.getMessage());
-                clientCallbacks.remove(token);
+                return true;
             }
         });
     }
 
     public static void notifyCountdownUpdate(int secondsLeft) {
         System.out.println("Notifying " + clientCallbacks.size() + " clients of countdown update: " + secondsLeft + " seconds");
-        clientCallbacks.forEach((token, callback) -> {
+        clientCallbacks.entrySet().removeIf(entry -> {
+            String token = entry.getKey();
             try {
+                if (!SessionManager.isTokenValid(token)) {
+                    System.out.println("Removing invalid callback for token: " + token + " (session expired)");
+                    return true;
+                }
+                WordWarZ.ClientCallback callback = entry.getValue();
                 callback.onGameCountdown(secondsLeft);
                 System.out.println("Notified token: " + token + " with countdown: " + secondsLeft);
+                return false;
             } catch (Exception e) {
                 System.err.println("Error notifying countdown for token " + token + ": " + e.getMessage());
-                clientCallbacks.remove(token);
+                return true;
             }
         });
+    }
+
+    public static void clearCallbacksExcept(List<String> currentUsernames) {
+        clientCallbacks.entrySet().removeIf(entry -> {
+            String token = entry.getKey();
+            try {
+                String username = SessionManager.getSession(token).getUsername();
+                if (!currentUsernames.contains(username)) {
+                    System.out.println("Removing stale callback for token: " + token + ", username: " + username);
+                    return true;
+                }
+                return false;
+            } catch (NotLoggedIn e) {
+                System.out.println("Removing invalid callback for token: " + token + " (session expired)");
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public Player[] getLeaderboard(String token) throws NotLoggedIn {
+        return new Player[0];
     }
 
     @Override
@@ -144,17 +159,14 @@ public class GameServant extends GameServicePOA {
 
     @Override
     public void displayWinnerByRound(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
-
     }
 
     @Override
     public void displayWinnerByGame(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
-
     }
 
     @Override
     public void endGame(String token) throws NotLoggedIn, NotInGame, GameNotFound, GameNotFinished {
-
     }
 
     @Override
@@ -181,5 +193,4 @@ public class GameServant extends GameServicePOA {
     public int getRemainingTime(String token) throws NotLoggedIn, NotInGame {
         return 0;
     }
-
 }
