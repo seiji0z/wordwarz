@@ -13,15 +13,24 @@ public class MainMenuController {
     private final ORB orb;
     private final Stage stage;
 
+    // Constructor for LoginController (creates new view and stage)
     public MainMenuController(String token, ORB orb) {
         this.orb = orb;
         this.playerToken = token;
         this.model = new MainMenuModel(token, orb);
         this.view = new MainMenuView();
-
-        // Initialize the view with a new stage
         this.stage = new Stage();
         view.initializeUI(stage);
+        setupEventHandlers();
+    }
+
+    // Constructor for QueueController (uses existing view and stage)
+    public MainMenuController(String token, ORB orb, MainMenuView view, Stage stage) {
+        this.orb = orb;
+        this.playerToken = token;
+        this.model = new MainMenuModel(token, orb);
+        this.view = view;
+        this.stage = stage;
         setupEventHandlers();
     }
 
@@ -39,7 +48,7 @@ public class MainMenuController {
 
     private void startGame() {
         System.out.println("Attempting to start game...");
-        new QueueController(playerToken, orb, stage); // Pass the stage, QueueController handles closing
+        new QueueController(playerToken, orb, stage);
     }
 
     private void handleLeaderboard() {

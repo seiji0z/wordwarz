@@ -19,6 +19,7 @@ public class QueueController {
     private final String playerToken;
     private final ORB orb;
     private final Stage stage;
+    private boolean transitionInProgress = false;
 
     public QueueController(String token, ORB orb, Stage stage) {
         this.orb = orb;
@@ -32,7 +33,7 @@ public class QueueController {
 
         // Show the QueueView and close MainMenuView
         view.start(stage);
-        stage.show(); // Ensure stage is visible
+        stage.show();
 
         // Set cancel button handler after start
         view.setCancelButtonHandler(this::handleCancelQueue);
@@ -62,6 +63,12 @@ public class QueueController {
     }
 
     private void handleCancelQueue(ActionEvent event) {
+        if (transitionInProgress) {
+            System.out.println("Transition already in progress, ignoring cancel request for token: " + playerToken);
+            return;
+        }
+        transitionInProgress = true;
+
         try {
             GameService gameService = model.getGameService();
             gameService.cancelQueue(playerToken);
@@ -70,15 +77,8 @@ public class QueueController {
             gameService.unregisterCallback(playerToken);
             System.out.println("Callback unregistered for token: " + playerToken);
 
-            // Close QueueView stage
-            stage.close();
-
-            // Open MainMenuView in a new stage
-            Stage mainMenuStage = new Stage();
-            MainMenuView mainMenuView = new MainMenuView();
-            MainMenuController mainMenuController = new MainMenuController(playerToken, orb);
-            mainMenuView.initializeUI(mainMenuStage);
-            mainMenuStage.setTitle("Word War Z - Main Menu");
+            // Transition to main menu
+            transitionToMainMenu();
 
         } catch (NotLoggedIn e) {
             System.err.println("Error canceling queue: Player not logged in for token: " + playerToken);
@@ -89,21 +89,24 @@ public class QueueController {
         } catch (Exception e) {
             System.err.println("Unexpected error canceling queue: " + e.getMessage());
             e.printStackTrace();
+        } finally {
+            transitionInProgress = false;
         }
     }
 
     private void transitionToMainMenu() {
+        System.out.println("Transitioning to MainMenuView for token: " + playerToken);
         stage.close();
         Stage mainMenuStage = new Stage();
         MainMenuView mainMenuView = new MainMenuView();
-        MainMenuController mainMenuController = new MainMenuController(playerToken, orb);
         mainMenuView.initializeUI(mainMenuStage);
+        MainMenuController mainMenuController = new MainMenuController(playerToken, orb, mainMenuView, mainMenuStage);
         mainMenuStage.setTitle("Word War Z - Main Menu");
     }
 
     private void transitionToLoginScreen() {
+        System.out.println("Transitioning to login screen for token: " + playerToken);
         stage.close();
-        System.out.println("Transitioning to login screen (not implemented)");
     }
 
     public Stage getStage() {

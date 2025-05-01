@@ -103,7 +103,6 @@ public class MainMenuView {
         leaderboardBtn.setPadding(Insets.EMPTY);
         leaderboardBtn.setOnAction(e -> {
             System.out.println("Leaderboard button clicked!");
-            // Implement leaderboard functionality here
         });
 
         // --- QUIT BUTTON ---
@@ -119,10 +118,8 @@ public class MainMenuView {
             if (quitButtonHandler != null) {
                 quitButtonHandler.handle();
             }
-
             Stage stage = (Stage) quitBtn.getScene().getWindow();
             stage.close();
-
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
             }
@@ -167,12 +164,10 @@ public class MainMenuView {
         // --- SETUP SCENE ---
         root.getChildren().addAll(mainContent, overlayPane);
         Scene scene = new Scene(root);
-        primaryStage.setTitle("Main Menu");
+        primaryStage.setTitle("Word War Z - Main Menu");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
-    // Add these methods to your MainMenuView class:
 
     // Event handler interfaces
     public interface PlayButtonHandler {
@@ -236,5 +231,4 @@ public class MainMenuView {
     public void showHowToPlay() {
         overlayPane.setVisible(true);
     }
-
 }

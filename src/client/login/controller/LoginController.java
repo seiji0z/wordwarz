@@ -43,6 +43,7 @@ public class LoginController {
             String token = parts[0];
             boolean isAdmin = Boolean.parseBoolean(parts[1]);
 
+            // Close login view before transitioning
             view.close();
 
             if (isAdmin) {
