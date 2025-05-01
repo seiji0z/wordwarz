@@ -4,6 +4,7 @@ import WordWarZ.*;
 import client.admin.model.AdminDashboardModel;
 import client.admin.view.AdminDashboardView;
 import client.admin.view.CreatePlayerView;
+import client.admin.view.EditGamePlaySettingsView;
 import client.admin.view.UpdatePlayerView;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -35,7 +36,7 @@ public class AdminDashboardController {
     private void setupEventHandlers() {
         // Main dashboard buttons
         view.getEditPlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        view.getEditGamePlayBtn().setOnAction(e -> handleEditGamePlay());
+        view.getEditGamePlayBtn().setOnAction(e -> view.showEditGameplaySettingsView());
 
         // Create Player View handlers
         CreatePlayerView createView = view.getCreatePlayerView();
@@ -56,7 +57,7 @@ public class AdminDashboardController {
     }
 
     private void handleEditGamePlay() {
-        System.out.println("Edit Game Play clicked");
+        System.out.println("handleEditGamePlay");
     }
 
     private void handleCreatePlayer() {

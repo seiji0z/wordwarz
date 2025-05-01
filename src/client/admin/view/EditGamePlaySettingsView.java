@@ -13,6 +13,8 @@ import javafx.scene.text.FontWeight;
 
 public class EditGamePlaySettingsView extends VBox {
     private final Font customFont;
+    TextField waitingField, roundField;
+    Button saveBtn;
 
 
     public EditGamePlaySettingsView(Font customFont) {
@@ -28,7 +30,7 @@ public class EditGamePlaySettingsView extends VBox {
     }
 
 
-    private void buildUI() {
+    public void buildUI() {
         // Title
         Label titleLabel = new Label("EDIT GAMEPLAY SETTINGS");
         titleLabel.setFont(Font.font(customFont.getFamily(), FontWeight.BOLD, 20));
@@ -40,7 +42,7 @@ public class EditGamePlaySettingsView extends VBox {
         Label waitingLabel = new Label("Waiting Time:");
         waitingLabel.setTextFill(Color.WHITE);
         waitingLabel.setFont(customFont);
-        TextField waitingField = new TextField();
+        waitingField = new TextField();
         waitingBox.getChildren().addAll(waitingLabel, waitingField);
 
 
@@ -49,12 +51,32 @@ public class EditGamePlaySettingsView extends VBox {
         Label roundLabel = new Label("Round Duration:");
         roundLabel.setTextFill(Color.WHITE);
         roundLabel.setFont(customFont);
-        TextField roundField = new TextField();
+        roundField = new TextField();
         roundBox.getChildren().addAll(roundLabel, roundField);
 
+        // Add input validation and tooltips
+        waitingField.setPromptText("Enter waiting time in seconds");
+        roundField.setPromptText("Enter round duration in seconds");
+
+        // Add tooltips
+        waitingField.setTooltip(new Tooltip("Enter the waiting time between games in seconds"));
+        roundField.setTooltip(new Tooltip("Enter the duration for each game round in seconds"));
+
+        // Numeric-only input validation
+        waitingField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                waitingField.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+        });
+
+        roundField.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (!newValue.matches("\\d*")) {
+                roundField.setText(newValue.replaceAll("[^\\d]", ""));
+            }
+        });
 
         // Save Changes button
-        Button saveBtn = createStyledButton("SAVE CHANGES");
+        saveBtn = createStyledButton("SAVE CHANGES");
 
 
         this.getChildren().addAll(titleLabel, waitingBox, roundBox, saveBtn);
@@ -81,4 +103,10 @@ public class EditGamePlaySettingsView extends VBox {
 
         return button;
     }
+
+    public TextField getWaitingField() { return waitingField;}
+    public TextField getRoundField(){ return roundField;}
+    public Button getSaveButton() { return saveBtn; }
+
+
 }

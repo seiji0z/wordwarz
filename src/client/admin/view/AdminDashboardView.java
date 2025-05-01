@@ -1,5 +1,6 @@
 package client.admin.view;
 
+import client.admin.controller.EditGamePlaySettingsController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -24,6 +25,8 @@ public class AdminDashboardView {
     private Button editGamePlayBtn;
     private CreatePlayerView createPlayerView;
     private UpdatePlayerView updatePlayerView;
+    private EditGamePlaySettingsView editGamePlaySettingsView;
+    private EditGamePlaySettingsController editGamePlaySettingsController;
 
     public void initializeUI(Stage primaryStage) {
         primaryStage.setTitle("Admin Dashboard");
@@ -126,6 +129,8 @@ public class AdminDashboardView {
         // Initialize the views
         createPlayerView = new CreatePlayerView(customFont);
         updatePlayerView = new UpdatePlayerView(customFont);
+        editGamePlaySettingsView = new EditGamePlaySettingsView(customFont);
+
     }
 
     private Button createStyledButton(String text) {
@@ -157,6 +162,11 @@ public class AdminDashboardView {
         rightContent.getChildren().add(updatePlayerView);
     }
 
+    public void showEditGameplaySettingsView(){
+        rightContent.getChildren().clear();
+        rightContent.getChildren().add(editGamePlaySettingsView);
+    }
+
     public Button getEditPlayerBtn() {
         return editPlayerBtn;
     }
@@ -172,4 +182,6 @@ public class AdminDashboardView {
     public UpdatePlayerView getUpdatePlayerView() {
         return updatePlayerView;
     }
+
+    public EditGamePlaySettingsView getEditGamePlaySettingsView() {return editGamePlaySettingsView;}
 }

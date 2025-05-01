@@ -6,7 +6,8 @@ import java.sql.SQLException;
 
 public class DBManager {
 
-    public DBManager() {}
+    public DBManager() {
+    }
 
     public static boolean userExists(String username) {
         String query = "SELECT username FROM credentials WHERE username = ?";
@@ -110,7 +111,68 @@ public class DBManager {
         }
     }
 
+    /**
+     * Updates both game configuration settings in a single transaction
+     *
+     * @param waitingTime   The waiting time in seconds
+     * @param roundDuration The round duration in seconds
+     * @return true if successful, false otherwise
+     */
+    public static boolean updateGameConfigurations(int waitingTime, int roundDuration) {
+        String query = "INSERT INTO gameconfig (waiting_time, round_duration) VALUES (?, ?)";
 
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setInt(1, waitingTime);
+            stmt.setInt(2, roundDuration);
+            stmt.executeUpdate();
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error updating game configurations: " + e.getMessage());
+            return false;
+        }
+    }
 
+    /**
+     * Gets the current game waiting time
+     *
+     * @return waiting time in seconds, or default 60 if not found
+     */
+    public static int getGameWaitingTime() {
+        String query = "SELECT waiting_time FROM gameconfig WHERE config_id = 1";
 
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("waiting_time");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting waiting time: " + e.getMessage());
+        }
+
+        return 10; // Default value if not found
+    }
+
+    /**
+     * Gets the current game round duration
+     *
+     * @return round duration in seconds
+     */
+    public static int getGameRoundDuration() {
+        String query = "SELECT round_duration FROM gameconfig WHERE config_id = 1";
+
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt("round_duration");
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Error getting round duration: " + e.getMessage());
+        }
+
+        return 30;
+    }
 }
+
+

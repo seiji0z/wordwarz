@@ -53,21 +53,28 @@ public class AdminServant extends AdminServicePOA {
 
     @Override
     public void setGameWaitingTime(int seconds) throws NotLoggedIn {
-
+        int currentRoundDuration = DBManager.getGameRoundDuration();
+        if (!DBManager.updateGameConfigurations(seconds, currentRoundDuration)) {
+            throw new RuntimeException("Failed to update waiting time");
+        }
     }
 
     @Override
     public void setGameRoundDuration(int seconds) throws NotLoggedIn {
-
+        int currentWaitingTime = DBManager.getGameWaitingTime();
+        if (!DBManager.updateGameConfigurations(currentWaitingTime, seconds)) {
+            throw new RuntimeException("Failed to update round duration");
+        }
     }
+
 
     @Override
     public int getGameWaitingTime() throws NotLoggedIn {
-        return 0;
+                return DBManager.getGameWaitingTime();
     }
 
     @Override
     public int getGameRoundDuration() throws NotLoggedIn {
-        return 0;
+        return DBManager.getGameRoundDuration();
     }
 }
