@@ -4,6 +4,8 @@ import WordWarZ.*;
 import org.omg.CORBA.ORB;
 import server.database.DBManager;
 
+import java.sql.SQLException;
+
 public class AdminServant extends AdminServicePOA {
 
     private ORB orb;
@@ -32,8 +34,33 @@ public class AdminServant extends AdminServicePOA {
     }
 
     @Override
-    public void updatePlayer(String username, String newPassword) throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
+    public void updatePlayer(String username, String newPassword)
+            throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
 
+        if (username == null || username.isEmpty() || newPassword == null || newPassword.isEmpty()) {
+            throw new NotLoggedIn("Invalid input parameters");
+        }
+
+        // Check if player exists
+        if (!DBManager.userExists(username)) {
+            throw new PlayerNotFound("Player with username " + username + " not found");
+        }
+
+        // TODO: Add check if player is currently logged in (if you have session tracking)
+        // if (isPlayerLoggedIn(username)) {
+        //     throw new PlayerCurrentlyLoggedIn("Player is currently logged in");
+        // }
+
+        try {
+            boolean updated = DBManager.updatePlayer(username, newPassword);
+            if (!updated) {
+                throw new PlayerNotFound("Failed to update player " + username);
+            }
+            System.out.println("Player " + username + " updated successfully");
+        } catch (SQLException e) {
+            System.out.println("Database error updating player: " + e.getMessage());
+            throw new PlayerNotFound("Database error updating player");
+        }
     }
 
     @Override

@@ -111,6 +111,36 @@ public class DBManager {
         }
     }
 
+    public static boolean updatePlayer(String username, String newPassword) throws SQLException {
+        // Check if player exists first
+        if (!userExists(username)) {
+            return false;
+        }
+
+        // Update both tables in a transaction
+        DBConnection.con.setAutoCommit(false);
+
+        try {
+            // Update credentials table
+            String credentialsQuery = "UPDATE credentials SET password = ? WHERE username = ?";
+            try (PreparedStatement credStmt = DBConnection.con.prepareStatement(credentialsQuery)) {
+                credStmt.setString(1, newPassword);
+                credStmt.setString(2, username);
+                credStmt.executeUpdate();
+            }
+
+            // Commit if both updates succeeded
+            DBConnection.con.commit();
+            return true;
+        } catch (SQLException e) {
+            DBConnection.con.rollback();
+            System.out.println("Error updating player: " + e.getMessage());
+            return false;
+        } finally {
+            DBConnection.con.setAutoCommit(true);
+        }
+    }
+
     /**
      * Updates both game configuration settings in a single transaction
      *

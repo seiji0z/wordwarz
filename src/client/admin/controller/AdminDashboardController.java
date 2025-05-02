@@ -78,12 +78,23 @@ public class AdminDashboardController {
 
     private void handleUpdatePlayer() {
         UpdatePlayerView updateView = view.getUpdatePlayerView();
-        String username = updateView.getSearchField().getText();  // username to update
-        String newPassword = updateView.getPasswordField().getText();  // new password only
+        String username = updateView.getSearchField().getText().trim();
+        String newPassword = updateView.getPasswordField().getText().trim();
+
+        // Input validation
+        if (username.isEmpty()) {
+            updateView.showError("Please enter a username to update");
+            return;
+        }
+        if (newPassword.isEmpty()) {
+            updateView.showError("Please enter a new password");
+            return;
+        }
 
         try {
-            model.updatePlayer(username, newPassword);  // fix: only username and password
+            model.updatePlayer(username, newPassword);
             updateView.showSuccess("Player password updated successfully");
+            updateView.getPasswordField().clear(); // Clear the password field after update
         } catch (NotLoggedIn e) {
             updateView.showError("Error: Admin not logged in");
         } catch (PlayerNotFound e) {
