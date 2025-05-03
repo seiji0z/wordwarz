@@ -80,74 +80,32 @@ public class AdminDashboardController {
         UpdatePlayerView updateView = view.getUpdatePlayerView();
         String username = updateView.getSearchField().getText().trim();
         String newPassword = updateView.getPasswordField().getText().trim();
+        String newUsername = updateView.getUsernameField().getText().trim();
 
         // Input validation
         if (username.isEmpty()) {
             updateView.showError("Please enter a username to update");
             return;
         }
-        if (newPassword.isEmpty()) {
-            updateView.showError("Please enter a new password");
+        if (newUsername.isEmpty() && newPassword.isEmpty()) {
+            updateView.showError("Please enter at least one field to update");
             return;
         }
 
-//        try {
-//            model.updatePlayer(username, newPassword);
-//            updateView.showSuccess("Player password updated successfully");
-//            updateView.getPasswordField().clear(); // Clear the password field after update
-//        } catch (NotLoggedIn e) {
-//            updateView.showError("Error: Admin not logged in");
-//        } catch (PlayerNotFound e) {
-//            updateView.showError("Error: Player not found");
-//        } catch (PlayerCurrentlyLoggedIn e) {
-//            updateView.showError("Error: Player is currently logged in");
-//        }
+        try {
+            // Correct parameter order
+            model.updatePlayer(username, newUsername, newPassword);
+            updateView.showSuccess("Player updated successfully");
+            updateView.getPasswordField().clear();
+            updateView.getUsernameField().clear();
+        } catch (NotLoggedIn e) {
+            updateView.showError("Error: Admin not logged in");
+        } catch (PlayerNotFound e) {
+            updateView.showError("Error: Player not found");
+        } catch (PlayerCurrentlyLoggedIn e) {
+            updateView.showError("Error: Player is currently logged in");
+        } catch (Exception e) {
+            updateView.showError("Unexpected error: " + e.getMessage());
+        }
     }
-
-
-//    private void handleDeletePlayer() {
-//        UpdatePlayerView updateView = view.getUpdatePlayerView();
-//        String username = updateView.getSearchField().getText();
-//
-//        try {
-//            model.deletePlayer(username);
-//            updateView.showSuccess("Player deleted successfully");
-//        } catch (NotLoggedIn e) {
-//            updateView.showError("Error: Admin not logged in");
-//        } catch (PlayerNotFound e) {
-//            updateView.showError("Error: Player not found");
-//        } catch (PlayerCurrentlyLoggedIn e) {
-//            updateView.showError("Error: Player is currently logged in");
-//        }
-//    }
-
-//    private void handleSearchPlayer() {
-//        UpdatePlayerView updateView = view.getUpdatePlayerView();
-//        String query = updateView.getSearchField().getText();
-//
-//        try {
-//            Player[] players = model.searchPlayers(query);
-//            updateView.getUserDropdown().getItems().clear();
-//            for (Player player : players) {
-//                updateView.getUserDropdown().getItems().add(player.username);
-//            }
-//        } catch (NotLoggedIn e) {
-//            updateView.showError("Error: Admin not logged in");
-//        } catch (PlayerNotFound e) {
-//            updateView.showError("Error: No players found");
-//        }
-//    }
-
-//    private void handleReadPlayers() {
-//        try {
-//            Player[] players = model.searchPlayers(""); // Empty query to get all players
-//            // You might want to show these in a dialog or table
-//            System.out.println("Players:");
-//            for (Player player : players) {
-//                System.out.println(player.username);
-//            }
-//        } catch (NotLoggedIn | PlayerNotFound e) {
-//            view.getCreatePlayerView().showError("Error retrieving players");
-//        }
-//    }
 }

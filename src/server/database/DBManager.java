@@ -140,35 +140,79 @@ public class DBManager {
         }
     }
 
-    public static boolean updatePlayer(String username, String newPassword) throws SQLException {
-        // Check if player exists first
+    public static boolean updatePlayer(String username, String newUsername, String newPassword) throws SQLException {
         if (!userExists(username)) {
+            System.out.println("[ERROR] User " + username + " not found");
             return false;
         }
 
-        // Update both tables in a transaction
+
         DBConnection.con.setAutoCommit(false);
 
+
         try {
+            // Get the user_id first
+            int userId = getUserId(username);
+            if (userId == -1) {
+                throw new SQLException("User ID not found for: " + username);
+            }
+
+
             // Update credentials table
-            String credentialsQuery = "UPDATE credentials SET password = ? WHERE username = ?";
+            String credentialsQuery = "UPDATE credentials SET username = ?, password = ? WHERE user_id = ?";
             try (PreparedStatement credStmt = DBConnection.con.prepareStatement(credentialsQuery)) {
-                credStmt.setString(1, newPassword);
-                credStmt.setString(2, username);
+                credStmt.setString(1, newUsername.isEmpty() ? username : newUsername);
+                credStmt.setString(2, newPassword.isEmpty() ? getCurrentPassword(username) : newPassword);
+                credStmt.setInt(3, userId);
                 credStmt.executeUpdate();
             }
 
-            // Commit if both updates succeeded
+
+            // Update user table if username changed
+            if (!newUsername.isEmpty()) {
+                String userQuery = "UPDATE user SET username = ? WHERE user_id = ?";
+                try (PreparedStatement userStmt = DBConnection.con.prepareStatement(userQuery)) {
+                    userStmt.setString(1, newUsername);
+                    userStmt.setInt(2, userId);
+                    userStmt.executeUpdate();
+                }
+            }
+
+
             DBConnection.con.commit();
             return true;
         } catch (SQLException e) {
             DBConnection.con.rollback();
             System.out.println("Error updating player: " + e.getMessage());
-            return false;
+            throw e;
         } finally {
             DBConnection.con.setAutoCommit(true);
         }
     }
+
+
+    // Helper method to get user_id
+    private static int getUserId(String username) throws SQLException {
+        String query = "SELECT user_id FROM credentials WHERE username = ?";
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? rs.getInt("user_id") : -1;
+        }
+    }
+
+
+    // Helper method to get current password
+    private static String getCurrentPassword(String username) throws SQLException {
+        String query = "SELECT password FROM credentials WHERE username = ?";
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? rs.getString("password") : null;
+        }
+    }
+
+
 
     /**
      * Updates both game configuration settings in a single transaction
