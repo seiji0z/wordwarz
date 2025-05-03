@@ -1,7 +1,5 @@
 package client.player.view;
 
-import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -34,7 +32,6 @@ public class MainMenuView {
     // Add these as class fields
     private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/Sound On.png");
     private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/Mute.png");
-
 
     public void initializeUI(Stage primaryStage) {
         // Main root container
@@ -106,7 +103,6 @@ public class MainMenuView {
         leaderboardBtn.setPadding(Insets.EMPTY);
         leaderboardBtn.setOnAction(e -> {
             System.out.println("Leaderboard button clicked!");
-            // Implement leaderboard functionality here
         });
 
         // --- QUIT BUTTON ---
@@ -122,10 +118,8 @@ public class MainMenuView {
             if (quitButtonHandler != null) {
                 quitButtonHandler.handle();
             }
-
             Stage stage = (Stage) quitBtn.getScene().getWindow();
             stage.close();
-
             if (mediaPlayer != null) {
                 mediaPlayer.stop();
             }
@@ -170,12 +164,10 @@ public class MainMenuView {
         // --- SETUP SCENE ---
         root.getChildren().addAll(mainContent, overlayPane);
         Scene scene = new Scene(root);
-        primaryStage.setTitle("Main Menu");
+        primaryStage.setTitle("Word War Z - Main Menu");
         primaryStage.setScene(scene);
         primaryStage.show();
     }
-
-    // Add these methods to your MainMenuView class:
 
     // Event handler interfaces
     public interface PlayButtonHandler {

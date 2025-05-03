@@ -91,17 +91,17 @@ public class AdminDashboardController {
             return;
         }
 
-        try {
-            model.updatePlayer(username, newPassword);
-            updateView.showSuccess("Player password updated successfully");
-            updateView.getPasswordField().clear(); // Clear the password field after update
-        } catch (NotLoggedIn e) {
-            updateView.showError("Error: Admin not logged in");
-        } catch (PlayerNotFound e) {
-            updateView.showError("Error: Player not found");
-        } catch (PlayerCurrentlyLoggedIn e) {
-            updateView.showError("Error: Player is currently logged in");
-        }
+//        try {
+//            model.updatePlayer(username, newPassword);
+//            updateView.showSuccess("Player password updated successfully");
+//            updateView.getPasswordField().clear(); // Clear the password field after update
+//        } catch (NotLoggedIn e) {
+//            updateView.showError("Error: Admin not logged in");
+//        } catch (PlayerNotFound e) {
+//            updateView.showError("Error: Player not found");
+//        } catch (PlayerCurrentlyLoggedIn e) {
+//            updateView.showError("Error: Player is currently logged in");
+//        }
     }
 
 
