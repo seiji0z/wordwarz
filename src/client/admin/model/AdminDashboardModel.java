@@ -27,9 +27,9 @@ public class AdminDashboardModel {
         adminService.createPlayer(username, password);
     }
 
-    public void updatePlayer(String username, String newPassword)
+    public void updatePlayer(String username, String newUsername, String newPassword)
             throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
-        adminService.updatePlayer(username, newPassword);
+        adminService.updatePlayer(username, newUsername, newPassword);
     }
 
 //    public void deletePlayer(String username)

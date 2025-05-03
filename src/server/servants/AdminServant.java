@@ -34,7 +34,7 @@ public class AdminServant extends AdminServicePOA {
     }
 
     @Override
-    public void updatePlayer(String username, String newPassword)
+    public void updatePlayer(String username, String newUsername, String newPassword)
             throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
 
         if (username == null || username.isEmpty() || newPassword == null || newPassword.isEmpty()) {

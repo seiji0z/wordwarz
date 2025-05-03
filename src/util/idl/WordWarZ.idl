@@ -47,7 +47,7 @@ module WordWarZ {
   interface AdminService {
     // crud
     void createPlayer(in string username, in string password) raises (NotLoggedIn, UsernameAlreadyExists);
-    void updatePlayer(in string username, in string newPassword) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
+    void updatePlayer(in string username, in string newUsername, in string newPassword) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
     void deletePlayer(in string username) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
     Player getPlayer(in string username) raises (NotLoggedIn, PlayerNotFound);
     Leaderboard searchPlayers(in string searchQuery) raises (NotLoggedIn, PlayerNotFound);
