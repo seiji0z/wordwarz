@@ -4,7 +4,10 @@ import WordWarZ.*;
 import org.omg.CORBA.ORB;
 import server.helpers.QueueManager;
 import server.helpers.SessionManager;
+import server.helpers.GameManager;
+import server.objects.GameConfig;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
@@ -149,12 +152,68 @@ public class GameServant extends GameServicePOA {
 
     @Override
     public int startRound(String token) throws NotLoggedIn, NotInGame, GameNotFound {
-        return 0;
+        GameManager game = getGameForPlayer(token);
+        String word = game.startNewRound();
+        int duration = GameConfig.getRoundDuration();
+
+        // Convert word to placeholder
+        String[] placeholder = new String[word.length()];
+        Arrays.fill(placeholder, "_");
+
+        // Notify players
+        game.getPlayers().forEach(player -> {
+            String playerToken = SessionManager.getTokenByUsername(player);
+            ClientCallback callback = (ClientCallback) clientCallbacks.get(playerToken);
+            if (callback != null) {
+                callback.onRoundStarted(placeholder);
+            }
+        });
+
+        return duration;
+    }
+
+    private void endRound(GameManager game, String winner) {
+        game.getPlayers().forEach(player -> {
+            String result = winner != null ?
+                    "Word guessed!" : "No winners this round";
+            ClientCallback callback = (ClientCallback) clientCallbacks.get(
+                    SessionManager.getTokenByUsername(player)
+            );
+            if (callback != null) {
+                callback.onRoundEnded(result, winner);
+            }
+        });
+
+        // Check for game win condition
+        if (winner != null && game.getWins(winner) >= 3) {
+            endGame(game, winner);
+        }
     }
 
     @Override
-    public char[] guessLetter(String token, char letter) throws NotLoggedIn, NotInGame, GameNotFound {
-        return new char[0];
+    public char[] guessLetter(String token, char letter)
+            throws NotLoggedIn, NotInGame, GameNotFound, CharacterAlreadyGuessed {
+
+        GameManager game = getGameForPlayer(token);
+        String username = SessionManager.getSession(token).getUsername();
+
+        try {
+            char[] result = game.guessLetter(letter);
+
+            // Check for win condition
+            if (game.isWordGuessed()) {
+                game.incrementWin(username);
+                endRound(game, username);
+            }
+            // Check for loss condition
+            else if (game.getRemainingGuesses() <= 0) {
+                endRound(game, null);
+            }
+
+            return result;
+        } catch (IllegalArgumentException e) {
+            throw new CharacterAlreadyGuessed();
+        }
     }
 
     @Override
@@ -192,5 +251,16 @@ public class GameServant extends GameServicePOA {
     @Override
     public int getRemainingTime(String token) throws NotLoggedIn, NotInGame {
         return 0;
+    }
+
+    public static WordWarZ.ClientCallback getCallback(String token) {
+        return clientCallbacks.get(token);
+    }
+
+    private static GameManager getGameForPlayer(String token) throws NotInGame, NotLoggedIn {
+        String username = SessionManager.getSession(token).getUsername();
+        GameManager game = QueueManager.getGame(username);
+        if (game == null) throw new NotInGame();
+        return game;
     }
 }

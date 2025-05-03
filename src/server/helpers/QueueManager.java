@@ -11,6 +11,7 @@ public class QueueManager {
     private static ScheduledFuture<?> countdownTask;
     private static boolean countdownStarted = false;
     private static int remainingTime = 0;
+    private static ConcurrentHashMap<String, GameManager> activeGames = new ConcurrentHashMap<>();
 
     public static synchronized void joinQueue(String username) {
         if (!waitingPlayers.contains(username)) {
@@ -88,8 +89,34 @@ public class QueueManager {
     }
 
     private static void createNewGame(List<String> players) {
-        System.out.println("Creating new game with players: " + players);
-        // Task 4
+        GameManager game = new GameManager(players, GameConfig.getRoundDuration());
+        for (String player : players) {
+            activeGames.put(player, game);
+        }
+        startFirstRound(game);
+    }
+
+
+    private static void startFirstRound(GameManager game) {
+        String word = game.startNewRound();
+        String[] placeholder = createPlaceholder(word);
+        notifyPlayers(game, placeholder);
+    }
+
+    private static String[] createPlaceholder(String word) {
+        String[] placeholder = new String[word.length()];
+        Arrays.fill(placeholder, "_");
+        return placeholder;
+    }
+
+    private static void notifyPlayers(GameManager game, String[] placeholder) {
+        game.getPlayers().forEach(player -> {
+            String token = SessionManager.getTokenByUsername(player);
+            WordWarZ.ClientCallback callback = GameServant.getCallback(token);
+            if (callback != null) {
+                callback.onRoundStarted(placeholder);
+            }
+        });
     }
 
     private static void broadcastQueueUpdate() {
@@ -113,5 +140,9 @@ public class QueueManager {
 
     public static synchronized boolean isInQueue(String username) {
         return waitingPlayers.contains(username);
+    }
+
+    public static GameManager getGame(String username) {
+        return activeGames.get(username);
     }
 }

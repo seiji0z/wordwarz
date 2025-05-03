@@ -2,20 +2,53 @@ package client.player;
 
 import WordWarZ.ClientCallbackPOA;
 import client.player.view.GameView;
+import client.player.view.MainMenuView;
 import client.player.view.QueueView;
 import javafx.application.Platform;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
 
 public class ClientCallbackImpl extends ClientCallbackPOA {
+    private final MainMenuView menuView;
     private final QueueView queueView;
+    private final GameView gameView;
     private final Stage stage;
     private final String playerToken;
     private final ORB orb;
 
-    public ClientCallbackImpl(QueueView q, Stage stage, String playerToken, ORB orb) {
+
+    public ClientCallbackImpl(MainMenuView m, QueueView q, GameView g,
+                              Stage stage, String playerToken, ORB orb) {
+        this.menuView = m;
         this.queueView = q;
+        this.gameView = g;
+        this.stage = stage;
+        this.playerToken = playerToken;
+        this.orb = orb;
+    }
+
+    public ClientCallbackImpl(MainMenuView m, Stage stage, String playerToken, ORB orb) {
+        this.menuView = m;
+        this.gameView = null;
+        this.queueView = null;
+        this.stage = stage;
+        this.playerToken = playerToken;
+        this.orb = orb;
+    }
+
+    public ClientCallbackImpl(QueueView q, Stage stage, String playerToken, ORB orb) {
+        this.menuView = null;
+        this.queueView = q;
+        this.gameView = null;
+        this.stage = stage;
+        this.playerToken = playerToken;
+        this.orb = orb;
+    }
+
+    public ClientCallbackImpl(GameView g, Stage stage, String playerToken, ORB orb) {
+        this.menuView = null;
+        this.queueView = null;
+        this.gameView = g;
         this.stage = stage;
         this.playerToken = playerToken;
         this.orb = orb;
