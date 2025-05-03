@@ -1,14 +1,13 @@
 package client.admin.controller;
 
+
 import WordWarZ.*;
 import client.admin.model.AdminDashboardModel;
-import client.admin.view.AdminDashboardView;
-import client.admin.view.CreatePlayerView;
-import client.admin.view.EditGamePlaySettingsView;
-import client.admin.view.UpdatePlayerView;
+import client.admin.view.*;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
+
 
 public class AdminDashboardController {
     private final AdminDashboardView view;
@@ -16,11 +15,13 @@ public class AdminDashboardController {
     private final ORB orb;
     private final String token;
 
+
     public AdminDashboardController(AdminDashboardView view, AdminDashboardModel model, ORB orb, String token) {
         this.view = view;
         this.model = model;
         this.orb = orb;
         this.token = token;
+
 
         Platform.runLater(() -> {
             initializeView();
@@ -28,42 +29,59 @@ public class AdminDashboardController {
         });
     }
 
+
     private void initializeView() {
         Stage adminStage = new Stage();
         view.initializeUI(adminStage);
     }
+
 
     private void setupEventHandlers() {
         // Main dashboard buttons
         view.getEditPlayerBtn().setOnAction(e -> view.showCreatePlayerView());
         view.getEditGamePlayBtn().setOnAction(e -> view.showEditGameplaySettingsView());
 
+
         // Create Player View handlers
         CreatePlayerView createView = view.getCreatePlayerView();
         createView.getCreateBtn().setOnAction(e -> view.showCreatePlayerView());
-        // createView.getReadBtn().setOnAction(e -> handleReadPlayers());
+        createView.getReadBtn().setOnAction(e -> view.showReadPlayerView()); // Changed to show read view
         createView.getUpdateBtn().setOnAction(e -> view.showUpdatePlayerView());
         createView.getDeleteBtn().setOnAction(e -> view.showUpdatePlayerView());
         createView.getConfirmBtn().setOnAction(e -> handleCreatePlayer());
 
+
         // Update Player View handlers
         UpdatePlayerView updateView = view.getUpdatePlayerView();
         updateView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        // updateView.getReadPlayersBtn().setOnAction(e -> handleReadPlayers());
+        updateView.getReadPlayersBtn().setOnAction(e -> view.showReadPlayerView()); // Changed to show read view
         updateView.getUpdateButton().setOnAction(e -> view.showUpdatePlayerView());
-        // updateView.getDeletePlayerBtn().setOnAction(e -> handleDeletePlayer());
-        // updateView.getSearchButton().setOnAction(e -> handleSearchPlayer());
         updateView.getConfirmBtn().setOnAction(e -> handleUpdatePlayer());
+
+
+        // Read Player View handlers
+        ReadPlayerView readView = view.getReadPlayerView();
+        readView.getCreateBtn().setOnAction(e -> view.showCreatePlayerView());
+        readView.getReadBtn().setOnAction(e -> handleReadAllPlayers()); // Load when clicked
+        readView.getUpdateBtn().setOnAction(e -> view.showUpdatePlayerView());
+        readView.getDeleteBtn().setOnAction(e -> view.showUpdatePlayerView());
+
+
+        // Load players automatically when view is shown
+        view.setOnShowReadPlayerViewListener(this::handleReadAllPlayers);
     }
+
 
     private void handleEditGamePlay() {
         System.out.println("handleEditGamePlay");
     }
 
+
     private void handleCreatePlayer() {
         CreatePlayerView createView = view.getCreatePlayerView();
         String username = createView.getUsernameField().getText();
         String password = createView.getPasswordField().getText();
+
 
         try {
             model.createPlayer(username, password);
@@ -76,11 +94,13 @@ public class AdminDashboardController {
         }
     }
 
+
     private void handleUpdatePlayer() {
         UpdatePlayerView updateView = view.getUpdatePlayerView();
         String username = updateView.getSearchField().getText().trim();
         String newPassword = updateView.getPasswordField().getText().trim();
         String newUsername = updateView.getUsernameField().getText().trim();
+
 
         // Input validation
         if (username.isEmpty()) {
@@ -92,8 +112,8 @@ public class AdminDashboardController {
             return;
         }
 
+
         try {
-            // Correct parameter order
             model.updatePlayer(username, newUsername, newPassword);
             updateView.showSuccess("Player updated successfully");
             updateView.getPasswordField().clear();
@@ -108,4 +128,18 @@ public class AdminDashboardController {
             updateView.showError("Unexpected error: " + e.getMessage());
         }
     }
+
+
+    private void handleReadAllPlayers() {
+        try {
+            Player[] players = model.getAllPlayers();
+            view.getReadPlayerView().updatePlayerTable(players);
+        } catch (NotLoggedIn e) {
+            view.getReadPlayerView().showError("Error: Admin not logged in");
+        } catch (PlayerNotFound e) {
+            view.getReadPlayerView().showError("No players found in database");
+        }
+    }
+
+
 }
