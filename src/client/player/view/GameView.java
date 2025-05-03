@@ -1,7 +1,8 @@
 package client.player.view;
 
-import client.player.controller.GameController;
+
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -32,14 +33,21 @@ public class GameView extends Application {
     private Consumer<Character> letterGuessHandler;
 
 
+    private Text timerText;
+    private List<ImageView> hearts = new ArrayList<>();
+    private Timeline timerTimeline;
+    private Stage primaryStage;
+    public int remainingGuesses = 5;
+
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         // --- ROOT LAYOUT ---
         root = new Pane();
 
         // Load the custom font
-        Font customFont = Font.loadFont("file:res/PressStart2P-Regular.ttf", 40);
+        Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40);
         if (customFont == null) {
             System.out.println("Failed to load custom font, falling back to default.");
             customFont = new Font("System", 30); // Fallback font
@@ -52,23 +60,25 @@ public class GameView extends Application {
         backgroundView.setFitHeight(760);
         root.getChildren().add(backgroundView);
 
-        // Hearts (5 full hearts as static images - no functionality)
+        // Modify hearts initialization
         for (int i = 0; i < 5; i++) {
             ImageView heart = new ImageView(new Image("file:res/images/others/heart.png"));
             heart.setX(30 + i * 60);
             heart.setY(20);
             heart.setFitWidth(50);
             heart.setFitHeight(50);
+            hearts.add(heart);
             root.getChildren().add(heart);
         }
 
-        // Timer (static timer text - no functionality)
-        Text timerText = new Text("00:30");
+        // Modify timer initialization
+        timerText = new Text("00:30");
         timerText.setFont(customFont);
         timerText.setFill(Color.WHITE);
         timerText.setX(1045);
         timerText.setY(70);
         root.getChildren().add(timerText);
+
 
         // Human (with idle animation)
         humanIdleFrames = new Image[2];
@@ -211,6 +221,46 @@ public class GameView extends Application {
         zombieIdleAnimation.play();
     }
 
+    public void startTimer() {
+        final int[] timeRemaining = {30};
+        timerTimeline = new Timeline(
+                new KeyFrame(Duration.seconds(1), e -> {
+                    timeRemaining[0]--;
+                    updateTimerDisplay(timeRemaining[0]);
+                    if (timeRemaining[0] <= 0) {
+                        closeApplication();
+                    }
+                })
+        );
+        timerTimeline.setCycleCount(Timeline.INDEFINITE);
+        timerTimeline.play();
+    }
+
+    private void updateTimerDisplay(int seconds) {
+        Platform.runLater(() -> {
+            int mins = seconds / 60;
+            int secs = seconds % 60;
+            timerText.setText(String.format("%02d:%02d", mins, secs));
+        });
+    }
+
+    public void updateHearts() {
+        Platform.runLater(() -> {
+            for (int i = 0; i < hearts.size(); i++) {
+                hearts.get(i).setVisible(i < remainingGuesses);
+            }
+        });
+    }
+
+    public void closeApplication() {
+        Platform.runLater(() -> {
+            if (timerTimeline != null) {
+                timerTimeline.stop();
+            }
+            primaryStage.close();
+        });
+    }
+
     public void initializeWordDisplay(int wordLength) {
         // Clear existing display
         root.getChildren().removeAll(letterTexts);
@@ -254,7 +304,7 @@ public class GameView extends Application {
             }
         }
 
-        // Use the handler instead of controller directly
+
         if (letterGuessHandler != null) {
             letterGuessHandler.accept(letter.charAt(0));
         }

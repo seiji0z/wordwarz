@@ -7,42 +7,42 @@ import java.util.Arrays;
 
 public class GameModel {
 
-    private final GameServant gameServant;
+    private final GameService gameService;
     private final String token;
 
 
-    public GameModel(GameServant gameServant, String token){
-        this.gameServant = gameServant;
+    public GameModel(GameService gameService, String token){
+        this.gameService = gameService;
         this.token = token;
     }
 
 
     public void startGame() throws NotLoggedIn, NoOpponentFound {
-        gameServant.startGame(token);
+        gameService.startGame(token);
     }
 
     public Player[] getLeaderboard() throws NotLoggedIn {
-        return gameServant.getLeaderboard(token);
+        return gameService.getLeaderboard(token);
     }
 
 
     public void cancelQueue() throws NotLoggedIn, PlayerNotInQueue {
-        gameServant.cancelQueue(token);
+        gameService.cancelQueue(token);
     }
 
 
     public int getPlayersInQueue() throws NotLoggedIn, PlayerNotInQueue {
-        return gameServant.getPlayersInQueue(token);
+        return gameService.getPlayersInQueue(token);
     }
 
 
     public int getRemainingGuesses() throws NotLoggedIn, NotInGame {
-        return gameServant.getRemainingGuesses(token);
+        return gameService.getRemainingGuesses(token);
     }
 
 
     public int startRound() throws GameNotFound, NotLoggedIn, NotInGame {
-        int wordLength = gameServant.startRound(token);
+        int wordLength = gameService.startRound(token);
         // Initialize with all underscores
         char[] initialState = new char[wordLength];
         Arrays.fill(initialState, '_');
@@ -51,33 +51,33 @@ public class GameModel {
 
 
     public char[] guessLetter(char letter) throws GameNotFound, NotLoggedIn, NotInGame, CharacterAlreadyGuessed {
-        return gameServant.guessLetter(token, letter);
+        return gameService.guessLetter(token, letter);
     }
 
 
     public void registerCallback(ClientCallback callback) throws NotLoggedIn {
-        gameServant.registerCallback(token, callback);
+        gameService.registerCallback(token, callback);
     }
 
 
     public void displayWinnerByRound() throws GameNotFound, RoundNotFinished, NotLoggedIn, NotInGame {
-        gameServant.displayWinnerByRound(token);
+        gameService.displayWinnerByRound(token);
     }
 
     public void displayWinnerByGame() throws GameNotFound, RoundNotFinished, NotLoggedIn, NotInGame {
-        gameServant.displayWinnerByGame(token);
+        gameService.displayWinnerByGame(token);
     }
 
     public void endGame() throws GameNotFound, NotLoggedIn, NotInGame, GameNotFinished {
-        gameServant.endGame(token);
+        gameService.endGame(token);
     }
 
     public String displayLoserByTime() throws GameNotFound, RoundNotFinished, NotLoggedIn, NotInGame {
-        return gameServant.displayLoserByTime(token);
+        return gameService.displayLoserByTime(token);
     }
 
     public String displayWins() throws GameNotFound, RoundNotFinished, NotLoggedIn, NotInGame {
-        return gameServant.displayWins(token);
+        return gameService.displayWins(token);
     }
 
 

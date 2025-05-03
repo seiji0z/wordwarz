@@ -22,6 +22,7 @@ public class GameServant extends GameServicePOA {
     private String targetWord = "lorraine"; // Hardcoded for testing
     private char[] currentWordState; // Tracks which letters have been guessed
     private List<Character> guessedLetters = new ArrayList<>();
+    private int remainingGuesses = 5;
 
 
     private ORB orb;
@@ -193,9 +194,15 @@ public class GameServant extends GameServicePOA {
             }
         }
 
+
+        if (!correctGuess) {
+            remainingGuesses--;
+        }
         // Return a copy of the current state
         return Arrays.copyOf(currentWordState, currentWordState.length);
     }
+
+
 
     @Override
     public void displayWinnerByRound(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
@@ -226,7 +233,7 @@ public class GameServant extends GameServicePOA {
 
     @Override
     public int getRemainingGuesses(String token) throws NotLoggedIn, NotInGame {
-        return 0;
+        return remainingGuesses;
     }
 
     @Override
