@@ -3,6 +3,8 @@ package client.player.model;
 import WordWarZ.*;
 import server.servants.GameServant;
 
+import java.util.Arrays;
+
 public class GameModel {
 
     private final GameServant gameServant;
@@ -40,11 +42,15 @@ public class GameModel {
 
 
     public int startRound() throws GameNotFound, NotLoggedIn, NotInGame {
-        return gameServant.startRound(token);
+        int wordLength = gameServant.startRound(token);
+        // Initialize with all underscores
+        char[] initialState = new char[wordLength];
+        Arrays.fill(initialState, '_');
+        return wordLength;
     }
 
 
-    public char[] guessLetter(char letter) throws GameNotFound, NotLoggedIn, NotInGame {
+    public char[] guessLetter(char letter) throws GameNotFound, NotLoggedIn, NotInGame, CharacterAlreadyGuessed {
         return gameServant.guessLetter(token, letter);
     }
 
@@ -73,4 +79,6 @@ public class GameModel {
     public String displayWins() throws GameNotFound, RoundNotFinished, NotLoggedIn, NotInGame {
         return gameServant.displayWins(token);
     }
+
+
 }

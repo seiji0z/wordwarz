@@ -1,5 +1,6 @@
 package client.player.view;
 
+import client.player.controller.GameController;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
@@ -13,9 +14,12 @@ import javafx.stage.Stage;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.util.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class GameView extends Application {
-
+    private List<Text> letterTexts = new ArrayList<>();
     private Pane root; // Store the root pane for resetting the game
 
     // Animation-related fields for animations
@@ -25,6 +29,9 @@ public class GameView extends Application {
     private Image[] zombieIdleFrames;
     private Timeline humanIdleAnimation;
     private Timeline zombieIdleAnimation;
+    private Consumer<Character> letterGuessHandler;
+
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -165,6 +172,11 @@ public class GameView extends Application {
         primaryStage.show();
     }
 
+    public void setLetterGuessHandler(Consumer<Character> handler) {
+        this.letterGuessHandler = handler;
+    }
+
+
     private void startHumanIdleAnimation() {
         if (humanIdleFrames == null || humanIdleFrames.length != 2) {
             System.out.println("Human idle animation frames not loaded properly.");
@@ -199,10 +211,38 @@ public class GameView extends Application {
         zombieIdleAnimation.play();
     }
 
-    // Placeholder for letter click handling
+    public void initializeWordDisplay(int wordLength) {
+        // Clear existing display
+        root.getChildren().removeAll(letterTexts);
+        letterTexts.clear();
+
+        double letterWidth = 60;
+        double gap = 25;
+        double startX = (1280 - (wordLength * letterWidth + (wordLength - 1) * gap)) / 2.0;
+
+        // Create underscore placeholders
+        for (int i = 0; i < wordLength; i++) {
+            // Underscore line
+            Rectangle line = new Rectangle(letterWidth, 8);
+            line.setX(startX + i * (letterWidth + gap));
+            line.setY(470);
+            line.setFill(Color.WHITE);
+            root.getChildren().add(line);
+
+            // Invisible text (will be shown when letter is guessed)
+            Text letterText = new Text();
+            letterText.setFont(Font.loadFont("file:res/PressStart2P-Regular.ttf", 40));
+            letterText.setFill(Color.WHITE);
+            letterText.setX(startX + i * (letterWidth + gap) + letterWidth/2 - 15);
+            letterText.setY(470 + 40);
+            letterText.setVisible(false);
+            root.getChildren().add(letterText);
+            letterTexts.add(letterText);
+        }
+    }
+
     private void handleLetterClick(String letter, ImageView button) {
         System.out.println("Letter clicked: " + letter);
-        // Change the button to the disabled (blue) state
         if (!button.isDisable()) {
             button.setDisable(true);
             try {
@@ -210,12 +250,30 @@ public class GameView extends Application {
                 button.setImage(disabledImage);
             } catch (Exception e) {
                 System.out.println("Failed to load disabled image for " + letter + ": " + e.getMessage());
-                button.setOpacity(0.5); // Fallback
+                button.setOpacity(0.5);
+            }
+        }
+
+        // Use the handler instead of controller directly
+        if (letterGuessHandler != null) {
+            letterGuessHandler.accept(letter.charAt(0));
+        }
+    }
+
+
+    public void updateWordDisplay(char[] wordState) {
+        for (int i = 0; i < wordState.length; i++) {
+            if (wordState[i] != '_') {
+                letterTexts.get(i).setText(String.valueOf(wordState[i]));
+                letterTexts.get(i).setVisible(true);
             }
         }
     }
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    public void showErrorMessage(String s) {
     }
 }
