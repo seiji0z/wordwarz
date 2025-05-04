@@ -10,10 +10,20 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 public class GameServant extends GameServicePOA {
     private static final ConcurrentHashMap<String, WordWarZ.ClientCallback> clientCallbacks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Long> waitingPlayers = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
+    private String targetWord = "lorraine"; // Hardcoded for testing
+    private char[] currentWordState; // Tracks which letters have been guessed
+    private List<Character> guessedLetters = new ArrayList<>();
+    private int remainingGuesses = 5;
+
 
     private ORB orb;
 
@@ -149,13 +159,50 @@ public class GameServant extends GameServicePOA {
 
     @Override
     public int startRound(String token) throws NotLoggedIn, NotInGame, GameNotFound {
-        return 0;
+        // Reset game state for new round
+        currentWordState = null;
+        guessedLetters.clear();
+        return targetWord.length(); // Return word length
     }
 
     @Override
-    public char[] guessLetter(String token, char letter) throws NotLoggedIn, NotInGame, GameNotFound {
-        return new char[0];
+    public char[] guessLetter(String token, char letter) throws NotLoggedIn, NotInGame, GameNotFound, CharacterAlreadyGuessed{
+        // Convert to lowercase for case-insensitive comparison
+        char lowerLetter = Character.toLowerCase(letter);
+
+        // Check if letter was already guessed
+        if (guessedLetters.contains(lowerLetter)) {
+            throw new CharacterAlreadyGuessed("Letter " + letter + " was already guessed");
+        }
+
+        // Add to guessed letters
+        guessedLetters.add(lowerLetter);
+
+        // Initialize currentWordState if this is the first guess
+        if (currentWordState == null) {
+            currentWordState = new char[targetWord.length()];
+            Arrays.fill(currentWordState, '_');
+        }
+
+        boolean correctGuess = false;
+
+        // Check if letter is in the word
+        for (int i = 0; i < targetWord.length(); i++) {
+            if (targetWord.charAt(i) == lowerLetter) {
+                currentWordState[i] = targetWord.charAt(i);
+                correctGuess = true;
+            }
+        }
+
+
+        if (!correctGuess) {
+            remainingGuesses--;
+        }
+        // Return a copy of the current state
+        return Arrays.copyOf(currentWordState, currentWordState.length);
     }
+
+
 
     @Override
     public void displayWinnerByRound(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
@@ -186,7 +233,7 @@ public class GameServant extends GameServicePOA {
 
     @Override
     public int getRemainingGuesses(String token) throws NotLoggedIn, NotInGame {
-        return 0;
+        return remainingGuesses;
     }
 
     @Override

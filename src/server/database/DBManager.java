@@ -1,13 +1,20 @@
 package server.database;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+
+import WordWarZ.Player;
+
+
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
 
 public class DBManager {
 
+
     public DBManager() {
     }
+
 
     public static boolean userExists(String username) {
         String query = "SELECT username FROM credentials WHERE username = ?";
@@ -22,21 +29,26 @@ public class DBManager {
         }
     }
 
+
     public static boolean validateCredentials(String username, String password) {
         if (!userExists(username)) {
             return false;
         }
 
+
         String query = "SELECT u.is_admin FROM credentials c NATURAL JOIN user u" +
                 " WHERE c.username = ? AND c.password = ?";
+
 
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             stmt.setString(1, username);
             stmt.setString(2, password);
 
+
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next();
             }
+
 
         } catch (SQLException e) {
             System.out.println("Error validating credentials: " + e.getMessage());
@@ -44,11 +56,13 @@ public class DBManager {
         }
     }
 
+
     public static int[] loadGameConfig() {
         String query = "SELECT waiting_time, round_duration FROM gameconfig WHERE config_id = 50001";
         int[] config = new int[2];
         config[0] = 10; // default waiting time
         config[1] = 30; // default round duration
+
 
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
@@ -60,8 +74,10 @@ public class DBManager {
             System.out.println("Error loading game config: " + e.getMessage());
         }
 
+
         return config;
     }
+
 
     public static void updateGameConfig(int newWaitingTime, int newRoundDuration) throws SQLException {
         String query = "UPDATE gameconfig SET waiting_time = ?, round_duration = ? WHERE config_id = 50001";
@@ -71,6 +87,8 @@ public class DBManager {
             stmt.executeUpdate();
         }
     }
+
+
 
 
     public static boolean isAdmin(String username) {
@@ -89,6 +107,7 @@ public class DBManager {
         return false;
     }
 
+
     // generate new user_id for new players
     public static int getNextUserId() {
         String query = "SELECT MAX(user_id) AS max_id FROM user";
@@ -103,17 +122,22 @@ public class DBManager {
         return 10000; // fallback starting ID
     }
 
+
     public static boolean createUser(String username, String password) {
+
 
         int userId = getNextUserId();  // Implement this to get the next available user ID
 
+
         // Check if the user should be an admin
         String isAdmin = username.equals("admin") ? "Y" : "N";  // Assign 'Y' for admin, 'N' otherwise
+
 
         // SQL for inserting into the 'user' table
         String userQuery = "INSERT INTO user (user_id, username, is_admin, wins) VALUES (?, ?, ?, 0)";
         // SQL for inserting into the 'credentials' table
         String credentialsQuery = "INSERT INTO credentials (user_id, username, password) VALUES (?, ?, ?)";
+
 
         try {
             // Insert into the 'user' table
@@ -124,6 +148,7 @@ public class DBManager {
                 userStmt.executeUpdate();
             }
 
+
             // Insert into the 'credentials' table
             try (PreparedStatement credStmt = DBConnection.con.prepareStatement(credentialsQuery)) {
                 credStmt.setInt(1, userId);  // User ID
@@ -132,7 +157,9 @@ public class DBManager {
                 credStmt.executeUpdate();
             }
 
+
             return true;
+
 
         } catch (SQLException e) {
             System.out.println("Error creating user: " + e.getMessage());
@@ -140,35 +167,128 @@ public class DBManager {
         }
     }
 
-    public static boolean updatePlayer(String username, String newPassword) throws SQLException {
-        // Check if player exists first
+
+    public static boolean updatePlayer(String username, String newUsername, String newPassword) throws SQLException {
         if (!userExists(username)) {
+            System.out.println("[ERROR] User " + username + " not found");
             return false;
         }
 
-        // Update both tables in a transaction
+
+
+
         DBConnection.con.setAutoCommit(false);
 
+
+
+
         try {
+            // Get the user_id first
+            int userId = getUserId(username);
+            if (userId == -1) {
+                throw new SQLException("User ID not found for: " + username);
+            }
+
+
+
+
             // Update credentials table
-            String credentialsQuery = "UPDATE credentials SET password = ? WHERE username = ?";
+            String credentialsQuery = "UPDATE credentials SET username = ?, password = ? WHERE user_id = ?";
             try (PreparedStatement credStmt = DBConnection.con.prepareStatement(credentialsQuery)) {
-                credStmt.setString(1, newPassword);
-                credStmt.setString(2, username);
+                credStmt.setString(1, newUsername.isEmpty() ? username : newUsername);
+                credStmt.setString(2, newPassword.isEmpty() ? getCurrentPassword(username) : newPassword);
+                credStmt.setInt(3, userId);
                 credStmt.executeUpdate();
             }
 
-            // Commit if both updates succeeded
+
+
+
+            // Update user table if username changed
+            if (!newUsername.isEmpty()) {
+                String userQuery = "UPDATE user SET username = ? WHERE user_id = ?";
+                try (PreparedStatement userStmt = DBConnection.con.prepareStatement(userQuery)) {
+                    userStmt.setString(1, newUsername);
+                    userStmt.setInt(2, userId);
+                    userStmt.executeUpdate();
+                }
+            }
+
+
+
+
             DBConnection.con.commit();
             return true;
         } catch (SQLException e) {
             DBConnection.con.rollback();
             System.out.println("Error updating player: " + e.getMessage());
-            return false;
+            throw e;
         } finally {
             DBConnection.con.setAutoCommit(true);
         }
     }
+
+
+
+
+    // Helper method to get user_id
+    private static int getUserId(String username) throws SQLException {
+        String query = "SELECT user_id FROM credentials WHERE username = ?";
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? rs.getInt("user_id") : -1;
+        }
+    }
+
+
+
+
+    // Helper method to get current password
+    private static String getCurrentPassword(String username) throws SQLException {
+        String query = "SELECT password FROM credentials WHERE username = ?";
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, username);
+            ResultSet rs = stmt.executeQuery();
+            return rs.next() ? rs.getString("password") : null;
+        }
+    }
+
+
+    public static Player getPlayer(String username) throws SQLException {
+        String query = "SELECT username, wins FROM user WHERE username = ?";
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    Player player = new Player();
+                    player.username = rs.getString("username");
+                    player.wins = rs.getInt("wins");
+                    return player;
+                }
+            }
+        }
+        return null;
+    }
+    public static List<Player> getAllPlayers() throws SQLException {
+        List<Player> players = new ArrayList<>();
+        String query = "SELECT username, wins FROM user";
+
+
+        try (Statement stmt = DBConnection.con.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+
+
+            while (rs.next()) {
+                Player player = new Player();
+                player.username = rs.getString("username");
+                player.wins = rs.getInt("wins");
+                players.add(player);
+            }
+        }
+        return players;
+    }
+
 
     /**
      * Updates both game configuration settings in a single transaction
@@ -179,6 +299,7 @@ public class DBManager {
      */
     public static boolean updateGameConfigurations(int waitingTime, int roundDuration) {
         String query = "INSERT INTO gameconfig (waiting_time, round_duration) VALUES (?, ?)";
+
 
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             stmt.setInt(1, waitingTime);
@@ -191,6 +312,7 @@ public class DBManager {
         }
     }
 
+
     /**
      * Gets the current game waiting time
      *
@@ -198,6 +320,7 @@ public class DBManager {
      */
     public static int getGameWaitingTime() {
         String query = "SELECT waiting_time FROM gameconfig WHERE config_id = 1";
+
 
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             try (ResultSet rs = stmt.executeQuery()) {
@@ -209,8 +332,10 @@ public class DBManager {
             System.out.println("Error getting waiting time: " + e.getMessage());
         }
 
+
         return 10; // Default value if not found
     }
+
 
     /**
      * Gets the current game round duration
@@ -219,6 +344,7 @@ public class DBManager {
      */
     public static int getGameRoundDuration() {
         String query = "SELECT round_duration FROM gameconfig WHERE config_id = 1";
+
 
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             try (ResultSet rs = stmt.executeQuery()) {
@@ -230,8 +356,7 @@ public class DBManager {
             System.out.println("Error getting round duration: " + e.getMessage());
         }
 
+
         return 30;
     }
 }
-
-
