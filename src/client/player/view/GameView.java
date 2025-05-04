@@ -1,6 +1,7 @@
 package client.player.view;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -9,14 +10,19 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.util.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Consumer;
 
 public class GameView extends Application {
-
+    private List<Text> letterTexts = new ArrayList<>();
     private Pane root; // Store the root pane for resetting the game
+    private Pane overlayPane; // For the start overlay
 
     // Animation-related fields for animations
     private ImageView humanView;
@@ -25,14 +31,24 @@ public class GameView extends Application {
     private Image[] zombieIdleFrames;
     private Timeline humanIdleAnimation;
     private Timeline zombieIdleAnimation;
+    private Consumer<Character> letterGuessHandler;
+
+
+    private Text timerText;
+    private List<ImageView> hearts = new ArrayList<>();
+    private Timeline timerTimeline;
+    private Stage primaryStage;
+    public int remainingGuesses = 5;
+
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         // --- ROOT LAYOUT ---
         root = new Pane();
 
         // Load the custom font
-        Font customFont = Font.loadFont("file:res/PressStart2P-Regular.ttf", 40);
+        Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40);
         if (customFont == null) {
             System.out.println("Failed to load custom font, falling back to default.");
             customFont = new Font("System", 30); // Fallback font
@@ -45,23 +61,25 @@ public class GameView extends Application {
         backgroundView.setFitHeight(760);
         root.getChildren().add(backgroundView);
 
-        // Hearts (5 full hearts as static images - no functionality)
+        // Modify hearts initialization
         for (int i = 0; i < 5; i++) {
             ImageView heart = new ImageView(new Image("file:res/images/others/heart.png"));
             heart.setX(30 + i * 60);
             heart.setY(20);
             heart.setFitWidth(50);
             heart.setFitHeight(50);
+            hearts.add(heart);
             root.getChildren().add(heart);
         }
 
-        // Timer (static timer text - no functionality)
-        Text timerText = new Text("00:30");
+        // Modify timer initialization
+        timerText = new Text("00:30");
         timerText.setFont(customFont);
         timerText.setFill(Color.WHITE);
         timerText.setX(1045);
         timerText.setY(70);
         root.getChildren().add(timerText);
+
 
         // Human (with idle animation)
         humanIdleFrames = new Image[2];
@@ -156,6 +174,31 @@ public class GameView extends Application {
             root.getChildren().add(buttonView);
         }
 
+        // --- OVERLAY ---
+        overlayPane = new Pane();
+        overlayPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
+        overlayPane.setPrefSize(1280, 760);
+
+        Text overlayText = new Text("Race against the clock to guess the word! \n\nFirst to 3 wins claims victory!");
+        overlayText.setFont(customFont);
+        overlayText.setFill(Color.WHITE);
+        overlayText.setTextAlignment(TextAlignment.CENTER);
+        overlayText.setWrappingWidth(1000);
+
+        // Center the text
+        overlayText.setX((1280 - overlayText.getLayoutBounds().getWidth()) / 2);
+        overlayText.setY(350);
+
+        overlayPane.getChildren().add(overlayText);
+        root.getChildren().add(overlayPane);
+
+        // Remove the overlay after 3 seconds
+        Timeline overlayTimer = new Timeline(
+                new KeyFrame(Duration.seconds(3),
+                        event -> root.getChildren().remove(overlayPane)
+                ));
+        overlayTimer.play();
+
         // --- SCENE & STAGE ---
         Scene scene = new Scene(root, 1280, 760); // Explicitly set size
         primaryStage.setTitle("Word War Z");
@@ -164,6 +207,11 @@ public class GameView extends Application {
         primaryStage.setResizable(false);
         primaryStage.show();
     }
+
+    public void setLetterGuessHandler(Consumer<Character> handler) {
+        this.letterGuessHandler = handler;
+    }
+
 
     private void startHumanIdleAnimation() {
         if (humanIdleFrames == null || humanIdleFrames.length != 2) {
@@ -199,10 +247,78 @@ public class GameView extends Application {
         zombieIdleAnimation.play();
     }
 
-    // Placeholder for letter click handling
+    public void startTimer() {
+        final int[] timeRemaining = {30};
+        timerTimeline = new Timeline(
+                new KeyFrame(Duration.seconds(1), e -> {
+                    timeRemaining[0]--;
+                    updateTimerDisplay(timeRemaining[0]);
+                    if (timeRemaining[0] <= 0) {
+                        closeApplication();
+                    }
+                })
+        );
+        timerTimeline.setCycleCount(Timeline.INDEFINITE);
+        timerTimeline.play();
+    }
+
+    private void updateTimerDisplay(int seconds) {
+        Platform.runLater(() -> {
+            int mins = seconds / 60;
+            int secs = seconds % 60;
+            timerText.setText(String.format("%02d:%02d", mins, secs));
+        });
+    }
+
+    public void updateHearts() {
+        Platform.runLater(() -> {
+            for (int i = 0; i < hearts.size(); i++) {
+                hearts.get(i).setVisible(i < remainingGuesses);
+            }
+        });
+    }
+
+    public void closeApplication() {
+        Platform.runLater(() -> {
+            if (timerTimeline != null) {
+                timerTimeline.stop();
+            }
+            primaryStage.close();
+        });
+    }
+
+    public void initializeWordDisplay(int wordLength) {
+        // Clear existing display
+        root.getChildren().removeAll(letterTexts);
+        letterTexts.clear();
+
+        double letterWidth = 60;
+        double gap = 25;
+        double startX = (1280 - (wordLength * letterWidth + (wordLength - 1) * gap)) / 2.0;
+
+        // Create underscore placeholders
+        for (int i = 0; i < wordLength; i++) {
+            // Underscore line
+            Rectangle line = new Rectangle(letterWidth, 8);
+            line.setX(startX + i * (letterWidth + gap));
+            line.setY(470);
+            line.setFill(Color.WHITE);
+            root.getChildren().add(line);
+
+            // Invisible text (will be shown when letter is guessed)
+            Text letterText = new Text();
+            letterText.setFont(Font.loadFont("file:res/PressStart2P-Regular.ttf", 40));
+            letterText.setFill(Color.WHITE);
+            letterText.setX(startX + i * (letterWidth + gap) + letterWidth/2 - 15);
+            letterText.setY(470 + 40);
+            letterText.setVisible(false);
+            root.getChildren().add(letterText);
+            letterTexts.add(letterText);
+        }
+    }
+
     private void handleLetterClick(String letter, ImageView button) {
         System.out.println("Letter clicked: " + letter);
-        // Change the button to the disabled (blue) state
         if (!button.isDisable()) {
             button.setDisable(true);
             try {
@@ -210,12 +326,30 @@ public class GameView extends Application {
                 button.setImage(disabledImage);
             } catch (Exception e) {
                 System.out.println("Failed to load disabled image for " + letter + ": " + e.getMessage());
-                button.setOpacity(0.5); // Fallback
+                button.setOpacity(0.5);
+            }
+        }
+
+
+        if (letterGuessHandler != null) {
+            letterGuessHandler.accept(letter.charAt(0));
+        }
+    }
+
+
+    public void updateWordDisplay(char[] wordState) {
+        for (int i = 0; i < wordState.length; i++) {
+            if (wordState[i] != '_') {
+                letterTexts.get(i).setText(String.valueOf(wordState[i]));
+                letterTexts.get(i).setVisible(true);
             }
         }
     }
 
     public static void main(String[] args) {
         launch(args);
+    }
+
+    public void showErrorMessage(String s) {
     }
 }
