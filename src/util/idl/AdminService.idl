@@ -1,0 +1,35 @@
+module WordWarZ {
+
+  typedef sequence<string> StringSequence;
+
+  // player
+  struct Player {
+    string username;
+    long wins;
+  };
+
+  // list of leaderboard entries
+  typedef sequence<Player> Leaderboard;
+
+  // exceptions
+  exception NotLoggedIn { string reason; };
+  exception PlayerCurrentlyLoggedIn { string reason; };
+  exception PlayerNotFound { string reason; };
+  exception UsernameAlreadyExists { string reason; };
+
+  // admin operations
+  interface AdminService {
+    // crud
+    void createPlayer(in string username, in string password) raises (NotLoggedIn, UsernameAlreadyExists);
+    void updatePlayer(in string username, in string newUsername, in string newPassword) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
+    void deletePlayer(in string username) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
+    Player getPlayer(in string username) raises (NotLoggedIn, PlayerNotFound);
+    Leaderboard searchPlayers(in string searchQuery) raises (NotLoggedIn, PlayerNotFound);
+
+    // gameplay settings
+    void setGameWaitingTime(in long seconds) raises (NotLoggedIn);
+    void setGameRoundDuration(in long seconds) raises (NotLoggedIn);
+    long getGameWaitingTime() raises (NotLoggedIn);
+    long getGameRoundDuration() raises (NotLoggedIn);
+  };
+};

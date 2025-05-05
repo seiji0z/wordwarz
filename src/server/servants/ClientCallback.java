@@ -40,17 +40,28 @@ public class ClientCallback extends ClientCallbackPOA {
     }
 
     @Override
-    public void onRoundEnded(String roundResult, String winner) {
-        System.out.println("[Callback] Round ended. Result: " + roundResult);
-        if (winner != null && !winner.isEmpty()) {
-            System.out.println("  Winner: " + winner);
-        }
+    public void onRoundLost(String word, String winner) {
+
     }
 
     @Override
-    public void onGameEnded(String winnerUsername) {
-        System.out.println("[Callback] Game ended. Winner: " +
-                (winnerUsername != null ? winnerUsername : "No winner"));
+    public void onRoundWon(String word) {
+
+    }
+
+    @Override
+    public void onRoundDrawn(String word) {
+
+    }
+
+    @Override
+    public void onGameLost(String winnerUsername) {
+
+    }
+
+    @Override
+    public void onGameWon(String winnerUsername) {
+
     }
 
     @Override
