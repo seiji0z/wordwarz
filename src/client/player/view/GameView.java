@@ -1,6 +1,5 @@
 package client.player.view;
 
-
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -11,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
@@ -22,6 +22,7 @@ import java.util.function.Consumer;
 public class GameView extends Application {
     private List<Text> letterTexts = new ArrayList<>();
     private Pane root; // Store the root pane for resetting the game
+    private Pane overlayPane; // For the start overlay
 
     // Animation-related fields for animations
     private ImageView humanView;
@@ -172,6 +173,31 @@ public class GameView extends Application {
             buttonView.setOnMouseClicked(event -> handleLetterClick(letter, buttonView));
             root.getChildren().add(buttonView);
         }
+
+        // --- OVERLAY ---
+        overlayPane = new Pane();
+        overlayPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
+        overlayPane.setPrefSize(1280, 760);
+
+        Text overlayText = new Text("Race against the clock to guess the word! \n\nFirst to 3 wins claims victory!");
+        overlayText.setFont(customFont);
+        overlayText.setFill(Color.WHITE);
+        overlayText.setTextAlignment(TextAlignment.CENTER);
+        overlayText.setWrappingWidth(1000);
+
+        // Center the text
+        overlayText.setX((1280 - overlayText.getLayoutBounds().getWidth()) / 2);
+        overlayText.setY(350);
+
+        overlayPane.getChildren().add(overlayText);
+        root.getChildren().add(overlayPane);
+
+        // Remove the overlay after 3 seconds
+        Timeline overlayTimer = new Timeline(
+                new KeyFrame(Duration.seconds(3),
+                        event -> root.getChildren().remove(overlayPane)
+                ));
+        overlayTimer.play();
 
         // --- SCENE & STAGE ---
         Scene scene = new Scene(root, 1280, 760); // Explicitly set size

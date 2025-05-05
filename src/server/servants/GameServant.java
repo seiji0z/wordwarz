@@ -4,26 +4,25 @@ import WordWarZ.*;
 import org.omg.CORBA.ORB;
 import server.helpers.QueueManager;
 import server.helpers.SessionManager;
+import server.objects.Game;
+import server.objects.GameConfig;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 public class GameServant extends GameServicePOA {
     private static final ConcurrentHashMap<String, WordWarZ.ClientCallback> clientCallbacks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Long> waitingPlayers = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
-
-    private String targetWord = "lorraine"; // Hardcoded for testing
-    private char[] currentWordState; // Tracks which letters have been guessed
-    private List<Character> guessedLetters = new ArrayList<>();
-    private int remainingGuesses = 5;
-
+    private static final Map<String, Game> activeGames = new ConcurrentHashMap<>();
+    private static final ScheduledExecutorService roundScheduler = Executors.newScheduledThreadPool(4);
 
     private ORB orb;
 
@@ -158,51 +157,59 @@ public class GameServant extends GameServicePOA {
     }
 
     @Override
-    public int startRound(String token) throws NotLoggedIn, NotInGame, GameNotFound {
-        // Reset game state for new round
-        currentWordState = null;
-        guessedLetters.clear();
-        return targetWord.length(); // Return word length
-    }
+    public synchronized int startRound(String token) throws NotLoggedIn, NotInGame, GameNotFound {
+        if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();
+        String username = SessionManager.getSession(token).getUsername();
 
-    @Override
-    public char[] guessLetter(String token, char letter) throws NotLoggedIn, NotInGame, GameNotFound, CharacterAlreadyGuessed{
-        // Convert to lowercase for case-insensitive comparison
-        char lowerLetter = Character.toLowerCase(letter);
+        // Get the player's game session
+        Game session = activeGames.get(username);
+        if (session == null || !session.getPlayers().contains(username)) throw new GameNotFound();
 
-        // Check if letter was already guessed
-        if (guessedLetters.contains(lowerLetter)) {
-            throw new CharacterAlreadyGuessed("Letter " + letter + " was already guessed");
-        }
+        // Pick the next word and initialize placeholders
+        String word = session.nextWord();
+        String[] placeholder = new String[word.length()];
+        Arrays.fill(placeholder, "_");
 
-        // Add to guessed letters
-        guessedLetters.add(lowerLetter);
-
-        // Initialize currentWordState if this is the first guess
-        if (currentWordState == null) {
-            currentWordState = new char[targetWord.length()];
-            Arrays.fill(currentWordState, '_');
-        }
-
-        boolean correctGuess = false;
-
-        // Check if letter is in the word
-        for (int i = 0; i < targetWord.length(); i++) {
-            if (targetWord.charAt(i) == lowerLetter) {
-                currentWordState[i] = targetWord.charAt(i);
-                correctGuess = true;
+        // Inform all players about the round start
+        for (String player : session.getPlayers()) {
+            WordWarZ.ClientCallback cb = clientCallbacks.get(SessionManager.getTokenByUsername(player));
+            if (cb != null) {
+                try {
+                    cb.onRoundStarted(placeholder);
+                } catch (Exception e) {
+                    System.err.println("Failed to notify player " + player + ": " + e.getMessage());
+                }
             }
         }
 
+        // Schedule round timeout
+        roundScheduler.schedule(() -> {
+            synchronized (session) {
+                String roundResult = "The correct word was: " + word;
+                String winner = null;
 
-        if (!correctGuess) {
-            remainingGuesses--;
-        }
-        // Return a copy of the current state
-        return Arrays.copyOf(currentWordState, currentWordState.length);
+                // No player won yet, so notify everyone
+                for (String player : session.getPlayers()) {
+                    WordWarZ.ClientCallback cb = clientCallbacks.get(SessionManager.getTokenByUsername(player));
+                    if (cb != null) {
+                        try {
+                            cb.onRoundEnded(roundResult, winner);
+                        } catch (Exception e) {
+                            System.err.println("Failed to notify end of round for " + player);
+                        }
+                    }
+                }
+            }
+        }, GameConfig.getRoundDuration(), TimeUnit.SECONDS);
+
+        return word.length();
     }
 
 
+    @Override
+    public char[] guessLetter(String token, char letter) throws NotLoggedIn, NotInGame, GameNotFound, CharacterAlreadyGuessed{
+        return new char[0];
+    }
 
     @Override
     public void displayWinnerByRound(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
@@ -233,7 +240,7 @@ public class GameServant extends GameServicePOA {
 
     @Override
     public int getRemainingGuesses(String token) throws NotLoggedIn, NotInGame {
-        return remainingGuesses;
+        return 0;
     }
 
     @Override
