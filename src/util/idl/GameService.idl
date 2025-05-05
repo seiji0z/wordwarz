@@ -15,13 +15,10 @@ module WordWarZ {
   // exceptions
   exception InvalidCredentials { string reason; };
   exception NotLoggedIn { string reason; };
-  exception PlayerCurrentlyLoggedIn { string reason; };
   exception NoOpponentFound { string reason; };
   exception NotInGame { string reason; };
   exception GameNotFound { string reason; };
-  exception PlayerNotFound { string reason; };
   exception PlayerNotInQueue { string reason; };
-  exception UsernameAlreadyExists { string reason; };
   exception CharacterAlreadyGuessed { string reason; };
   exception RoundNotFinished{ string reason; };
   exception GameNotFinished { string reason; };
@@ -30,10 +27,13 @@ module WordWarZ {
   interface ClientCallback {
     void onQueueUpdated(in long playerCount);
     void onLeaderboardUpdated(in Leaderboard leaderboard);
-    void onGameCountdown(in long secondsLeft); // maybe called every second
+    void onGameCountdown(in long secondsLeft);
     void onRoundStarted(in StringSequence wordPlaceholder);
-    void onRoundEnded(in string roundResult, in string winner);
-    void onGameEnded(in string winnerUsername);
+    void onRoundLost(in string word, in string winner);
+    void onRoundWon(in string word);
+    void onRoundDrawn(in string word);
+    void onGameLost(in string winnerUsername);
+    void onGameWon(in string winnerUsername);
     void onForceLogout();
   };
 
@@ -41,22 +41,6 @@ module WordWarZ {
     // authentication
     string login(in string username, in string password) raises (InvalidCredentials);
     void logout(in string token) raises (NotLoggedIn);
-  };
-
-  // admin operations
-  interface AdminService {
-    // crud
-    void createPlayer(in string username, in string password) raises (NotLoggedIn, UsernameAlreadyExists);
-    void updatePlayer(in string username, in string newUsername, in string newPassword) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
-    void deletePlayer(in string username) raises (NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn);
-    Player getPlayer(in string username) raises (NotLoggedIn, PlayerNotFound);
-    Leaderboard searchPlayers(in string searchQuery) raises (NotLoggedIn, PlayerNotFound);
-
-    // gameplay settings
-    void setGameWaitingTime(in long seconds) raises (NotLoggedIn);
-    void setGameRoundDuration(in long seconds) raises (NotLoggedIn);
-    long getGameWaitingTime() raises (NotLoggedIn);
-    long getGameRoundDuration() raises (NotLoggedIn);
   };
 
   // main game
