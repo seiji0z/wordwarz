@@ -193,35 +193,35 @@ public class DBManager {
 
     public static Player getPlayer(String username) throws SQLException {
         String query = "SELECT username, wins FROM user WHERE username = ?";
+
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             stmt.setString(1, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    Player player = new Player();
-                    player.username = rs.getString("username");
-                    player.wins = rs.getInt("wins");
-                    return player;
+                    return new Player(rs.getString("username"), rs.getInt("wins"));
                 }
+                return null;
             }
+        } catch (SQLException e) {
+            throw e;
         }
-        return null;
     }
 
-    public static List<Player> getAllPlayers() throws SQLException {
+    public static List<Player> searchPlayers(String searchQuery) throws SQLException {
         List<Player> players = new ArrayList<>();
-        String query = "SELECT username, wins FROM user";
+        String query = "SELECT username, wins FROM user WHERE username LIKE ? ORDER BY wins DESC";
 
-        try (Statement stmt = DBConnection.con.createStatement();
-             ResultSet rs = stmt.executeQuery(query)) {
-            while (rs.next()) {
-                Player player = new Player();
-                player.username = rs.getString("username");
-                player.wins = rs.getInt("wins");
-                players.add(player);
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, "%" + searchQuery + "%");
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    players.add(new Player(rs.getString("username"), rs.getInt("wins")));
+                }
             }
         }
         return players;
     }
+
 
     /**
      * Updates both game configuration settings in a single transaction

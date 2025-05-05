@@ -137,14 +137,16 @@ public class AdminDashboardController {
 
 
     private void handleReadAllPlayers() {
+        ReadPlayerView readView = view.getReadPlayerView();
         try {
             Player[] players = model.getAllPlayers();
-            view.getReadPlayerView().updatePlayerTable(players);
+            readView.displayPlayers(players);
         } catch (NotLoggedIn e) {
-            view.getReadPlayerView().showError("Error: Admin not logged in");
+            readView.showError("Error: Admin not logged in");
         } catch (PlayerNotFound e) {
-            view.getReadPlayerView().showError("No players found in database");
+            readView.showError("Error: No players found");
         }
     }
+
 }
 

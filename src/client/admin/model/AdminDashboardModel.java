@@ -44,23 +44,16 @@ public class AdminDashboardModel {
     }
 
 
-    public Player[] getAllPlayers() throws NotLoggedIn, PlayerNotFound {
-        try {
-            List<Player> players = DBManager.getAllPlayers();
-            if (players.isEmpty()) {
-                throw new PlayerNotFound("No players found in database");
-            }
-            return players.toArray(new Player[0]);
-        } catch (SQLException e) {
-            System.err.println("Database error: " + e.getMessage());
-            throw new PlayerNotFound("Error accessing player database");
-        }
-    }
-
-
     public Player getPlayer(String username) throws NotLoggedIn, PlayerNotFound {
-        return adminService.getPlayer(username);
+        Player player = adminService.getPlayer(username);
+        return player;
     }
+
+    public Player[] getAllPlayers() throws NotLoggedIn, PlayerNotFound {
+        Player[] players = adminService.searchPlayers("");
+        return players;
+    }
+
 
 
 }

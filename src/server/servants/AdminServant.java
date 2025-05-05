@@ -7,6 +7,7 @@ import server.database.DBManager;
 
 
 import java.sql.SQLException;
+import java.util.List;
 
 
 public class AdminServant extends AdminServicePOA {
@@ -86,46 +87,60 @@ public class AdminServant extends AdminServicePOA {
     @Override
     public Player getPlayer(String username) throws NotLoggedIn, PlayerNotFound {
         if (username == null || username.isEmpty()) {
-            throw new NotLoggedIn("Username is required");
+            throw new NotLoggedIn("Original username is required");
         }
-
 
         try {
             Player player = DBManager.getPlayer(username);
             if (player == null) {
-                throw new PlayerNotFound("Player " + username + " not found");
+                throw new PlayerNotFound("Player not found: " + username);
             }
             return player;
         } catch (SQLException e) {
-            System.out.println("Database error getting player: " + e.getMessage());
-            throw new PlayerNotFound("Database error getting player");
+            throw new PlayerNotFound("Database error retrieving player");
+        }
+    }
+
+    @Override
+    public Player[] searchPlayers(String searchQuery) throws NotLoggedIn, PlayerNotFound {
+        if (searchQuery == null) {
+            throw new NotLoggedIn("Search query cannot be null");
+        }
+
+        try {
+            List<Player> players;
+            if (searchQuery.isEmpty()) {
+                players = DBManager.searchPlayers("");
+            } else {
+                players = DBManager.searchPlayers(searchQuery);
+            }
+
+            if (players.isEmpty()) {
+                throw new PlayerNotFound("No players found matching: '" + searchQuery + "'");
+            }
+            return players.toArray(new Player[0]);
+        } catch (SQLException e) {
+            throw new PlayerNotFound("Database error while searching players");
         }
     }
 
 
-    @Override
-    public Player[] searchPlayers(String searchQuery) throws NotLoggedIn, PlayerNotFound {
-        return new Player[0];
-    }
-
 
     @Override
-    public boolean setGameWaitingTime(int seconds) throws NotLoggedIn {
+    public void setGameWaitingTime(int seconds) throws NotLoggedIn {
         int currentRoundDuration = DBManager.getGameRoundDuration();
         if (!DBManager.updateGameConfigurations(seconds, currentRoundDuration)) {
             throw new RuntimeException("Failed to update waiting time");
         }
-        return false;
     }
 
 
     @Override
-    public boolean setGameRoundDuration(int seconds) throws NotLoggedIn {
+    public void setGameRoundDuration(int seconds) throws NotLoggedIn {
         int currentWaitingTime = DBManager.getGameWaitingTime();
         if (!DBManager.updateGameConfigurations(currentWaitingTime, seconds)) {
             throw new RuntimeException("Failed to update round duration");
         }
-        return false;
     }
 
     @Override

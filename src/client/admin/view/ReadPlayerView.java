@@ -1,14 +1,15 @@
 package client.admin.view;
 
-
 import WordWarZ.Player;
+import javafx.application.Platform;
+import javafx.beans.property.SimpleIntegerProperty;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -16,23 +17,19 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 
-
 public class ReadPlayerView extends VBox {
     private final Font customFont;
     private Button createBtn;
     private Button readBtn;
     private Button updateBtn;
     private Button deleteBtn;
-    private Button searchBtn;
-    private TextField searchField;
     private TableView<Player> playerTable;
-
 
     public ReadPlayerView(Font customFont) {
         this.customFont = customFont;
         initializeUI();
+        setupTableColumns();
     }
-
 
     private void initializeUI() {
         // Main container settings
@@ -42,17 +39,14 @@ public class ReadPlayerView extends VBox {
         this.setMaxWidth(Double.MAX_VALUE);
         this.setMaxHeight(Double.MAX_VALUE);
 
-
         // Make the view grow with the window
         HBox.setHgrow(this, Priority.ALWAYS);
         VBox.setVgrow(this, Priority.ALWAYS);
 
-
         // Title label
-        Label titleLabel = new Label("Player Details");
+        Label titleLabel = new Label("Read Players");
         titleLabel.setFont(Font.font(customFont.getFamily(), FontWeight.BOLD, 24));
         titleLabel.setTextFill(Color.DARKRED);
-
 
         // Button container
         GridPane buttonGrid = new GridPane();
@@ -61,13 +55,11 @@ public class ReadPlayerView extends VBox {
         buttonGrid.setVgap(15);
         buttonGrid.setPadding(new Insets(20));
 
-
-        // Create buttons with consistent sizing
+        // Create buttons
         createBtn = createStyledButton("CREATE PLAYER");
         readBtn = createStyledButton("READ PLAYERS");
         updateBtn = createStyledButton("UPDATE PLAYER");
         deleteBtn = createStyledButton("DELETE PLAYER");
-
 
         // Add buttons to grid
         buttonGrid.add(createBtn, 0, 0);
@@ -75,46 +67,111 @@ public class ReadPlayerView extends VBox {
         buttonGrid.add(updateBtn, 0, 1);
         buttonGrid.add(deleteBtn, 1, 1);
 
-
-        // Make buttons resize with window
-        for (javafx.scene.Node node : buttonGrid.getChildren()) {
-            if (node instanceof Button) {
-                Button button = (Button) node;
-                button.setMaxWidth(Double.MAX_VALUE);
-                HBox.setHgrow(button, Priority.ALWAYS);
-            }
-        }
-
-
-        // Player table setup (keep this)
+        // Player table setup
         playerTable = new TableView<>();
-        playerTable.setStyle("-fx-background-color: rgb(64,64,64);");
+        playerTable.setStyle("-fx-background-color: #f5f5f5; " +
+                "-fx-border-color: #e0e0e0; " +
+                "-fx-padding: 5;");
+
+        // Use fixed cell size to prevent empty rows
+        playerTable.setFixedCellSize(35);
         playerTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-
-        TableColumn<Player, String> usernameCol = new TableColumn<>("Username");
-        usernameCol.setCellValueFactory(new PropertyValueFactory<>("username"));
-        usernameCol.setStyle("-fx-text-fill: white; -fx-alignment: CENTER;");
-
-
-        TableColumn<Player, Integer> winsCol = new TableColumn<>("Wins");
-        winsCol.setCellValueFactory(new PropertyValueFactory<>("wins"));
-        winsCol.setStyle("-fx-text-fill: white; -fx-alignment: CENTER;");
-
-
-        playerTable.getColumns().addAll(usernameCol, winsCol);
         playerTable.setPlaceholder(new Label("No players found"));
         playerTable.setPrefHeight(300);
 
+        VBox.setVgrow(playerTable, Priority.ALWAYS);
+        playerTable.setMinHeight(200);
 
-        // Add components to main view (without search container)
         this.getChildren().addAll(
                 titleLabel,
                 buttonGrid,
-                playerTable  // Removed searchContainer from here
+                playerTable
         );
     }
 
+    private void setupTableColumns() {
+        playerTable.getColumns().clear();
+
+        // Username Column - 60% width
+        TableColumn<Player, String> usernameCol = new TableColumn<>("Username");
+        usernameCol.setCellValueFactory(cellData ->
+                new SimpleStringProperty(cellData.getValue().username));
+        usernameCol.setPrefWidth(200);
+        usernameCol.setStyle("-fx-alignment: CENTER_LEFT;");
+
+        usernameCol.setCellFactory(column -> new TableCell<Player, String>() {
+            @Override
+            protected void updateItem(String item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    setText(item);
+                    setTextFill(Color.BLACK);
+                    setStyle("-fx-background-color: white; " +
+                            "-fx-font-family: '" + customFont.getFamily() + "'; " +
+                            "-fx-font-size: 14px; " +
+                            "-fx-border-color: #e0e0e0; " +
+                            "-fx-border-width: 0 1 1 0;");
+                }
+            }
+        });
+
+        // Wins Column - 40% width
+        TableColumn<Player, Integer> winsCol = new TableColumn<>("Wins");
+        winsCol.setCellValueFactory(cellData ->
+                new SimpleIntegerProperty(cellData.getValue().wins).asObject());
+        winsCol.setPrefWidth(150);
+        winsCol.setStyle("-fx-alignment: CENTER;");
+
+        winsCol.setCellFactory(column -> new TableCell<Player, Integer>() {
+            @Override
+            protected void updateItem(Integer item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                    setGraphic(null);
+                    setStyle("");
+                } else {
+                    setText(item.toString());
+                    setTextFill(Color.BLACK);
+                    setStyle("-fx-background-color: white; " +
+                            "-fx-font-family: '" + customFont.getFamily() + "'; " +
+                            "-fx-font-size: 14px; " +
+                            "-fx-border-color: #e0e0e0; " +
+                            "-fx-border-width: 0 0 1 0;");
+                }
+            }
+        });
+
+        playerTable.getColumns().addAll(usernameCol, winsCol);
+
+        // Row factory for alternating colors
+        playerTable.setRowFactory(tv -> new TableRow<Player>() {
+            @Override
+            protected void updateItem(Player item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setStyle("");
+                } else {
+                    if (getIndex() % 2 == 0) {
+                        setStyle("-fx-background-color: white;");
+                    } else {
+                        setStyle("-fx-background-color: #f9f9f9;");
+                    }
+                }
+            }
+        });
+    }
+
+    public void displayPlayers(Player[] players) {
+        Platform.runLater(() -> {
+            ObservableList<Player> items = FXCollections.observableArrayList(players);
+            playerTable.setItems(items);
+        });
+    }
 
     private Button createStyledButton(String text) {
         Button button = new Button(text);
@@ -128,7 +185,6 @@ public class ReadPlayerView extends VBox {
         button.setMinWidth(150);
         button.setPadding(new Insets(10, 20, 10, 20));
 
-
         // Hover effects
         button.setOnMouseEntered(e -> button.setBackground(new Background(new BackgroundFill(
                 Color.rgb(80, 80, 80), new CornerRadii(8), Insets.EMPTY
@@ -137,45 +193,33 @@ public class ReadPlayerView extends VBox {
                 Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
         ))));
 
-
         return button;
     }
 
-
-    // Getters for buttons
+    // Getters
     public Button getCreateBtn() { return createBtn; }
     public Button getReadBtn() { return readBtn; }
     public Button getUpdateBtn() { return updateBtn; }
     public Button getDeleteBtn() { return deleteBtn; }
-
-
-    // Getters for fields
     public TableView<Player> getPlayerTable() { return playerTable; }
 
-
-    // Method to update the table with player data
-    public void updatePlayerTable(Player[] players) {
-        ObservableList<Player> playerList = FXCollections.observableArrayList(players);
-        playerTable.setItems(playerList);
-    }
-
-
-    // Show Error Alert
     public void showError(String message) {
-        Alert alert = new Alert(AlertType.ERROR);
-        alert.setTitle("Error");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(AlertType.ERROR);
+            alert.setTitle("Error");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
     }
 
-
-    // Show Success Alert
     public void showSuccess(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Success");
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Success");
+            alert.setHeaderText(null);
+            alert.setContentText(message);
+            alert.showAndWait();
+        });
     }
 }
