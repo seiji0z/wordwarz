@@ -2,6 +2,8 @@ package client.admin.view;
 
 
 import client.admin.controller.EditGamePlaySettingsController;
+import client.admin.model.AdminDashboardModel;
+import client.admin.model.EditGamePlaySettingsModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -14,6 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import org.omg.CORBA.ORB;
 
 
 public class AdminDashboardView {
@@ -28,13 +31,13 @@ public class AdminDashboardView {
     private Button editGamePlayBtn;
     private CreatePlayerView createPlayerView;
     private UpdatePlayerView updatePlayerView;
-    private ReadPlayerView readPlayerView; // Added ReadPlayerView
+    private ReadPlayerView readPlayerView;
     private Runnable onShowReadPlayerView;
     private EditGamePlaySettingsView editGamePlaySettingsView;
     private EditGamePlaySettingsController editGamePlaySettingsController;
 
 
-    public void initializeUI(Stage primaryStage) {
+    public void initializeUI(Stage primaryStage, AdminDashboardModel adminModel, ORB orb, String token) {
         primaryStage.setTitle("Admin Dashboard");
 
 
@@ -152,8 +155,17 @@ public class AdminDashboardView {
         // Initialize the views
         createPlayerView = new CreatePlayerView(customFont);
         updatePlayerView = new UpdatePlayerView(customFont);
-        readPlayerView = new ReadPlayerView(customFont); // Initialize ReadPlayerView
+        readPlayerView = new ReadPlayerView(customFont);
         editGamePlaySettingsView = new EditGamePlaySettingsView(customFont);
+
+
+        // Initialize EditGamePlaySettingsModel
+        EditGamePlaySettingsModel gamePlayModel = new EditGamePlaySettingsModel(orb);
+
+
+        // Initialize the EditGamePlaySettingsController
+        editGamePlaySettingsController = new EditGamePlaySettingsController(gamePlayModel, editGamePlaySettingsView, orb, token);
+        editGamePlaySettingsView.setController(editGamePlaySettingsController);
     }
 
 
@@ -198,9 +210,13 @@ public class AdminDashboardView {
             onShowReadPlayerView.run();
         }
     }
+
+
     public void setOnShowReadPlayerViewListener(Runnable listener) {
         this.onShowReadPlayerView = listener;
     }
+
+
     public void showEditGameplaySettingsView() {
         rightContent.getChildren().clear();
         rightContent.getChildren().add(editGamePlaySettingsView);
@@ -236,5 +252,4 @@ public class AdminDashboardView {
         return editGamePlaySettingsView;
     }
 }
-
 

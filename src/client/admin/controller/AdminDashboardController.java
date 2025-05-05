@@ -32,20 +32,20 @@ public class AdminDashboardController {
 
     private void initializeView() {
         Stage adminStage = new Stage();
-        view.initializeUI(adminStage);
+        view.initializeUI(adminStage, model, orb, token);
     }
 
 
     private void setupEventHandlers() {
         // Main dashboard buttons
         view.getEditPlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        view.getEditGamePlayBtn().setOnAction(e -> view.showEditGameplaySettingsView());
+        view.getEditGamePlayBtn().setOnAction(e -> handleEditGamePlay());
 
 
         // Create Player View handlers
         CreatePlayerView createView = view.getCreatePlayerView();
         createView.getCreateBtn().setOnAction(e -> view.showCreatePlayerView());
-        createView.getReadBtn().setOnAction(e -> view.showReadPlayerView()); // Changed to show read view
+        createView.getReadBtn().setOnAction(e -> view.showReadPlayerView());
         createView.getUpdateBtn().setOnAction(e -> view.showUpdatePlayerView());
         createView.getDeleteBtn().setOnAction(e -> view.showUpdatePlayerView());
         createView.getConfirmBtn().setOnAction(e -> handleCreatePlayer());
@@ -54,7 +54,7 @@ public class AdminDashboardController {
         // Update Player View handlers
         UpdatePlayerView updateView = view.getUpdatePlayerView();
         updateView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        updateView.getReadPlayersBtn().setOnAction(e -> view.showReadPlayerView()); // Changed to show read view
+        updateView.getReadPlayersBtn().setOnAction(e -> view.showReadPlayerView());
         updateView.getUpdateButton().setOnAction(e -> view.showUpdatePlayerView());
         updateView.getConfirmBtn().setOnAction(e -> handleUpdatePlayer());
 
@@ -62,7 +62,7 @@ public class AdminDashboardController {
         // Read Player View handlers
         ReadPlayerView readView = view.getReadPlayerView();
         readView.getCreateBtn().setOnAction(e -> view.showCreatePlayerView());
-        readView.getReadBtn().setOnAction(e -> handleReadAllPlayers()); // Load when clicked
+        readView.getReadBtn().setOnAction(e -> handleReadAllPlayers());
         readView.getUpdateBtn().setOnAction(e -> view.showUpdatePlayerView());
         readView.getDeleteBtn().setOnAction(e -> view.showUpdatePlayerView());
 
@@ -73,7 +73,14 @@ public class AdminDashboardController {
 
 
     private void handleEditGamePlay() {
-        System.out.println("handleEditGamePlay");
+        try {
+            // Show the EditGamePlaySettingsView
+            view.showEditGameplaySettingsView();
+            // Load the current settings
+            view.getEditGamePlaySettingsView().getController().loadCurrentSettings();
+        } catch (Exception e) {
+            System.err.println("Error loading gameplay settings: " + e.getMessage());
+        }
     }
 
 
@@ -102,13 +109,12 @@ public class AdminDashboardController {
         String newUsername = updateView.getUsernameField().getText().trim();
 
 
-        // Input validation
         if (username.isEmpty()) {
             updateView.showError("Please enter a username to update");
             return;
         }
         if (newUsername.isEmpty() && newPassword.isEmpty()) {
-            updateView.showError("Please enter at least one field to update");
+            updateView.showError("Please enter at least PRESSone field to update");
             return;
         }
 
@@ -140,6 +146,5 @@ public class AdminDashboardController {
             view.getReadPlayerView().showError("No players found in database");
         }
     }
-
-
 }
+

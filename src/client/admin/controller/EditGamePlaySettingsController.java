@@ -1,6 +1,6 @@
 package client.admin.controller;
 
-import WordWarZ.*;
+import WordWarZ.NotLoggedIn;
 import client.admin.model.EditGamePlaySettingsModel;
 import client.admin.view.EditGamePlaySettingsView;
 import javafx.event.ActionEvent;
@@ -19,20 +19,15 @@ public class EditGamePlaySettingsController {
         this.orb = orb;
         this.token = token;
 
-        initializeView();
         initController();
         loadCurrentSettings();
-    }
-
-    private void initializeView() {
-        view.buildUI();
     }
 
     private void initController() {
         view.getSaveButton().setOnAction(this::handleSaveSettings);
     }
 
-    private void loadCurrentSettings() {
+    public void loadCurrentSettings() {
         try {
             long waitingTime = model.getCurrentWaitingTime();
             long roundDuration = model.getCurrentRoundDuration();
@@ -61,6 +56,7 @@ public class EditGamePlaySettingsController {
 
             if (waitingSuccess && roundSuccess) {
                 showAlert("Success", "Game configurations updated successfully!");
+                loadCurrentSettings(); // Refresh fields with updated values
             } else {
                 showAlert("Partial Success", "Some configurations might not have been updated.");
             }

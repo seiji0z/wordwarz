@@ -1,6 +1,7 @@
 package client.admin.view;
 
 
+import client.admin.controller.EditGamePlaySettingsController;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
@@ -15,6 +16,7 @@ public class EditGamePlaySettingsView extends VBox {
     private final Font customFont;
     TextField waitingField, roundField;
     Button saveBtn;
+    private EditGamePlaySettingsController controller;
 
 
     public EditGamePlaySettingsView(Font customFont) {
@@ -26,11 +28,14 @@ public class EditGamePlaySettingsView extends VBox {
         this.setMaxWidth(Double.MAX_VALUE);
 
 
-        buildUI();
+        buildUI(); // Build UI in constructor
     }
 
 
     public void buildUI() {
+        getChildren().clear(); // Clear existing children to prevent duplicates
+
+
         // Title
         Label titleLabel = new Label("EDIT GAMEPLAY SETTINGS");
         titleLabel.setFont(Font.font(customFont.getFamily(), FontWeight.BOLD, 20));
@@ -54,13 +59,16 @@ public class EditGamePlaySettingsView extends VBox {
         roundField = new TextField();
         roundBox.getChildren().addAll(roundLabel, roundField);
 
+
         // Add input validation and tooltips
         waitingField.setPromptText("Enter waiting time in seconds");
         roundField.setPromptText("Enter round duration in seconds");
 
+
         // Add tooltips
         waitingField.setTooltip(new Tooltip("Enter the waiting time between games in seconds"));
         roundField.setTooltip(new Tooltip("Enter the duration for each game round in seconds"));
+
 
         // Numeric-only input validation
         waitingField.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -69,11 +77,13 @@ public class EditGamePlaySettingsView extends VBox {
             }
         });
 
+
         roundField.textProperty().addListener((observable, oldValue, newValue) -> {
             if (!newValue.matches("\\d*")) {
                 roundField.setText(newValue.replaceAll("[^\\d]", ""));
             }
         });
+
 
         // Save Changes button
         saveBtn = createStyledButton("SAVE CHANGES");
@@ -104,9 +114,17 @@ public class EditGamePlaySettingsView extends VBox {
         return button;
     }
 
-    public TextField getWaitingField() { return waitingField;}
-    public TextField getRoundField(){ return roundField;}
+
+    public TextField getWaitingField() { return waitingField; }
+    public TextField getRoundField() { return roundField; }
     public Button getSaveButton() { return saveBtn; }
+    public void setController(EditGamePlaySettingsController controller) {
+        this.controller = controller;
+    }
 
 
+    public EditGamePlaySettingsController getController() {
+        return controller;
+    }
 }
+
