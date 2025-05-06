@@ -1,14 +1,10 @@
 package client.player.controller;
+import WordWarZ.CharacterAlreadyGuessed;
 import client.player.model.GameModel;
-import client.player.model.MainMenuModel;
 import client.player.view.GameView;
-import client.player.view.MainMenuView;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
-import server.objects.Game;
-
-import java.util.Arrays;
 
 public class GameController {
     private GameModel model;
@@ -22,9 +18,15 @@ public class GameController {
         this.playerToken = token;
         this.model = new GameModel(token, orb);
         this.view = new GameView(new Stage());
+
+        setupEventHandlers();
     }
 
-    public void onGameStart(String[] wordPlaceholder) {
+    private void setupEventHandlers() {
+        view.setOnLetterPressed(this::handleLetterGuess);
+    }
+
+    public void onGameStart(char[] wordPlaceholder) {
         if (roundActive) return;
         roundActive = true;
 
@@ -42,4 +44,71 @@ public class GameController {
             });
         });
     }
+
+    // In GameController
+    private void handleLetterGuess(char letter) {
+        view.disableLetterButton(letter);
+
+        try {
+            char[] result = model.guessLetter(letter);
+            // Always update display with the server's response
+            view.updateWordDisplay(result);
+
+            if (!isGuessCorrect(result, letter)) {
+                handleWrongGuess();
+            }
+        } catch (CharacterAlreadyGuessed e) {
+            view.showErrorMessage("Letter already guessed!");
+        } catch (Exception e) {
+            view.showErrorMessage("Error processing guess: " + e.getMessage());
+        }
+    }
+
+    private boolean isGuessCorrect(char[] wordState, char guessedLetter) {
+        for (char c : wordState) {
+            if (Character.toUpperCase(c) == Character.toUpperCase(guessedLetter)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void handleWrongGuess() {
+        view.loseHeart();
+        if (view.getRemainingGuesses() <= 0) {
+            handleGameOver(false);
+            for (char c = 'A'; c <= 'Z'; c++) {
+                view.disableLetterButton(c);
+            }
+        }
+    }
+
+    private void updateGameState(char[] wordState) {
+        // Check if word is complete
+        boolean wordComplete = true;
+        for (char c : wordState) {
+            if (c == '_') {
+                wordComplete = false;
+                break;
+            }
+        }
+
+        if (wordComplete) {
+            handleGameOver(true);
+        }
+    }
+
+    private void handleGameOver(boolean won) {
+        try {
+            if (won) {
+                System.out.println("panalo");;
+            } else {
+                System.out.println("talo");;
+            }
+            model.endGame();
+        } catch (Exception e) {
+            view.showErrorMessage("Error ending game: " + e.getMessage());
+        }
+    }
+
 }

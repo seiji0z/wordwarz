@@ -1,7 +1,6 @@
 module WordWarZ {
 
   typedef sequence<char> CharSequence;
-  typedef sequence<string> StringSequence;
 
   // player
   struct Player {
@@ -28,7 +27,7 @@ module WordWarZ {
     void onQueueUpdated(in long playerCount);
     void onLeaderboardUpdated(in Leaderboard leaderboard);
     void onGameCountdown(in long secondsLeft);
-    void onRoundStarted(in StringSequence wordPlaceholder);
+    void onRoundStarted(in CharSequence wordPlaceholder);
     void onRoundLost(in string word, in string winner);
     void onRoundWon(in string word);
     void onRoundDrawn(in string word);

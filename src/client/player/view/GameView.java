@@ -1,7 +1,8 @@
 package client.player.view;
 
-import javafx.application.Application;
+import javafx.animation.*;
 import javafx.application.Platform;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -12,8 +13,6 @@ import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
-import javafx.animation.Timeline;
-import javafx.animation.KeyFrame;
 import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,16 +31,16 @@ public class GameView {
     private Timeline humanIdleAnimation;
     private Timeline zombieIdleAnimation;
     private Consumer<Character> letterGuessHandler;
+
     private int initialRoundDuration;
     private int timeRemaining;
-
-
-
     private Text timerText;
     private List<ImageView> hearts = new ArrayList<>();
     private Timeline timerTimeline;
     private Stage primaryStage;
     public int remainingGuesses = 5;
+    private Consumer<Character> onLetterPressed;
+    private boolean[] revealedLetters;
 
     public GameView(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -119,21 +118,6 @@ public class GameView {
         root.getChildren().add(zombieView);
         startZombieIdleAnimation();
 
-        // Word Display (static underscores - no functionality - placeholder for now)
-        int placeholderWordLength = 6; // Placeholder for a typical word length (e.g., "ZOMBIE")
-        double lineWidth = 60;
-        double lineHeight = 8;
-        double gap = 25;
-        double startXWord = (1280 - (placeholderWordLength * lineWidth + (placeholderWordLength - 1) * gap)) / 2.0;
-
-        for (int i = 0; i < placeholderWordLength; i++) {
-            Rectangle line = new Rectangle(lineWidth, lineHeight);
-            line.setX(startXWord + i * (lineWidth + gap));
-            line.setY(470);
-            line.setFill(Color.WHITE);
-            root.getChildren().add(line);
-        }
-
         // Keyboard Buttons
         // Top Row: Q to P (Y=505)
         String[] topRow = {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"};
@@ -189,8 +173,45 @@ public class GameView {
         primaryStage.show();
     }
 
-    public void setLetterGuessHandler(Consumer<Character> handler) {
-        this.letterGuessHandler = handler;
+    public void setOnLetterPressed(Consumer<Character> handler) {
+        this.onLetterPressed = handler;
+
+        // Setup all keyboard buttons
+        for (Node node : root.getChildren()) {
+            if (node instanceof ImageView && node.getUserData() != null) {
+                ImageView button = (ImageView) node;
+                button.setOnMouseClicked(event -> {
+                    String letter = (String) button.getUserData();
+                    disableLetterButton(button);
+                    if (onLetterPressed != null) {
+                        onLetterPressed.accept(letter.charAt(0));
+                    }
+                });
+            }
+        }
+    }
+
+    public void disableLetterButton(char letter) {
+        for (Node node : root.getChildren()) {
+            if (node instanceof ImageView && node.getUserData() != null) {
+                ImageView button = (ImageView) node;
+                if (((String)button.getUserData()).charAt(0) == Character.toUpperCase(letter)) {
+                    disableLetterButton(button);  // This calls the private method below
+                    break;
+                }
+            }
+        }
+    }
+
+    private void disableLetterButton(ImageView button) {
+        button.setDisable(true);
+        try {
+            String letter = (String) button.getUserData();
+            Image disabledImage = new Image("file:res/images/buttons/disabled keyboard buttons/" + letter + ".png");
+            button.setImage(disabledImage);
+        } catch (Exception e) {
+            button.setOpacity(0.5);
+        }
     }
 
     public void showOverlayWithTimer(Runnable onOverlayEnd) {
@@ -344,6 +365,9 @@ public class GameView {
     }
 
     public void initializeWordDisplay(int wordLength) {
+
+        revealedLetters = new boolean[wordLength]; // Initialize the array
+
         // Clear existing display
         root.getChildren().removeAll(letterTexts);
         letterTexts.clear();
@@ -354,7 +378,6 @@ public class GameView {
 
         // Create underscore placeholders
         for (int i = 0; i < wordLength; i++) {
-            // Underscore line
             Rectangle line = new Rectangle(letterWidth, 8);
             line.setX(startX + i * (letterWidth + gap));
             line.setY(470);
@@ -363,43 +386,199 @@ public class GameView {
 
             // Invisible text (will be shown when letter is guessed)
             Text letterText = new Text();
-            letterText.setFont(Font.loadFont("file:res/PressStart2P-Regular.ttf", 40));
+            letterText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40));
             letterText.setFill(Color.WHITE);
             letterText.setX(startX + i * (letterWidth + gap) + letterWidth/2 - 15);
-            letterText.setY(470 + 40);
+            letterText.setY(470 - 16);
             letterText.setVisible(false);
             root.getChildren().add(letterText);
             letterTexts.add(letterText);
         }
     }
 
-    private void handleLetterClick(String letter, ImageView button) {
-        System.out.println("Letter clicked: " + letter);
-        if (!button.isDisable()) {
-            button.setDisable(true);
+    public void updateWordDisplay(char[] wordState) {
+        Platform.runLater(() -> {
+            for (int i = 0; i < Math.min(wordState.length, letterTexts.size()); i++) {
+                if (wordState[i] != '_' && wordState[i] != ' ') {
+                    Text letterText = letterTexts.get(i);
+
+                    // Check if this letter was previously hidden
+                    boolean wasHidden = !revealedLetters[i];
+
+                    letterText.setText(String.valueOf(wordState[i]).toUpperCase());
+                    letterText.setVisible(true);
+                    revealedLetters[i] = true; // Mark as revealed
+
+                    // Only animate if this letter was just revealed
+                    if (wasHidden) {
+                        animateLetterReveal(letterText);
+                    }
+                }
+            }
+        });
+    }
+
+    private void animateLetterReveal(Text letterText) {
+        ScaleTransition st = new ScaleTransition(Duration.millis(200), letterText);
+        st.setFromX(0.1);
+        st.setFromY(0.1);
+        st.setToX(1.0);
+        st.setToY(1.0);
+        st.play();
+    }
+
+    public void loseHeart() {
+        if (remainingGuesses <= 0) return;
+
+        Platform.runLater(() -> {
+            remainingGuesses--;  // Move this before the animation
+
+            // Get the heart to deplete (last visible one)
+            ImageView heart = hearts.get(remainingGuesses);
+
+            // Change to depleted heart image
             try {
-                Image disabledImage = new Image("file:res/images/buttons/disabled keyboard buttons/" + letter + ".png");
-                button.setImage(disabledImage);
+                Image depletedHeart = new Image("file:res/images/others/deplted heart.png");
+                heart.setImage(depletedHeart);
+
+                // Add shake animation
+                animateHeartDepletion(heart);
             } catch (Exception e) {
-                System.out.println("Failed to load disabled image for " + letter + ": " + e.getMessage());
-                button.setOpacity(0.5);
+                System.err.println("Failed to load depleted heart image: " + e.getMessage());
+                heart.setOpacity(0.5);
+            }
+
+            // Disable all buttons if no guesses left
+            if (remainingGuesses <= 0) {
+                disableAllLetterButtons();
+            }
+        });
+    }
+
+    private void disableAllLetterButtons() {
+        for (Node node : root.getChildren()) {
+            if (node instanceof ImageView && node.getUserData() != null) {
+                ImageView button = (ImageView) node;
+                disableLetterButton(button);
             }
         }
+    }
 
+    private void animateHeartDepletion(ImageView heart) {
+        // More vigorous shake animation using scale and rotate transitions
+        ScaleTransition st1 = new ScaleTransition(Duration.millis(50), heart);
+        st1.setFromX(1.0);
+        st1.setFromY(1.0);
+        st1.setToX(1.3);
+        st1.setToY(1.3);
 
-        if (letterGuessHandler != null) {
-            letterGuessHandler.accept(letter.charAt(0));
+        ScaleTransition st2 = new ScaleTransition(Duration.millis(50), heart);
+        st2.setFromX(1.3);
+        st2.setFromY(1.3);
+        st2.setToX(0.7);
+        st2.setToY(0.7);
+
+        ScaleTransition st3 = new ScaleTransition(Duration.millis(50), heart);
+        st3.setFromX(0.7);
+        st3.setFromY(0.7);
+        st3.setToX(1.2);
+        st3.setToY(1.2);
+
+        ScaleTransition st4 = new ScaleTransition(Duration.millis(50), heart);
+        st4.setFromX(1.2);
+        st4.setFromY(1.2);
+        st4.setToX(1.0);
+        st4.setToY(1.0);
+
+        RotateTransition rt1 = new RotateTransition(Duration.millis(50), heart);
+        rt1.setFromAngle(0);
+        rt1.setToAngle(15);
+
+        RotateTransition rt2 = new RotateTransition(Duration.millis(50), heart);
+        rt2.setFromAngle(15);
+        rt2.setToAngle(-15);
+
+        RotateTransition rt3 = new RotateTransition(Duration.millis(50), heart);
+        rt3.setFromAngle(-15);
+        rt3.setToAngle(0);
+
+        SequentialTransition scaleShake = new SequentialTransition(st1, st2, st3, st4);
+        SequentialTransition rotateShake = new SequentialTransition(rt1, rt2, rt3);
+
+        // Fade animation
+        FadeTransition ft = new FadeTransition(Duration.millis(300), heart);
+        ft.setFromValue(1.0);
+        ft.setToValue(0.7);
+
+        ParallelTransition combined = new ParallelTransition(scaleShake, rotateShake, ft);
+        combined.play();
+    }
+
+    private void handleLetterClick(String letter, ImageView button) {
+        if (button.isDisable()) return;
+
+        button.setDisable(true);
+        try {
+            // Visual feedback for pressed key
+            Image pressedImage = new Image("file:res/images/buttons/disabled keyboard buttons/" + letter + ".png");
+            button.setImage(pressedImage);
+
+            // Notify controller
+            if (letterGuessHandler != null) {
+                letterGuessHandler.accept(letter.charAt(0));
+            }
+        } catch (Exception e) {
+            button.setOpacity(0.5);
+        }
+    }
+
+    public void resetKeyboard() {
+        for (Node node : root.getChildren()) {
+            if (node instanceof ImageView && node.getUserData() != null) {
+                ImageView button = (ImageView) node;
+                String letter = (String) button.getUserData();
+                try {
+                    Image normalImage = new Image("file:res/images/buttons/keyboard buttons/" + letter + ".png");
+                    button.setImage(normalImage);
+                    button.setDisable(false);
+                } catch (Exception e) {
+                    button.setOpacity(1.0);
+                }
+            }
         }
     }
 
 
-    public void updateWordDisplay(char[] wordState) {
-        for (int i = 0; i < wordState.length; i++) {
-            if (wordState[i] != '_') {
-                letterTexts.get(i).setText(String.valueOf(wordState[i]));
-                letterTexts.get(i).setVisible(true);
-            }
-        }
+    public void showGameWon() {
+        showEndGameOverlay("YOU SURVIVED!", Color.GREEN);
+    }
+
+    public void showGameLost() {
+        showEndGameOverlay("YOU GOT INFECTED!", Color.RED);
+    }
+
+    private void showEndGameOverlay(String message, Color color) {
+        Platform.runLater(() -> {
+            Pane overlay = new Pane();
+            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8);");
+            overlay.setPrefSize(1280, 760);
+
+            Font font = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 50);
+            Text text = new Text(message);
+            text.setFont(font);
+            text.setFill(color);
+            text.setTextAlignment(TextAlignment.CENTER);
+            text.setWrappingWidth(1000);
+            text.setX((1280 - text.getLayoutBounds().getWidth()) / 2);
+            text.setY(380);
+
+            overlay.getChildren().add(text);
+            root.getChildren().add(overlay);
+        });
+    }
+
+    public int getRemainingGuesses() {
+        return this.remainingGuesses;
     }
 
     public void showErrorMessage(String s) {

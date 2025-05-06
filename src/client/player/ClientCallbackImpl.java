@@ -61,7 +61,7 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
 
     @Override
-    public void onRoundStarted(String[] wordPlaceholder) {
+    public void onRoundStarted(char[] wordPlaceholder) {
         if (gameStarted) {
             return; // Prevent multiple initializations
         }
