@@ -23,8 +23,13 @@ public class GameServant extends GameServicePOA {
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static final Map<String, Game> activeGames = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService roundScheduler = Executors.newScheduledThreadPool(4);
+    private static GameServant instance;
 
     private ORB orb;
+
+    public GameServant() {
+        instance = this;
+    }
 
     public void setORB(ORB orb_val) {
         orb = orb_val;
@@ -56,6 +61,31 @@ public class GameServant extends GameServicePOA {
         String username = SessionManager.getSession(token).getUsername();
         System.out.println("Starting game for token: " + token + ", username: " + username);
         QueueManager.joinQueue(username);
+    }
+
+    public static void createAndStartGame(List<String> usernames) {
+        // Wait until countdown is actually complete
+        if (QueueManager.getRemainingTime() > 0) {
+            return;
+        }
+
+        Game newGame = new Game(usernames);
+
+        // Register game for all players
+        for (String username : usernames) {
+            String token = SessionManager.getTokenByUsername(username);
+            registerActiveGame(token, newGame);
+        }
+
+        // Start round only once (for the first player)
+        if (!usernames.isEmpty()) {
+            String firstPlayerToken = SessionManager.getTokenByUsername(usernames.get(0));
+            try {
+                instance.startRound(firstPlayerToken);
+            } catch (Exception e) {
+                System.err.println("Error starting round: " + e.getMessage());
+            }
+        }
     }
 
     @Override
@@ -114,8 +144,9 @@ public class GameServant extends GameServicePOA {
         });
     }
 
-    public static void notifyCountdownUpdate(int secondsLeft) {
+    public void notifyCountdownUpdate(int secondsLeft) {
         System.out.println("Notifying " + clientCallbacks.size() + " clients of countdown update: " + secondsLeft + " seconds");
+
         clientCallbacks.entrySet().removeIf(entry -> {
             String token = entry.getKey();
             try {
@@ -132,6 +163,7 @@ public class GameServant extends GameServicePOA {
                 return true;
             }
         });
+
     }
 
     public static void clearCallbacksExcept(List<String> currentUsernames) {
@@ -161,50 +193,33 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();
         String username = SessionManager.getSession(token).getUsername();
 
-        // Get the player's game session
         Game session = activeGames.get(username);
         if (session == null || !session.getPlayers().contains(username)) throw new GameNotFound();
 
-        // Pick the next word and initialize placeholders
-        String word = session.nextWord();
-        String[] placeholder = new String[word.length()];
-        Arrays.fill(placeholder, "_");
+        // Only generate new word if this is the first player starting the round
+        if (session.getCurrentWord() == null) {
+            String word = session.nextWord();
+            System.out.println("NEW WORD: " + word);
+            String[] placeholder = new String[word.length()];
+            Arrays.fill(placeholder, "_");
+            System.out.println("PLACEHOLDER: " + Arrays.toString(placeholder));
 
-        // Inform all players about the round start
-        for (String player : session.getPlayers()) {
-            WordWarZ.ClientCallback cb = clientCallbacks.get(SessionManager.getTokenByUsername(player));
-            if (cb != null) {
-                try {
-                    cb.onRoundStarted(placeholder);
-                } catch (Exception e) {
-                    System.err.println("Failed to notify player " + player + ": " + e.getMessage());
+            // Notify all players
+            for (String player : session.getPlayers()) {
+                String playerToken = SessionManager.getTokenByUsername(player);
+                WordWarZ.ClientCallback cb = clientCallbacks.get(playerToken);
+                if (cb != null) {
+                    try {
+                        cb.onRoundStarted(placeholder);
+                    } catch (Exception e) {
+                        System.err.println("Failed to notify player " + player + ": " + e.getMessage());
+                    }
                 }
             }
         }
 
-        // Schedule round timeout
-        roundScheduler.schedule(() -> {
-            synchronized (session) {
-                String roundResult = "The correct word was: " + word;
-                String winner = null;
-
-                // No player won yet, so notify everyone
-                for (String player : session.getPlayers()) {
-                    WordWarZ.ClientCallback cb = clientCallbacks.get(SessionManager.getTokenByUsername(player));
-                    if (cb != null) {
-                        try {
-                            cb.onRoundEnded(roundResult, winner);
-                        } catch (Exception e) {
-                            System.err.println("Failed to notify end of round for " + player);
-                        }
-                    }
-                }
-            }
-        }, GameConfig.getRoundDuration(), TimeUnit.SECONDS);
-
-        return word.length();
+        return session.getCurrentWord().length();
     }
-
 
     @Override
     public char[] guessLetter(String token, char letter) throws NotLoggedIn, NotInGame, GameNotFound, CharacterAlreadyGuessed{
@@ -246,5 +261,18 @@ public class GameServant extends GameServicePOA {
     @Override
     public int getRemainingTime(String token) throws NotLoggedIn, NotInGame {
         return 0;
+    }
+
+    public static void registerActiveGame(String playerToken, Game game) {
+        try {
+            activeGames.put(SessionManager.getSession(playerToken).getUsername(), game);
+            System.out.println("Game registered for player: " + SessionManager.getSession(playerToken).getUsername());
+        } catch (NotLoggedIn e) {
+            System.out.println(e.getMessage());;
+        }
+    }
+
+    public static Game getActiveGame(String username) {
+        return activeGames.get(username);
     }
 }

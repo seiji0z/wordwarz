@@ -21,9 +21,11 @@ public class QueueView extends Application {
     private Text playerCountText;
     private Pane usernamesPane;
     private Button cancelButton;
+    private Stage stage;
 
     @Override
     public void start(Stage primaryStage) {
+        this.stage = primaryStage;
         root = new Pane();
         Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 25);
         if (customFont == null) {
@@ -117,4 +119,11 @@ public class QueueView extends Application {
             System.out.println("Player count updated to: " + count);
         });
     }
-}
+
+    public void close() {
+        if (stage != null) {
+            stage.close();
+        }
+        // Clear any other resources
+    }
+    }

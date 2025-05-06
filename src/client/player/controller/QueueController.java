@@ -20,6 +20,7 @@ public class QueueController {
     private final ORB orb;
     private final Stage stage;
     private boolean transitionInProgress = false;
+    private ClientCallbackImpl callbackImpl;
 
     public QueueController(String token, ORB orb, Stage stage) {
         this.orb = orb;
@@ -48,7 +49,7 @@ public class QueueController {
             POA rootPOA = POAHelper.narrow(obj);
             rootPOA.the_POAManager().activate();
 
-            ClientCallbackImpl callbackImpl = new ClientCallbackImpl(view, stage, playerToken, orb);
+            callbackImpl = new ClientCallbackImpl(view, stage, playerToken, orb);
             org.omg.CORBA.Object callbackObj = rootPOA.servant_to_reference(callbackImpl);
             WordWarZ.ClientCallback callback = WordWarZ.ClientCallbackHelper.narrow(callbackObj);
             GameService gameService = model.getGameService();
@@ -100,7 +101,7 @@ public class QueueController {
         Stage mainMenuStage = new Stage();
         MainMenuView mainMenuView = new MainMenuView();
         mainMenuView.initializeUI(mainMenuStage);
-        MainMenuController mainMenuController = new MainMenuController(playerToken, orb, mainMenuView, mainMenuStage);
+        new MainMenuController(playerToken, orb, mainMenuView, mainMenuStage);
         mainMenuStage.setTitle("Word War Z - Main Menu");
     }
 

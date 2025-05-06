@@ -27,6 +27,7 @@
         }
 
         public int startRound() throws GameNotFound, NotLoggedIn, NotInGame {
+            System.out.println("[MODEL] Starting round");
             return gameService.startRound(token);
         }
 

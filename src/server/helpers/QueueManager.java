@@ -1,9 +1,11 @@
 package server.helpers;
 
+import server.objects.Game;
 import server.objects.GameConfig;
 import server.servants.GameServant;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 public class QueueManager {
     private static List<String> waitingPlayers = new ArrayList<>();
@@ -65,30 +67,30 @@ public class QueueManager {
         System.out.println("Countdown canceled");
     }
 
-    private static void startGame() {
+    private static synchronized void startGame() {
         if (waitingPlayers.size() >= 2) {
             System.out.println("Starting game with players: " + waitingPlayers);
-            notifyNewGame(new ArrayList<>(waitingPlayers));
-        } else if (!waitingPlayers.isEmpty()) {
-            System.out.println("No opponent found for " + waitingPlayers.get(0));
-            notifyNoOpponent(waitingPlayers.get(0));
+
+            System.out.println("Attempting to create game. Countdown started: " + countdownStarted + ", Remaining time: " + remainingTime);
+
+            List<String> playerTokens = waitingPlayers.stream()
+                    .map(SessionManager::getTokenByUsername)
+                    .collect(Collectors.toList());
+
+            List<String> playersToStart = new ArrayList<>(waitingPlayers);
+            waitingPlayers.clear();
+            countdownStarted = false;
+
+            cancelCountdown();
+
+            GameServant.createAndStartGame(playersToStart);
         }
-
-        // Clear callbacks for players no longer in queue
-        List<String> currentPlayers = new ArrayList<>(waitingPlayers);
-        GameServant.clearCallbacksExcept(currentPlayers);
-
-        waitingPlayers.clear();
-        countdownStarted = false;
     }
 
     private static void notifyNoOpponent(String username) {
         System.out.println("Notifying no opponent for " + username);
     }
 
-    private static void notifyNewGame(List<String> players) {
-        System.out.println("Creating new game with players: " + players);
-    }
 
     private static void broadcastQueueUpdate() {
         System.out.println("Broadcasting queue update: " + waitingPlayers.size() + " players");
@@ -97,8 +99,9 @@ public class QueueManager {
 
     private static void broadcastCountdownUpdate() {
         System.out.println("Broadcasting countdown update: " + remainingTime + " seconds");
-        GameServant.notifyCountdownUpdate(remainingTime);
-    }
+        GameServant gameServant = new GameServant();
+        // Notify all clients about the countdown
+        gameServant.notifyCountdownUpdate(remainingTime);    }
 
     public static synchronized int getQueueSize() {
         System.out.println("Queue size requested. Current players: " + waitingPlayers);
@@ -111,5 +114,9 @@ public class QueueManager {
 
     public static synchronized boolean isInQueue(String username) {
         return waitingPlayers.contains(username);
+    }
+
+    public static boolean isCountdownStarted() {
+        return countdownStarted;
     }
 }

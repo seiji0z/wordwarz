@@ -19,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
-public class GameView extends Application {
+public class GameView {
     private List<Text> letterTexts = new ArrayList<>();
     private Pane root; // Store the root pane for resetting the game
     private Pane overlayPane; // For the start overlay
@@ -40,9 +40,12 @@ public class GameView extends Application {
     private Stage primaryStage;
     public int remainingGuesses = 5;
 
+    public GameView(Stage primaryStage) {
+        this.primaryStage = primaryStage;
+        initialize();
+    }
 
-    @Override
-    public void start(Stage primaryStage) {
+    public void initialize() {
         this.primaryStage = primaryStage;
         // --- ROOT LAYOUT ---
         root = new Pane();
@@ -213,6 +216,20 @@ public class GameView extends Application {
     }
 
 
+    public void showOverlayWithTimer(Runnable onOverlayEnd) {
+        overlayPane.setVisible(true); // Display the overlay
+
+        // Run a timer to automatically remove the overlay after 3 seconds
+        Timeline overlayTimer = new Timeline(
+                new KeyFrame(Duration.seconds(3), event -> {
+                    overlayPane.setVisible(false); // Hide the overlay
+                    if (onOverlayEnd != null) onOverlayEnd.run(); // Trigger callback
+                })
+        );
+        overlayTimer.setCycleCount(1); // Run once
+        overlayTimer.play();
+    }
+
     private void startHumanIdleAnimation() {
         if (humanIdleFrames == null || humanIdleFrames.length != 2) {
             System.out.println("Human idle animation frames not loaded properly.");
@@ -344,10 +361,6 @@ public class GameView extends Application {
                 letterTexts.get(i).setVisible(true);
             }
         }
-    }
-
-    public static void main(String[] args) {
-        launch(args);
     }
 
     public void showErrorMessage(String s) {
