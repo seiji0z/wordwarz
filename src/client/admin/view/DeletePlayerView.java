@@ -17,7 +17,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 
-public class ReadPlayerView extends VBox {
+public class DeletePlayerView extends VBox {
     private final Font customFont;
     private Button createBtn;
     private Button readBtn;
@@ -25,8 +25,9 @@ public class ReadPlayerView extends VBox {
     private Button deleteBtn;
     private TableView<Player> playerTable;
     private TextField searchField;
+    private Button searchDeleteBtn;
 
-    public ReadPlayerView(Font customFont) {
+    public DeletePlayerView(Font customFont) {
         this.customFont = customFont;
         initializeUI();
         setupTableColumns();
@@ -45,11 +46,11 @@ public class ReadPlayerView extends VBox {
         VBox.setVgrow(this, Priority.ALWAYS);
 
         // Title label
-        Label titleLabel = new Label("Read Players");
+        Label titleLabel = new Label("Delete Players");
         titleLabel.setFont(Font.font(customFont.getFamily(), FontWeight.BOLD, 24));
         titleLabel.setTextFill(Color.DARKRED);
 
-        // Search bar
+        // Search bar and buttons
         HBox searchBox = new HBox(10);
         searchBox.setAlignment(Pos.CENTER);
         searchBox.setPadding(new Insets(10));
@@ -58,7 +59,7 @@ public class ReadPlayerView extends VBox {
         searchLabel.setFont(Font.font(customFont.getFamily(), FontWeight.BOLD, 14));
 
         searchField = new TextField();
-        searchField.setPromptText("Enter username to search...");
+        searchField.setPromptText("Enter username to delete...");
         searchField.setFont(Font.font(customFont.getFamily(), 14));
         searchField.setPrefWidth(200);
         searchField.setStyle("-fx-background-color: white; " +
@@ -66,7 +67,48 @@ public class ReadPlayerView extends VBox {
                 "-fx-border-radius: 5; " +
                 "-fx-padding: 5;");
 
-        searchBox.getChildren().addAll(searchLabel, searchField);
+        // Create clear button for search bar
+        Button clearBtn = new Button("Clear");
+        clearBtn.setFont(Font.font(customFont.getFamily(), 14));
+        clearBtn.setTextFill(Color.WHITE);
+        clearBtn.setCursor(Cursor.HAND);
+        clearBtn.setBackground(new Background(new BackgroundFill(
+                Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
+        )));
+        clearBtn.setPadding(new Insets(5, 10, 5, 10));
+        clearBtn.setStyle("-fx-font-size: 12px;");
+
+        // Hover effects for clear button
+        clearBtn.setOnMouseEntered(e -> clearBtn.setBackground(new Background(new BackgroundFill(
+                Color.rgb(80, 80, 80), new CornerRadii(8), Insets.EMPTY
+        ))));
+        clearBtn.setOnMouseExited(e -> clearBtn.setBackground(new Background(new BackgroundFill(
+                Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
+        ))));
+
+        // Action to clear the search field
+        clearBtn.setOnAction(e -> searchField.clear());
+
+        // Create delete button for search bar
+        searchDeleteBtn = new Button("Delete");
+        searchDeleteBtn.setFont(Font.font(customFont.getFamily(), 14));
+        searchDeleteBtn.setTextFill(Color.WHITE);
+        searchDeleteBtn.setCursor(Cursor.HAND);
+        searchDeleteBtn.setBackground(new Background(new BackgroundFill(
+                Color.rgb(200, 50, 50), new CornerRadii(8), Insets.EMPTY
+        )));
+        searchDeleteBtn.setPadding(new Insets(5, 10, 5, 10));
+        searchDeleteBtn.setStyle("-fx-font-size: 12px;");
+
+        // Hover effects for delete button
+        searchDeleteBtn.setOnMouseEntered(e -> searchDeleteBtn.setBackground(new Background(new BackgroundFill(
+                Color.rgb(220, 70, 70), new CornerRadii(8), Insets.EMPTY
+        ))));
+        searchDeleteBtn.setOnMouseExited(e -> searchDeleteBtn.setBackground(new Background(new BackgroundFill(
+                Color.rgb(200, 50, 50), new CornerRadii(8), Insets.EMPTY
+        ))));
+
+        searchBox.getChildren().addAll(searchLabel, searchField, clearBtn, searchDeleteBtn);
 
         // Button container
         GridPane buttonGrid = new GridPane();
@@ -80,6 +122,7 @@ public class ReadPlayerView extends VBox {
         readBtn = createStyledButton("READ PLAYERS");
         updateBtn = createStyledButton("UPDATE PLAYER");
         deleteBtn = createStyledButton("DELETE PLAYER");
+        deleteBtn.setDisable(true); // Indicate active view
 
         // Add buttons to grid
         buttonGrid.add(createBtn, 0, 0);
@@ -217,6 +260,19 @@ public class ReadPlayerView extends VBox {
         return button;
     }
 
+    public boolean showDeleteConfirmation(String username) {
+        Alert alert = new Alert(AlertType.CONFIRMATION);
+        alert.setTitle("Confirm Deletion");
+        alert.setHeaderText(null);
+        alert.setContentText("Are you sure you want to delete the player '" + username + "'? This action cannot be undone.");
+
+        ButtonType confirmButton = new ButtonType("Delete", ButtonBar.ButtonData.OK_DONE);
+        ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+        alert.getButtonTypes().setAll(confirmButton, cancelButton);
+
+        return alert.showAndWait().filter(buttonType -> buttonType == confirmButton).isPresent();
+    }
+
     // Getters
     public Button getCreateBtn() { return createBtn; }
     public Button getReadBtn() { return readBtn; }
@@ -224,6 +280,7 @@ public class ReadPlayerView extends VBox {
     public Button getDeleteBtn() { return deleteBtn; }
     public TableView<Player> getPlayerTable() { return playerTable; }
     public TextField getSearchField() { return searchField; }
+    public Button getSearchDeleteBtn() { return searchDeleteBtn; }
 
     public void showError(String message) {
         Platform.runLater(() -> {

@@ -79,8 +79,24 @@ public class AdminServant extends AdminServicePOA {
 
     @Override
     public void deletePlayer(String username) throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
+        System.out.println(username + " umaabot ba dito");
+        if (username == null || username.isEmpty()) {
+            throw new NotLoggedIn("Username is required");
+        }
 
-
+        if (!DBManager.userExists(username)) {
+            throw new PlayerNotFound("Player not found: " + username);
+        }
+        try {
+            boolean deleted = DBManager.deletePlayer(username);
+            if (!deleted) {
+                throw new PlayerNotFound("Failed to delete player " + username);
+            }
+            System.out.println("Player " + username + " deleted successfully");
+        } catch (SQLException e) {
+            System.out.println("Database error deleting player: " + e.getMessage());
+            throw new PlayerNotFound("Database error deleting player");
+        }
     }
 
 

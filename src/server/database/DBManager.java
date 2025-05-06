@@ -11,7 +11,6 @@ public class DBManager {
     public DBManager() {
     }
 
-
     public static boolean userExists(String username) {
         String query = "SELECT username FROM credentials WHERE username = ?";
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
@@ -173,6 +172,71 @@ public class DBManager {
         }
     }
 
+    public static boolean deletePlayer(String username) throws SQLException {
+        System.out.println("Attempting to delete player: " + username);
+
+        if (!userExists(username)) {
+            System.out.println("[ERROR] User " + username + " not found in credentials table");
+            return false;
+        }
+
+        // Verify database connection
+        if (DBConnection.con == null || DBConnection.con.isClosed()) {
+            System.out.println("[ERROR] Database connection is null or closed");
+            throw new SQLException("Database connection is not available");
+        }
+
+        DBConnection.con.setAutoCommit(false);
+
+        try {
+            int userId = getUserId(username);
+            if (userId == -1) {
+                System.out.println("[ERROR] User ID not found for username: " + username);
+                throw new SQLException("User ID not found for: " + username);
+            }
+            System.out.println("Found user_id: " + userId + " for username: " + username);
+
+            // Delete from user table (credentials should cascade)
+            String userQuery = "DELETE FROM user WHERE user_id = ?";
+            System.out.println("Executing query: " + userQuery + " with user_id: " + userId);
+            try (PreparedStatement userStmt = DBConnection.con.prepareStatement(userQuery)) {
+                userStmt.setInt(1, userId);
+                int userRows = userStmt.executeUpdate();
+                System.out.println("Rows affected in user: " + userRows);
+                if (userRows == 0) {
+                    System.out.println("[WARNING] No rows deleted from user for user_id: " + userId);
+                }
+            }
+
+            // Verify credentials deletion (should be handled by CASCADE)
+            String checkCredentialsQuery = "SELECT COUNT(*) FROM credentials WHERE user_id = ?";
+            try (PreparedStatement checkStmt = DBConnection.con.prepareStatement(checkCredentialsQuery)) {
+                checkStmt.setInt(1, userId);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next() && rs.getInt(1) > 0) {
+                    System.out.println("[WARNING] Credentials record still exists for user_id: " + userId);
+                } else {
+                    System.out.println("Credentials record deleted successfully for user_id: " + userId);
+                }
+            }
+
+            System.out.println("Committing transaction for deletion of user: " + username);
+            DBConnection.con.commit();
+            System.out.println("Player " + username + " deleted successfully");
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error deleting player: " + e.getMessage());
+            System.out.println("SQL State: " + e.getSQLState());
+            System.out.println("Error Code: " + e.getErrorCode());
+            System.out.println("Rolling back transaction for user: " + username);
+            DBConnection.con.rollback();
+            throw e;
+        } finally {
+            System.out.println("Restoring auto-commit state");
+            DBConnection.con.setAutoCommit(true);
+        }
+    }
+
     private static int getUserId(String username) throws SQLException {
         String query = "SELECT user_id FROM credentials WHERE username = ?";
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
@@ -209,7 +273,7 @@ public class DBManager {
 
     public static List<Player> searchPlayers(String searchQuery) throws SQLException {
         List<Player> players = new ArrayList<>();
-        String query = "SELECT username, wins FROM user WHERE username LIKE ? ORDER BY wins DESC";
+        String query = "SELECT username, wins FROM user WHERE username LIKE ? AND is_admin <> 'Y' ORDER BY wins DESC;";
 
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             stmt.setString(1, "%" + searchQuery + "%");
@@ -222,14 +286,6 @@ public class DBManager {
         return players;
     }
 
-
-    /**
-     * Updates both game configuration settings in a single transaction
-     *
-     * @param waitingTime   The waiting time in seconds
-     * @param roundDuration The round duration in seconds
-     * @return true if successful, false otherwise
-     */
     public static boolean updateGameConfigurations(int waitingTime, int roundDuration) {
         String query = "UPDATE gameconfig SET waiting_time = ?, round_duration = ? WHERE config_id = 50001";
 
@@ -254,11 +310,6 @@ public class DBManager {
         }
     }
 
-    /**
-     * Gets the current game waiting time
-     *
-     * @return waiting time in seconds, or default 10 if not found
-     */
     public static int getGameWaitingTime() {
         String query = "SELECT waiting_time FROM gameconfig WHERE config_id = 50001";
 
@@ -275,11 +326,6 @@ public class DBManager {
         return 10; // Default value if not found
     }
 
-    /**
-     * Gets the current game round duration
-     *
-     * @return round duration in seconds, or default 30 if not found
-     */
     public static int getGameRoundDuration() {
         String query = "SELECT round_duration FROM gameconfig WHERE config_id = 50001";
 
