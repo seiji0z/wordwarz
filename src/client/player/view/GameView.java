@@ -32,6 +32,9 @@ public class GameView {
     private Timeline humanIdleAnimation;
     private Timeline zombieIdleAnimation;
     private Consumer<Character> letterGuessHandler;
+    private int initialRoundDuration;
+    private int timeRemaining;
+
 
 
     private Text timerText;
@@ -177,31 +180,6 @@ public class GameView {
             root.getChildren().add(buttonView);
         }
 
-        // --- OVERLAY ---
-        overlayPane = new Pane();
-        overlayPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
-        overlayPane.setPrefSize(1280, 760);
-
-        Text overlayText = new Text("Race against the clock to guess the word! \n\nFirst to 3 wins claims victory!");
-        overlayText.setFont(customFont);
-        overlayText.setFill(Color.WHITE);
-        overlayText.setTextAlignment(TextAlignment.CENTER);
-        overlayText.setWrappingWidth(1000);
-
-        // Center the text
-        overlayText.setX((1280 - overlayText.getLayoutBounds().getWidth()) / 2);
-        overlayText.setY(350);
-
-        overlayPane.getChildren().add(overlayText);
-        root.getChildren().add(overlayPane);
-
-        // Remove the overlay after 3 seconds
-        Timeline overlayTimer = new Timeline(
-                new KeyFrame(Duration.seconds(3),
-                        event -> root.getChildren().remove(overlayPane)
-                ));
-        overlayTimer.play();
-
         // --- SCENE & STAGE ---
         Scene scene = new Scene(root, 1280, 760); // Explicitly set size
         primaryStage.setTitle("Word War Z");
@@ -215,19 +193,41 @@ public class GameView {
         this.letterGuessHandler = handler;
     }
 
-
     public void showOverlayWithTimer(Runnable onOverlayEnd) {
-        overlayPane.setVisible(true); // Display the overlay
+        Platform.runLater(() -> {
+            // Create overlay if it doesn't exist
+            if (overlayPane == null) {
+                overlayPane = new Pane();
+                overlayPane.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
+                overlayPane.setPrefSize(1280, 760);
 
-        // Run a timer to automatically remove the overlay after 3 seconds
-        Timeline overlayTimer = new Timeline(
-                new KeyFrame(Duration.seconds(3), event -> {
-                    overlayPane.setVisible(false); // Hide the overlay
-                    if (onOverlayEnd != null) onOverlayEnd.run(); // Trigger callback
-                })
-        );
-        overlayTimer.setCycleCount(1); // Run once
-        overlayTimer.play();
+                Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40);
+                Text overlayText = new Text("Race against the clock to guess the word! \n\nFirst to 3 wins claims victory!");
+                overlayText.setFont(customFont);
+                overlayText.setFill(Color.WHITE);
+                overlayText.setTextAlignment(TextAlignment.CENTER);
+                overlayText.setWrappingWidth(1000);
+                overlayText.setX((1280 - overlayText.getLayoutBounds().getWidth()) / 2);
+                overlayText.setY(350);
+                overlayPane.getChildren().add(overlayText);
+            }
+
+            // Add overlay if not already present
+            if (!root.getChildren().contains(overlayPane)) {
+                root.getChildren().add(overlayPane);
+            }
+            overlayPane.setVisible(true);
+
+            // Remove after 3 seconds
+            Timeline overlayTimer = new Timeline(
+                    new KeyFrame(Duration.seconds(3), event -> {
+                        root.getChildren().remove(overlayPane);
+                        if (onOverlayEnd != null) {
+                            onOverlayEnd.run();
+                        }
+                    }));
+            overlayTimer.play();
+        });
     }
 
     private void startHumanIdleAnimation() {
@@ -285,6 +285,45 @@ public class GameView {
             int secs = seconds % 60;
             timerText.setText(String.format("%02d:%02d", mins, secs));
         });
+    }
+
+    public void startTimer(int duration) {
+        this.initialRoundDuration = duration;
+        timeRemaining = duration;
+
+        if (timerTimeline != null) {
+            timerTimeline.stop();
+        }
+
+        timerTimeline = new Timeline(
+                new KeyFrame(Duration.seconds(1), event -> {
+                    timeRemaining--;
+                    updateTimerDisplay(timeRemaining);
+                    updateZombiePosition();
+
+                    if (timeRemaining <= 0) {
+                        timerTimeline.stop();
+                        handleTimeOut();
+                    }
+                })
+        );
+        timerTimeline.setCycleCount(Timeline.INDEFINITE);
+        timerTimeline.play();
+    }
+
+    private void updateZombiePosition() {
+        // Calculate progress (0.0 to 1.0)
+        double progress = (double)(initialRoundDuration - timeRemaining) / initialRoundDuration;
+
+        // Zombie moves from right (1000) to left (200) based on time elapsed
+        double newX = 1000 - (progress * 800);
+        zombieView.setX(Math.max(200, newX));
+    }
+
+    private void handleTimeOut() {
+        // Notify controller that time ran out
+        // You might want to add a callback for this
+        System.out.println("Time's up!");
     }
 
     public void updateHearts() {

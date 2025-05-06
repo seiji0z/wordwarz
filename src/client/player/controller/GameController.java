@@ -33,6 +33,7 @@ public class GameController {
                 try {
                     view.initializeWordDisplay(wordPlaceholder.length);
                     model.startRound();
+                    view.startTimer(model.getRoundDuration());
                 } catch (Exception e) {
                     view.showErrorMessage("Failed to start round: " + e.getMessage());
                 } finally {

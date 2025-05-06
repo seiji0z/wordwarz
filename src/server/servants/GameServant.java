@@ -113,6 +113,14 @@ public class GameServant extends GameServicePOA {
     }
 
     @Override
+    public int getRoundDuration(String token) throws NotLoggedIn {
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+        return GameConfig.getRoundDuration();
+    }
+
+    @Override
     public int getTimeUntilGameStart(String token) throws NotLoggedIn, PlayerNotInQueue {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();

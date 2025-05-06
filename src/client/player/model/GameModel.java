@@ -31,6 +31,9 @@
             return gameService.startRound(token);
         }
 
+        public int getRoundDuration() throws NotLoggedIn, GameNotFound, NotInGame {
+            return gameService.getRoundDuration(token);
+        }
 
         public char[] guessLetter(char letter) throws GameNotFound, NotLoggedIn, NotInGame, CharacterAlreadyGuessed {
             return gameService.guessLetter(token, letter);
