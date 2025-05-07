@@ -42,6 +42,7 @@ public class GameView {
     public int remainingGuesses = 5;
     private Consumer<Character> onLetterPressed;
     private boolean[] revealedLetters;
+    private Runnable timeOutHandler;
 
     public GameView(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -352,12 +353,6 @@ public class GameView {
         zombieView.setX(Math.max(200, newX));
     }
 
-    private void handleTimeOut() {
-        // Notify controller that time ran out
-        // You might want to add a callback for this
-        System.out.println("Time's up!");
-    }
-
     public void updateHearts() {
         Platform.runLater(() -> {
             for (int i = 0; i < hearts.size(); i++) {
@@ -593,5 +588,75 @@ public class GameView {
     }
 
     public void showErrorMessage(String s) {
+    }
+
+    // In GameView.java
+    public void showRoundLost(String winner, String word) {
+        showRoundEndOverlay("You got eaten by " + winner + "!\nThe word was: " + word, Color.RED);
+    }
+
+    public void showRoundWon(String word) {
+        showRoundEndOverlay("You survived!\nThe word was: " + word, Color.GREEN);
+    }
+
+    public void showRoundDrawn(String word) {
+        showRoundEndOverlay("Time's up! No one guessed the word: " + word, Color.YELLOW);
+    }
+
+    public void showWaitingForOthers() {
+        showRoundEndOverlay("You got eaten!\nWaiting for round to end...", Color.ORANGE);
+    }
+
+    private void showRoundEndOverlay(String message, Color color) {
+        Platform.runLater(() -> {
+            Pane overlay = new Pane();
+            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8);");
+            overlay.setPrefSize(1280, 760);
+
+            Font font = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 30);
+            Text text = new Text(message);
+            text.setFont(font);
+            text.setFill(color);
+            text.setTextAlignment(TextAlignment.CENTER);
+            text.setWrappingWidth(1000);
+            text.setX((1280 - text.getLayoutBounds().getWidth()) / 2);
+            text.setY(380);
+
+            overlay.getChildren().add(text);
+            root.getChildren().add(overlay);
+
+            // Remove overlay after 3 seconds
+            new Timeline(new KeyFrame(Duration.seconds(3), e -> {
+                root.getChildren().remove(overlay);
+            })).play();
+        });
+    }
+
+    private void handleTimeOut() {
+        if (timeOutHandler != null) {
+            timeOutHandler.run();
+        }
+    }
+
+    public void setOnTimeOut(Runnable handler) {
+        this.timeOutHandler = handler;
+    }
+
+    public void resetRound() {
+        Platform.runLater(() -> {
+            resetKeyboard();
+            remainingGuesses = 5;
+            updateHearts();
+
+            // Reset zombie position
+            zombieView.setX(1000);
+
+            // Clear any existing word display
+            root.getChildren().removeAll(letterTexts);
+            letterTexts.clear();
+
+            // Reset timer display
+            timerText.setText(String.format("%02d:%02d", initialRoundDuration/60, initialRoundDuration%60));
+        });
     }
 }

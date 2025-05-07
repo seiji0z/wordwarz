@@ -30,7 +30,6 @@ public class GameServant extends GameServicePOA {
     public GameServant() {
         instance = this;
     }
-
     public void setORB(ORB orb_val) {
         orb = orb_val;
     }
@@ -197,42 +196,45 @@ public class GameServant extends GameServicePOA {
     }
 
     @Override
-    public synchronized int startRound(String token) throws NotLoggedIn, NotInGame, GameNotFound {
+    public synchronized int startRound(String token)
+            throws NotLoggedIn, NotInGame, GameNotFound {
         if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();
+
         String username = SessionManager.getSession(token).getUsername();
+        System.out.println("Starting round for: " + username);
 
         Game session = activeGames.get(username);
-        if (session == null || !session.getPlayers().contains(username)) throw new GameNotFound();
+        if (session == null || !session.getPlayers().contains(username)) {
+            throw new GameNotFound();
+        }
 
-        // Only generate new word if this is the first player starting the round
-        if (session.getCurrentWord() == null) {
-            String word = session.nextWord();
-            System.out.println("WORD: " + word);
-            // Initialize guess tracking for each player
-            for (String player : session.getPlayers()) {
-                session.resetPlayerGuesses(player);
+        synchronized (session) {
+            // Prevent multiple word generation for a single round
+            if (session.getCurrentWord() == null || session.getCurrentWord().isEmpty()) {
+                String word = session.nextWord();  // Generate the word only once
+                System.out.println("New word selected: " + word);
+
+                // Reset player guesses for all players
+                for (String player : session.getPlayers()) {
+                    session.resetPlayerGuesses(player);
+                }
             }
 
-            // Create char array with underscores
-            char[] placeholder = new char[word.length()];
-            Arrays.fill(placeholder, '_');
-            System.out.println("PLACEHOLDER: " + Arrays.toString(placeholder));
-
-            // Notify all players
+            char[] placeholder = session.getGuessedWord();  // Use existing guessed word state
             for (String player : session.getPlayers()) {
                 String playerToken = SessionManager.getTokenByUsername(player);
-                WordWarZ.ClientCallback cb = clientCallbacks.get(playerToken);
-                if (cb != null) {
+                WordWarZ.ClientCallback callback = clientCallbacks.get(playerToken);
+                if (callback != null) {
                     try {
-                        cb.onRoundStarted(placeholder); // Send char array instead of String array
+                        callback.onRoundStarted(placeholder);  // Notify player of round start with one word
                     } catch (Exception e) {
                         System.err.println("Failed to notify player " + player + ": " + e.getMessage());
                     }
                 }
             }
-        }
 
-        return session.getCurrentWord().length();
+            return session.getCurrentWord().length();  // Return the length of the current word
+        }
     }
 
     @Override
@@ -249,27 +251,92 @@ public class GameServant extends GameServicePOA {
         return session.processGuess(username, letter);
     }
 
-
+    // In GameServant.java
     @Override
-    public void displayWinnerByRound(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
+    public synchronized void endRound(String token) throws NotLoggedIn, NotInGame, GameNotFound {
+        if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();
+        String username = SessionManager.getSession(token).getUsername();
+
+        Game game = activeGames.get(username);
+        if (game == null || !game.getPlayers().contains(username)) throw new GameNotFound();
+
+        // Notify all players about round outcome
+        String word = game.getCurrentWord();
+        boolean wordGuessed = false;
+
+        // Check if any player guessed the word
+        for (String player : game.getPlayers()) {
+            if (game.hasWon(player)) {
+                wordGuessed = true;
+                break;
+            }
+        }
+
+        // Notify players based on outcome
+        for (String player : game.getPlayers()) {
+            String playerToken = SessionManager.getTokenByUsername(player);
+            WordWarZ.ClientCallback cb = clientCallbacks.get(playerToken);
+            if (cb != null) {
+                try {
+                    if (wordGuessed) {
+                        if (game.hasWon(player)) {
+                            cb.onRoundWon(word);
+                        } else {
+                            cb.onRoundLost(word, getWinnerUsername(game));
+                        }
+                    } else {
+                        cb.onRoundDrawn(word);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Failed to notify player " + player + ": " + e.getMessage());
+                }
+            }
+        }
+
+        if (game.getScores().values().stream().anyMatch(score -> score >= 3)) {
+            try {
+                endGame(token);
+            } catch (GameNotFinished e) {
+                throw new RuntimeException(e);
+            }
+        } else {
+            // Delay the next round preparation
+            scheduler.schedule(() -> {
+                game.nextWord();  // Prepare for next round
+            }, 3, TimeUnit.SECONDS);  // Delay by 3 seconds
+        }
     }
 
+    // In GameServant.java
     @Override
-    public void displayWinnerByGame(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
+    public void notifyPlayerLost(String token) throws NotLoggedIn, NotInGame, GameNotFound {
+        if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();
+        String username = SessionManager.getSession(token).getUsername();
+
+        Game game = activeGames.get(username);
+        if (game == null || !game.getPlayers().contains(username)) throw new GameNotFound();
+
+        // Mark player as eliminated in the game state
+        game.markPlayerEliminated(username);
+
+        // Check if all players are eliminated
+        if (game.allPlayersEliminated()) {
+            endRound(token); // End round if everyone is out
+        }
+    }
+
+    private String getWinnerUsername(Game game) {
+        for (String player : game.getPlayers()) {
+            if (game.hasWon(player)) {
+                return player;
+            }
+        }
+        return "";
     }
 
     @Override
     public void endGame(String token) throws NotLoggedIn, NotInGame, GameNotFound, GameNotFinished {
-    }
-
-    @Override
-    public String displayLoserByTime(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
-        return "";
-    }
-
-    @Override
-    public String displayLoserByGuess(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
-        return "";
+        System.out.println("Game ended. Winner: " );
     }
 
     @Override

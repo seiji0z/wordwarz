@@ -59,11 +59,10 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
         }
     }
 
-
     @Override
     public void onRoundStarted(char[] wordPlaceholder) {
         if (gameStarted) {
-            return; // Prevent multiple initializations
+            return; // Prevent duplicate initialization
         }
         gameStarted = true;
 
@@ -75,7 +74,7 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
                 queueView = null; // Remove reference
             }
 
-            // Initialize game controller if not already done
+            // Ensure the game controller is only initialized once
             if (gameController == null) {
                 gameController = new GameController(playerToken, orb);
             }
@@ -83,19 +82,32 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
         });
     }
 
+    // In ClientCallbackImpl.java
     @Override
     public void onRoundLost(String word, String winner) {
-
+        Platform.runLater(() -> {
+            if (gameController != null) {
+                gameController.handleRoundLost(word, winner);
+            }
+        });
     }
 
     @Override
     public void onRoundWon(String word) {
-
+        Platform.runLater(() -> {
+            if (gameController != null) {
+                gameController.handleRoundWon(word);
+            }
+        });
     }
 
     @Override
     public void onRoundDrawn(String word) {
-
+        Platform.runLater(() -> {
+            if (gameController != null) {
+                gameController.handleRoundDrawn(word);
+            }
+        });
     }
 
     @Override
@@ -108,7 +120,6 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     }
 
-
     @Override
     public void onLeaderboardUpdated(WordWarZ.Player[] leaderboard) {
         // Optional future: update leaderboard
@@ -118,4 +129,5 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
     public void onForceLogout() {
         // Optional future: logout force handling
     }
+
 }

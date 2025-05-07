@@ -27,14 +27,24 @@ public class GameController {
     }
 
     public void onGameStart(char[] wordPlaceholder) {
-        if (roundActive) return;
+        if (roundActive) return; // Prevent concurrent rounds
         roundActive = true;
 
         Platform.runLater(() -> {
             view.showOverlayWithTimer(() -> {
                 try {
+                    model.startRound(); // Ensure proper server round state
                     view.initializeWordDisplay(wordPlaceholder.length);
-                    model.startRound();
+
+                    // Start timer and handle timeout
+                    view.setOnTimeOut(() -> {
+                        try {
+                            model.endRound(); // Notify server
+                        } catch (Exception e) {
+                            view.showErrorMessage("Error ending round: " + e.getMessage());
+                        }
+                    });
+
                     view.startTimer(model.getRoundDuration());
                 } catch (Exception e) {
                     view.showErrorMessage("Failed to start round: " + e.getMessage());
@@ -76,9 +86,16 @@ public class GameController {
     private void handleWrongGuess() {
         view.loseHeart();
         if (view.getRemainingGuesses() <= 0) {
-            handleGameOver(false);
+            view.showWaitingForOthers();;
             for (char c = 'A'; c <= 'Z'; c++) {
                 view.disableLetterButton(c);
+            }
+
+            // Notify server this player is out
+            try {
+                model.notifyPlayerLost();
+            } catch (Exception e) {
+                view.showErrorMessage("Error notifying server: " + e.getMessage());
             }
         }
     }
@@ -111,4 +128,67 @@ public class GameController {
         }
     }
 
+    // In GameController.java
+    public void handleRoundLost(String word, String winner) {
+        view.showRoundLost(winner, word);
+        // Prepare for next round after delay
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> {
+                            try {
+                                model.startRound();
+                                view.resetRound();
+                            } catch (Exception e) {
+                                view.showErrorMessage("Error starting new round: " + e.getMessage());
+                            }
+                        });
+                    }
+                },
+                3000 // 3 second delay
+        );
+    }
+
+    public void handleRoundWon(String word) {
+        view.showRoundWon(word);
+        // Prepare for next round after delay
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> {
+                            try {
+                                model.startRound();
+                                view.resetRound();
+                            } catch (Exception e) {
+                                view.showErrorMessage("Error starting new round: " + e.getMessage());
+                            }
+                        });
+                    }
+                },
+                3000 // 3 second delay
+        );
+    }
+
+    public void handleRoundDrawn(String word) {
+        view.showRoundDrawn(word);
+        // Prepare for next round after delay
+        new java.util.Timer().schedule(
+                new java.util.TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> {
+                            try {
+                                model.startRound();
+                                view.resetRound();
+                            } catch (Exception e) {
+                                view.showErrorMessage("Error starting new round: " + e.getMessage());
+                            }
+                        });
+                    }
+                },
+                3000 // 3 second delay
+        );
+    }
 }

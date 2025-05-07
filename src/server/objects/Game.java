@@ -15,6 +15,7 @@ public class Game {
     private Map<String, Integer> wrongGuesses = new HashMap<>();
     private Set<Character> guessedLetters = new HashSet<>();
     private Map<String, Set<Character>> playerGuesses = new ConcurrentHashMap<>();
+    private Set<String> eliminatedPlayers = new HashSet<>();
 
     public Game(List<String> players) {
         this.players.addAll(players);
@@ -57,7 +58,6 @@ public class Game {
         return hit;
     }
 
-    // In Game class
     public char[] processGuess(String username, char letter) throws CharacterAlreadyGuessed {
         // Track guesses per player
         if (playerGuesses.get(username).contains(letter)) {
@@ -71,12 +71,9 @@ public class Game {
         char[] result = new char[currentWord.length()];
         for (int i = 0; i < currentWord.length(); i++) {
             char c = currentWord.charAt(i);
-            if (playerGuesses.get(username).contains(c)) {
-                result[i] = c;
-            } else {
-                result[i] = '_';
-            }
+            result[i] = playerGuesses.get(username).contains(c) ? c : '_';
         }
+
         return result;
     }
 
@@ -95,7 +92,15 @@ public class Game {
     }
 
     public boolean hasWon(String player) {
-        return new String(guessedWord).equals(currentWord);
+        Set<Character> guesses = playerGuesses.get(player);
+        if (guesses == null) return false;
+
+        for (char c : currentWord.toCharArray()) {
+            if (!guesses.contains(c)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public boolean hasLost(String player) {
@@ -117,4 +122,21 @@ public class Game {
     public String getCurrentWord() { return currentWord; }
 
     public Set<Character> getGuessedLetters() { return guessedLetters; }
+
+    public Map<String, Integer> getScores() {
+        // Return a copy of the scores map to prevent outside modification
+        return new HashMap<>(scores);
+    }
+
+    public void markPlayerEliminated(String username) {
+        eliminatedPlayers.add(username);
+    }
+
+    public boolean allPlayersEliminated() {
+        return eliminatedPlayers.size() == players.size();
+    }
+
+    public boolean isPlayerEliminated(String username) {
+        return eliminatedPlayers.contains(username);
+    }
 }

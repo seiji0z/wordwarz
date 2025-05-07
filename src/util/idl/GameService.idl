@@ -58,11 +58,9 @@ module WordWarZ {
     long startRound(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
     long getRoundDuration(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
     CharSequence guessLetter(in string token, in char letter) raises (NotLoggedIn, NotInGame, GameNotFound, CharacterAlreadyGuessed); // returns char array with a placeholder for unguessed letters '_'
-    void displayWinnerByRound(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
-    void displayWinnerByGame(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
+    void endRound(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
+    void notifyPlayerLost(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
     void endGame(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, GameNotFinished);
-    string displayLoserByTime(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished); // displays the guessed word along with the user
-    string displayLoserByGuess(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
     string displayWins(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
 
     // game status
