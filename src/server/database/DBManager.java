@@ -177,7 +177,7 @@ public class DBManager {
 
         if (!userExists(username)) {
             System.out.println("[ERROR] User " + username + " not found in credentials table");
-            return false;
+            throw new SQLException("User not found");
         }
 
         // Verify database connection
@@ -192,35 +192,39 @@ public class DBManager {
             int userId = getUserId(username);
             if (userId == -1) {
                 System.out.println("[ERROR] User ID not found for username: " + username);
-                throw new SQLException("User ID not found for: " + username);
+                throw new SQLException("User ID not found");
             }
             System.out.println("Found user_id: " + userId + " for username: " + username);
 
-            // Delete from user table (credentials should cascade)
+            // First delete from child tables
+            String[] childTables = {"credentials", "player_stats", "game_history"}; // Add all child tables
+            for (String table : childTables) {
+                try {
+                    String deleteQuery = "DELETE FROM " + table + " WHERE user_id = ?";
+                    System.out.println("Executing query: " + deleteQuery);
+                    try (PreparedStatement stmt = DBConnection.con.prepareStatement(deleteQuery)) {
+                        stmt.setInt(1, userId);
+                        int rows = stmt.executeUpdate();
+                        System.out.println("Deleted " + rows + " rows from " + table);
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Warning: Could not delete from " + table +
+                            " - " + e.getMessage());
+                }
+            }
+
+            // Then delete from user table
             String userQuery = "DELETE FROM user WHERE user_id = ?";
-            System.out.println("Executing query: " + userQuery + " with user_id: " + userId);
+            System.out.println("Executing final query: " + userQuery);
             try (PreparedStatement userStmt = DBConnection.con.prepareStatement(userQuery)) {
                 userStmt.setInt(1, userId);
                 int userRows = userStmt.executeUpdate();
                 System.out.println("Rows affected in user: " + userRows);
                 if (userRows == 0) {
-                    System.out.println("[WARNING] No rows deleted from user for user_id: " + userId);
+                    throw new SQLException("No rows deleted from user table");
                 }
             }
 
-            // Verify credentials deletion (should be handled by CASCADE)
-            String checkCredentialsQuery = "SELECT COUNT(*) FROM credentials WHERE user_id = ?";
-            try (PreparedStatement checkStmt = DBConnection.con.prepareStatement(checkCredentialsQuery)) {
-                checkStmt.setInt(1, userId);
-                ResultSet rs = checkStmt.executeQuery();
-                if (rs.next() && rs.getInt(1) > 0) {
-                    System.out.println("[WARNING] Credentials record still exists for user_id: " + userId);
-                } else {
-                    System.out.println("Credentials record deleted successfully for user_id: " + userId);
-                }
-            }
-
-            System.out.println("Committing transaction for deletion of user: " + username);
             DBConnection.con.commit();
             System.out.println("Player " + username + " deleted successfully");
             return true;
@@ -228,15 +232,12 @@ public class DBManager {
             System.out.println("Error deleting player: " + e.getMessage());
             System.out.println("SQL State: " + e.getSQLState());
             System.out.println("Error Code: " + e.getErrorCode());
-            System.out.println("Rolling back transaction for user: " + username);
             DBConnection.con.rollback();
             throw e;
         } finally {
-            System.out.println("Restoring auto-commit state");
             DBConnection.con.setAutoCommit(true);
         }
     }
-
     private static int getUserId(String username) throws SQLException {
         String query = "SELECT user_id FROM credentials WHERE username = ?";
         try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {

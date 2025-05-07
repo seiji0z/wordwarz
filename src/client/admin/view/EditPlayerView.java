@@ -38,7 +38,7 @@ public class EditPlayerView extends VBox {
     }
 
     private void initializeUI() {
-        // Main container settings (same as before)
+        // Main container settings
         this.setAlignment(Pos.CENTER);
         this.setSpacing(20);
         this.setPadding(new Insets(10));
@@ -65,13 +65,10 @@ public class EditPlayerView extends VBox {
 
         buttonBox.getChildren().addAll(createPlayerBtn, editPlayerBtn);
 
-        // Search bar (same as before)
+        // Search bar
         HBox searchBox = new HBox(10);
         searchBox.setAlignment(Pos.CENTER);
         searchBox.setPadding(new Insets(10));
-
-        Label searchLabel = new Label("Search:");
-        searchLabel.setFont(Font.font(customFont.getFamily(), FontWeight.BOLD, 14));
 
         searchField = new TextField();
         searchField.setPromptText("Enter username...");
@@ -80,59 +77,33 @@ public class EditPlayerView extends VBox {
         searchField.setStyle("-fx-background-color: white; " +
                 "-fx-border-color: #e0e0e0; " +
                 "-fx-border-radius: 5; " +
-                "-fx-padding: 5;");
+                "-fx-padding: 5; " +
+                "-fx-font-family: '" + customFont.getFamily() + "';");
 
-        searchButton = new Button("Search");
-        searchButton.setFont(Font.font(customFont.getFamily(), 14));
-        searchButton.setTextFill(Color.WHITE);
-        searchButton.setCursor(Cursor.HAND);
-        searchButton.setBackground(new Background(new BackgroundFill(
-                Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
-        )));
-        searchButton.setPadding(new Insets(5, 10, 5, 10));
-        searchButton.setStyle("-fx-font-size: 12px;");
-
-        // Hover effects for search button
-        searchButton.setOnMouseEntered(e -> searchButton.setBackground(new Background(new BackgroundFill(
-                Color.rgb(80, 80, 80), new CornerRadii(8), Insets.EMPTY
-        ))));
-        searchButton.setOnMouseExited(e -> searchButton.setBackground(new Background(new BackgroundFill(
-                Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
-        ))));
-
-        clearBtn = new Button("Clear");
-        clearBtn.setFont(Font.font(customFont.getFamily(), 14));
-        clearBtn.setTextFill(Color.WHITE);
-        clearBtn.setCursor(Cursor.HAND);
-        clearBtn.setBackground(new Background(new BackgroundFill(
-                Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
-        )));
-        clearBtn.setPadding(new Insets(5, 10, 5, 10));
-        clearBtn.setStyle("-fx-font-size: 12px;");
-
-        // Hover effects for clear button
-        clearBtn.setOnMouseEntered(e -> clearBtn.setBackground(new Background(new BackgroundFill(
-                Color.rgb(80, 80, 80), new CornerRadii(8), Insets.EMPTY
-        ))));
-        clearBtn.setOnMouseExited(e -> clearBtn.setBackground(new Background(new BackgroundFill(
-                Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
-        ))));
+        searchButton = createStyledButton("Search", 14);
+        clearBtn = createStyledButton("Clear", 14);
 
         // Action to clear the search field
         clearBtn.setOnAction(e -> searchField.clear());
 
-        searchBox.getChildren().addAll(searchLabel, searchField, searchButton, clearBtn);
+        searchBox.getChildren().addAll(searchField, searchButton, clearBtn);
 
-        // Player table setup (same as before)
+        // Player table setup
         playerTable = new TableView<>();
         playerTable.setStyle("-fx-background-color: #f5f5f5; " +
                 "-fx-border-color: #e0e0e0; " +
-                "-fx-padding: 5;");
+                "-fx-padding: 5; " +
+                "-fx-font-family: '" + customFont.getFamily() + "';");
 
         // Use fixed cell size to prevent empty rows
         playerTable.setFixedCellSize(35);
         playerTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        playerTable.setPlaceholder(new Label("No players found"));
+
+        // Custom placeholder with custom font
+        Label placeholder = new Label("No players found");
+        placeholder.setFont(Font.font(customFont.getFamily(), 14));
+        playerTable.setPlaceholder(placeholder);
+
         playerTable.setPrefHeight(300);
 
         VBox.setVgrow(playerTable, Priority.ALWAYS);
@@ -151,6 +122,7 @@ public class EditPlayerView extends VBox {
         usernameField = new TextField();
         usernameField.setFont(Font.font(customFont.getFamily(), 14));
         usernameField.setPrefWidth(250);
+        usernameField.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
         usernameBox.getChildren().addAll(usernameLabel, usernameField);
 
         // Password field
@@ -160,20 +132,15 @@ public class EditPlayerView extends VBox {
         passwordField = new PasswordField();
         passwordField.setFont(Font.font(customFont.getFamily(), 14));
         passwordField.setPrefWidth(250);
+        passwordField.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
         passwordBox.getChildren().addAll(passwordLabel, passwordField);
 
         // Action buttons
         HBox actionButtons = new HBox(15);
         actionButtons.setAlignment(Pos.CENTER);
 
-        confirmUpdateBtn = new Button("Update");
-        confirmUpdateBtn.setFont(Font.font(customFont.getFamily(), 14));
-        confirmUpdateBtn.setTextFill(Color.WHITE);
-        confirmUpdateBtn.setCursor(Cursor.HAND);
-        confirmUpdateBtn.setBackground(new Background(new BackgroundFill(
-                Color.rgb(50, 120, 50), new CornerRadii(8), Insets.EMPTY
-        )));
-        confirmUpdateBtn.setPadding(new Insets(8, 15, 8, 15));
+        confirmUpdateBtn = createStyledButton("Update", 14);
+        confirmDeleteBtn = createStyledButton("Delete", 14);
 
         // Add confirmation dialog for update
         confirmUpdateBtn.setOnAction(e -> {
@@ -183,19 +150,9 @@ public class EditPlayerView extends VBox {
             }
         });
 
-        confirmDeleteBtn = new Button("Delete");
-        confirmDeleteBtn.setFont(Font.font(customFont.getFamily(), 14));
-        confirmDeleteBtn.setTextFill(Color.WHITE);
-        confirmDeleteBtn.setCursor(Cursor.HAND);
-        confirmDeleteBtn.setBackground(new Background(new BackgroundFill(
-                Color.rgb(200, 50, 50), new CornerRadii(8), Insets.EMPTY
-        )));
-        confirmDeleteBtn.setPadding(new Insets(8, 15, 8, 15));
-
         actionButtons.getChildren().addAll(confirmUpdateBtn, confirmDeleteBtn);
 
         updateFormContainer.getChildren().addAll(
-               // new Label("Edit Selected Player").setFont(Font.font(customFont.getFamily(), FontWeight.BOLD, 16)),
                 usernameBox,
                 passwordBox,
                 actionButtons
@@ -218,19 +175,19 @@ public class EditPlayerView extends VBox {
         usernameCol.setCellValueFactory(cellData ->
                 new SimpleStringProperty(cellData.getValue().username));
         usernameCol.setPrefWidth(250);
-        usernameCol.setStyle("-fx-alignment: CENTER_LEFT;");
+        usernameCol.setStyle("-fx-alignment: CENTER_LEFT; -fx-font-family: '" + customFont.getFamily() + "';");
 
         // Wins Column (made thinner)
         TableColumn<Player, Integer> winsCol = new TableColumn<>("Wins");
         winsCol.setCellValueFactory(cellData ->
                 new SimpleIntegerProperty(cellData.getValue().wins).asObject());
         winsCol.setPrefWidth(100);  // Made thinner
-        winsCol.setStyle("-fx-alignment: CENTER;");
+        winsCol.setStyle("-fx-alignment: CENTER; -fx-font-family: '" + customFont.getFamily() + "';");
 
         // Action Column
         TableColumn<Player, Void> actionCol = new TableColumn<>("Actions");
         actionCol.setPrefWidth(150);
-        actionCol.setStyle("-fx-alignment: CENTER;");
+        actionCol.setStyle("-fx-alignment: CENTER; -fx-font-family: '" + customFont.getFamily() + "';");
 
         actionCol.setCellFactory(param -> new TableCell<Player, Void>() {
             private final Button updateBtn = new Button("Update");
@@ -268,14 +225,16 @@ public class EditPlayerView extends VBox {
                 // Button actions
                 updateBtn.setOnAction(event -> {
                     Player player = getTableView().getItems().get(getIndex());
+                    getTableView().getSelectionModel().select(getIndex());
                     showUpdateForm(player);
                 });
 
                 deleteBtn.setOnAction(event -> {
                     Player player = getTableView().getItems().get(getIndex());
+                    getTableView().getSelectionModel().select(getIndex());
+
                     if (showDeleteConfirmation(player.username)) {
-                        // Trigger delete action
-                        confirmDeleteBtn.fire();
+                        getConfirmDeleteBtn().fire();
                     }
                 });
             }
@@ -319,6 +278,10 @@ public class EditPlayerView extends VBox {
         alert.setHeaderText(null);
         alert.setContentText("Are you sure you want to update the player '" + username + "'?");
 
+        // Apply custom font to alert dialog
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
+
         ButtonType confirmButton = new ButtonType("Update", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         alert.getButtonTypes().setAll(confirmButton, cancelButton);
@@ -332,6 +295,10 @@ public class EditPlayerView extends VBox {
         alert.setHeaderText(null);
         alert.setContentText("Are you sure you want to delete the player '" + username + "'? This action cannot be undone.");
 
+        // Apply custom font to alert dialog
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
+
         ButtonType confirmButton = new ButtonType("Delete", ButtonBar.ButtonData.OK_DONE);
         ButtonType cancelButton = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
         alert.getButtonTypes().setAll(confirmButton, cancelButton);
@@ -340,9 +307,22 @@ public class EditPlayerView extends VBox {
     }
 
     private void showUpdateForm(Player player) {
+        System.out.println("[EDP VIEW] showUpdateForm called for player: " + (player != null ? player.username : "null"));
+
+        // Clear and set the selection
+        playerTable.getSelectionModel().clearSelection();
+        int index = playerTable.getItems().indexOf(player);
+        if (index >= 0) {
+            System.out.println("[EDP VIEW] Selecting player at index: " + index);
+            playerTable.getSelectionModel().select(index);
+        } else {
+            System.out.println("[EDP VIEW] Player not found in table items");
+        }
+
         usernameField.setText(player.username);
         passwordField.clear();
         updateFormContainer.setVisible(true);
+        System.out.println("[EDP VIEW] Update form visibility set to: true");
     }
 
     public void hideUpdateForm() {
@@ -351,22 +331,33 @@ public class EditPlayerView extends VBox {
 
     public void displayPlayers(Player[] players) {
         Platform.runLater(() -> {
+            System.out.println("[EDP VIEW] Displaying " + players.length + " players");
             ObservableList<Player> items = FXCollections.observableArrayList(players);
             playerTable.setItems(items);
+            playerTable.refresh(); // Force table refresh
         });
     }
 
     private Button createStyledButton(String text) {
+        return createStyledButton(text, 14);
+    }
+
+    private Button createStyledButton(String text, double size) {
         Button button = new Button(text);
-        button.setFont(Font.font(customFont.getFamily(), 14));
+        button.setFont(Font.font(customFont.getFamily(), size));
         button.setTextFill(Color.WHITE);
         button.setCursor(Cursor.HAND);
         button.setBackground(new Background(new BackgroundFill(
                 Color.rgb(64, 64, 64), new CornerRadii(8), Insets.EMPTY
         )));
-        button.setPrefHeight(50);
-        button.setMinWidth(150);
-        button.setPadding(new Insets(10, 20, 10, 20));
+
+        if (size == 14) { // For main buttons
+            button.setPrefHeight(50);
+            button.setMinWidth(150);
+            button.setPadding(new Insets(10, 20, 10, 20));
+        } else { // For smaller buttons
+            button.setPadding(new Insets(5, 10, 5, 10));
+        }
 
         // Hover effects
         button.setOnMouseEntered(e -> button.setBackground(new Background(new BackgroundFill(
@@ -385,6 +376,11 @@ public class EditPlayerView extends VBox {
             alert.setTitle("Error");
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            // Apply custom font to alert dialog
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
+
             alert.showAndWait();
         });
     }
@@ -395,6 +391,11 @@ public class EditPlayerView extends VBox {
             alert.setTitle("Success");
             alert.setHeaderText(null);
             alert.setContentText(message);
+
+            // Apply custom font to alert dialog
+            DialogPane dialogPane = alert.getDialogPane();
+            dialogPane.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
+
             alert.showAndWait();
         });
     }
@@ -410,4 +411,5 @@ public class EditPlayerView extends VBox {
     public PasswordField getPasswordField() { return passwordField; }
     public Button getConfirmUpdateBtn() { return confirmUpdateBtn; }
     public Button getConfirmDeleteBtn() { return confirmDeleteBtn; }
+    public VBox getUpdateFormContainer() { return updateFormContainer; }
 }

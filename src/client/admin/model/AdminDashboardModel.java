@@ -34,6 +34,7 @@ public class AdminDashboardModel {
 
     public void deletePlayer(String username)
             throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
+        System.out.println("[MODEL] deletePlayer called for username: " + username);
         adminService.deletePlayer(username);
     }
 

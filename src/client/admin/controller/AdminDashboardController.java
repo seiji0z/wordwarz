@@ -39,6 +39,7 @@ public class AdminDashboardController {
         CreatePlayerView createView = view.getCreatePlayerView();
         createView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
         createView.getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
+        createView.getConfirmBtn().setOnAction(e -> handleCreatePlayer());
 
         // Edit Player View handlers
         EditPlayerView editView = view.getEditPlayerView();
@@ -47,8 +48,19 @@ public class AdminDashboardController {
         editView.getSearchButton().setOnAction(e -> handleSearchPlayers(editView.getSearchField().getText()));
         editView.getClearBtn().setOnAction(e -> editView.getSearchField().clear());
         editView.getConfirmUpdateBtn().setOnAction(e -> handleUpdatePlayer());
-        editView.getConfirmDeleteBtn().setOnAction(e -> handleDeletePlayer());
 
+        editView.getConfirmDeleteBtn().setOnAction(e -> {
+            // Get the selected player directly from the table
+            Player selectedPlayer = editView.getPlayerTable()
+                    .getSelectionModel()
+                    .getSelectedItem();
+
+            if (selectedPlayer != null) {
+                handleDeletePlayer(); // Your existing delete logic
+            } else {
+                editView.showError("No player selected");
+            }
+        });
         editView.getSearchField().textProperty().addListener((obs, oldValue, newValue) -> {
             handleSearchPlayers(newValue);
         });
@@ -93,6 +105,10 @@ public class AdminDashboardController {
             editView.showError("Please select a player to update");
             return;
         }
+        if (!editView.getUpdateFormContainer().isVisible()) {
+            editView.showError("Please select a player first");
+            return;
+        }
 
         String currentUsername = selectedPlayer.username;
 
@@ -120,8 +136,9 @@ public class AdminDashboardController {
             editView.showError("Unexpected error: " + e.getMessage());
         }
     }
-
     private void handleDeletePlayer() {
+        System.out.println("[CONTROLLER] handleDeletePlayer called");
+
         EditPlayerView editView = view.getEditPlayerView();
         Player selectedPlayer = editView.getPlayerTable().getSelectionModel().getSelectedItem();
 
@@ -133,16 +150,19 @@ public class AdminDashboardController {
         String username = selectedPlayer.username;
 
         try {
-            if (editView.showDeleteConfirmation(username)) {
-                model.deletePlayer(username);
-                editView.showSuccess("Player deleted successfully");
-                editView.hideUpdateForm();
-                handleReadAllPlayers(); // Refresh the table
-            }
+
+            // Attempt deletion
+            model.deletePlayer(username);
+            editView.showSuccess("Player deleted successfully");
+            handleReadAllPlayers();
+
+        } catch (PlayerNotFound e) {
+            // If player not found, refresh the list and show message
+            System.out.println("[CONTROLLER] Player not found - refreshing view");
+            editView.showError("Player no longer exists - list refreshed");
+            handleReadAllPlayers();
         } catch (NotLoggedIn e) {
             editView.showError("Error: Admin not logged in");
-        } catch (PlayerNotFound e) {
-            editView.showError("Error: Player not found");
         } catch (PlayerCurrentlyLoggedIn e) {
             editView.showError("Error: Player is currently logged in");
         } catch (Exception e) {
