@@ -357,8 +357,56 @@ public class MainMenuView {
         howToPlayFullScreen.setFitHeight(650);
         howToPlayFullScreen.setPreserveRatio(false);
 
-        closeHowToPlayBtn = new Button("Close");
-        closeHowToPlayBtn.setStyle("-fx-font-size: 16px; -fx-padding: 8px 16px;");
+        //CLOSE HOW TO PLAY BUTTON
+        closeHowToPlayBtn = new Button("CLOSE");
+        closeHowToPlayBtn.setFont(pressStartFont);
+        closeHowToPlayBtn.setTextFill(Color.WHITE);
+        closeHowToPlayBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        closeHowToPlayBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        closeHowToPlayBtn.setPadding(new Insets(10, 80, 10, 80));
+        closeHowToPlayBtn.setPrefWidth(450);
+        closeHowToPlayBtn.setPrefHeight(60);
+        closeHowToPlayBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+
+
+        closeHowToPlayBtn.setOnMouseEntered(e -> closeHowToPlayBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+
+        closeHowToPlayBtn.setOnMouseExited(e -> closeHowToPlayBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+
+        closeHowToPlayBtn.setOnMousePressed(e -> closeHowToPlayBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+
+        closeHowToPlayBtn.setOnMouseReleased(e -> closeHowToPlayBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+
         closeHowToPlayBtn.setOnAction(ev -> overlayPane.setVisible(false));
 
         VBox overlayContent = new VBox(20, howToPlayFullScreen, closeHowToPlayBtn);
