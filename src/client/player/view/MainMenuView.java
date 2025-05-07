@@ -10,6 +10,7 @@ import javafx.scene.layout.*;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import java.io.File;
 
@@ -29,11 +30,22 @@ public class MainMenuView {
     private Button soundButton;
     private Button closeHowToPlayBtn;
 
-    // Add these as class fields
+    // Font
+    private Font pressStartFont;
+
+    // Image fields
     private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/Sound On.png");
     private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/Mute.png");
 
     public void initializeUI(Stage primaryStage) {
+        // Load font
+        try {
+            pressStartFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 20);
+        } catch (Exception e) {
+            System.err.println("Failed to load font: res/fonts/PressStart2P-Regular.ttf. Using default font.");
+            pressStartFont = Font.font("System", 20);
+        }
+
         // Main root container
         StackPane root = new StackPane();
         root.setPrefSize(1280, 760);
@@ -83,37 +95,139 @@ public class MainMenuView {
         logoView.setFitWidth(300);
 
         // --- PLAY BUTTON ---
-        Image playImg = new Image("file:res/images/buttons/menu buttons/Start 1.png");
-        ImageView playView = new ImageView(playImg);
-        playView.setPreserveRatio(true);
-        playView.setFitWidth(200);
-        playBtn = new Button();
-        playBtn.setGraphic(playView);
-        playBtn.setBackground(Background.EMPTY);
-        playBtn.setPadding(Insets.EMPTY);
+        playBtn = new Button("PLAY");
+        playBtn.setFont(pressStartFont);
+        playBtn.setTextFill(Color.WHITE);
+        playBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        playBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        playBtn.setPadding(new Insets(10, 80, 10, 80));
+        playBtn.setPrefWidth(450);
+        playBtn.setPrefHeight(60);
+        playBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        playBtn.setOnMouseEntered(e -> playBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        playBtn.setOnMouseExited(e -> playBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        playBtn.setOnMousePressed(e -> playBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        playBtn.setOnMouseReleased(e -> playBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
 
         // --- LEADERBOARD BUTTON ---
-        Image leaderboardImg = new Image("file:res/images/buttons/menu buttons/Leaderboard 1.png");
-        ImageView leaderboardView = new ImageView(leaderboardImg);
-        leaderboardView.setPreserveRatio(true);
-        leaderboardView.setFitWidth(200);
-        leaderboardBtn = new Button();
-        leaderboardBtn.setGraphic(leaderboardView);
-        leaderboardBtn.setBackground(Background.EMPTY);
-        leaderboardBtn.setPadding(Insets.EMPTY);
-        leaderboardBtn.setOnAction(e -> {
-            System.out.println("Leaderboard button clicked!");
-        });
+        leaderboardBtn = new Button("LEADERBOARD");
+        leaderboardBtn.setFont(pressStartFont);
+        leaderboardBtn.setTextFill(Color.WHITE);
+        leaderboardBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        leaderboardBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        leaderboardBtn.setPadding(new Insets(10, 80, 10, 80));
+        leaderboardBtn.setPrefWidth(450);
+        leaderboardBtn.setPrefHeight(60);
+        leaderboardBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        leaderboardBtn.setOnMouseEntered(e -> leaderboardBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        leaderboardBtn.setOnMouseExited(e -> leaderboardBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        leaderboardBtn.setOnMousePressed(e -> leaderboardBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        leaderboardBtn.setOnMouseReleased(e -> leaderboardBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
 
         // --- QUIT BUTTON ---
-        Image quitImg = new Image("file:res/images/buttons/menu buttons/Quit 1.png");
-        ImageView quitView = new ImageView(quitImg);
-        quitView.setPreserveRatio(true);
-        quitView.setFitWidth(200);
-        quitBtn = new Button();
-        quitBtn.setGraphic(quitView);
-        quitBtn.setBackground(Background.EMPTY);
-        quitBtn.setPadding(Insets.EMPTY);
+        quitBtn = new Button("QUIT");
+        quitBtn.setFont(pressStartFont);
+        quitBtn.setTextFill(Color.WHITE);
+        quitBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        quitBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        quitBtn.setPadding(new Insets(10, 80, 10, 80));
+        quitBtn.setPrefWidth(450);
+        quitBtn.setPrefHeight(60);
+        quitBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        quitBtn.setOnMouseEntered(e -> quitBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        quitBtn.setOnMouseExited(e -> quitBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        quitBtn.setOnMousePressed(e -> quitBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        quitBtn.setOnMouseReleased(e -> quitBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
         quitBtn.setOnAction(e -> {
             if (quitButtonHandler != null) {
                 quitButtonHandler.handle();
@@ -126,7 +240,7 @@ public class MainMenuView {
         });
 
         // --- CENTER BOX ---
-        VBox centerBox = new VBox(10, logoView, playBtn, leaderboardBtn, quitBtn);
+        VBox centerBox = new VBox(20, logoView, playBtn, leaderboardBtn, quitBtn);
         centerBox.setAlignment(Pos.TOP_CENTER);
         centerBox.setPadding(new Insets(10, 0, 0, 0));
         mainContent.setCenter(centerBox);
@@ -198,27 +312,46 @@ public class MainMenuView {
 
     public void setPlayButtonHandler(PlayButtonHandler handler) {
         this.playButtonHandler = handler;
-        playBtn.setOnAction(e -> handler.handle());
+        playBtn.setOnAction(e -> {
+            System.out.println("Play button clicked!");
+            handler.handle();
+        });
     }
 
     public void setLeaderboardButtonHandler(LeaderboardButtonHandler handler) {
         this.leaderboardButtonHandler = handler;
-        leaderboardBtn.setOnAction(e -> handler.handle());
+        leaderboardBtn.setOnAction(e -> {
+            System.out.println("Leaderboard button clicked!");
+            handler.handle();
+        });
     }
 
     public void setHowToPlayButtonHandler(HowToPlayButtonHandler handler) {
         this.howToPlayButtonHandler = handler;
-        howToPlayBtn.setOnAction(e -> handler.handle());
+        howToPlayBtn.setOnAction(e -> {
+            System.out.println("How to Play button clicked!");
+            overlayPane.setVisible(true);
+            handler.handle();
+        });
     }
 
     public void setQuitButtonHandler(QuitButtonHandler handler) {
         this.quitButtonHandler = handler;
-        quitBtn.setOnAction(e -> handler.handle());
+        quitBtn.setOnAction(e -> {
+            System.out.println("Quit button clicked!");
+            handler.handle();
+            Stage stage = (Stage) quitBtn.getScene().getWindow();
+            stage.close();
+            if (mediaPlayer != null) {
+                mediaPlayer.stop();
+            }
+        });
     }
 
     public void setSoundToggleHandler(SoundToggleHandler handler) {
         this.soundToggleHandler = handler;
         soundButton.setOnAction(e -> {
+            System.out.println("Sound button clicked! Muted: " + !isMuted);
             isMuted = !isMuted;
             mediaPlayer.setMute(isMuted);
             soundButtonView.setImage(isMuted ? soundOffImg : soundOnImg);
