@@ -13,21 +13,25 @@ import org.omg.PortableServer.POAHelper;
 import javafx.event.ActionEvent;
 import javafx.stage.Stage;
 
+
 public class QueueController {
     private final QueueModel model;
     private final QueueView view;
     private final String playerToken;
     private final ORB orb;
     private final Stage stage;
+    private final int selectedCharacter;
     private boolean transitionInProgress = false;
     private ClientCallbackImpl callbackImpl;
+    private GameController gameController;
 
-    public QueueController(String token, ORB orb, Stage stage) {
+    public QueueController(String token, ORB orb, Stage stage,  int selectedCharacter) {
         this.orb = orb;
         this.playerToken = token;
         this.model = new QueueModel(token, orb);
         this.view = new QueueView();
         this.stage = stage;
+        this.selectedCharacter = selectedCharacter;
 
         // Initialize listener for server callbacks
         initializeListeners();
@@ -49,7 +53,7 @@ public class QueueController {
             POA rootPOA = POAHelper.narrow(obj);
             rootPOA.the_POAManager().activate();
 
-            callbackImpl = new ClientCallbackImpl(view, stage, playerToken, orb);
+            callbackImpl = new ClientCallbackImpl(view, stage, playerToken, orb, selectedCharacter);
             org.omg.CORBA.Object callbackObj = rootPOA.servant_to_reference(callbackImpl);
             WordWarZ.ClientCallback callback = WordWarZ.ClientCallbackHelper.narrow(callbackObj);
             GameService gameService = model.getGameService();

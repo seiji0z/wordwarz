@@ -46,10 +46,13 @@ public class MainMenuController {
         view.setSoundToggleHandler(this::handleSoundToggle);
     }
 
+    // In MainMenuController.java
     private void startGame() {
         System.out.println("Attempting to start game...");
-        new QueueController(playerToken, orb, stage);
+        int selectedChar = view.getSelectedCharacterIndex();
+        new QueueController(playerToken, orb, stage, selectedChar);
     }
+
 
     private void handleLeaderboard() {
         model.getLeaderboard();

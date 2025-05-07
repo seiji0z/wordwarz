@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import java.util.Random;
 
 public class GameView {
+    private int selectedCharacter;
     private List<Text> letterTexts = new ArrayList<>();
     private Pane root; // Store the root pane for resetting the game
     private Pane overlayPane; // For the start overlay
@@ -44,8 +45,9 @@ public class GameView {
     private boolean[] revealedLetters;
     private Runnable timeOutHandler;
 
-    public GameView(Stage primaryStage) {
+    public GameView(Stage primaryStage, int selectedCharacter) {
         this.primaryStage = primaryStage;
+        this.selectedCharacter = selectedCharacter;
         initialize();
     }
 
@@ -94,8 +96,15 @@ public class GameView {
                 "human4-idle-1.png",
         };
 
-        Random random = new Random();
-        int randomIndex = random.nextInt(humanIdleImageFiles.length);
+        // FIXED CHARACTER SELECTION LOGIC
+        int randomIndex;
+        if (selectedCharacter == 5) {
+            randomIndex = new Random().nextInt(humanIdleImageFiles.length);
+        } else {
+            randomIndex = selectedCharacter - 1;
+            randomIndex = Math.max(0, Math.min(randomIndex, humanIdleImageFiles.length - 1));
+        }
+
         String selectedHumanImage = humanIdleImageFiles[randomIndex];
 
         // Human (with idle animation)

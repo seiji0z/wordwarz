@@ -1,6 +1,7 @@
 package client.player;
 
 import WordWarZ.ClientCallbackPOA;
+import WordWarZ.Player;
 import client.player.controller.GameController;
 import client.player.view.QueueView;
 import javafx.application.Platform;
@@ -14,29 +15,14 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
     private final String playerToken;
     private final ORB orb;
     private boolean gameStarted = false;
+    private int selectedCharacter = 0;
 
-    public ClientCallbackImpl(QueueView q, GameController controller, Stage stage, String playerToken, ORB orb) {
+    public ClientCallbackImpl(QueueView q, Stage stage, String playerToken, ORB orb, int selectedCharacter) {
         this.queueView = q;
-        this.gameController = controller;
         this.stage = stage;
         this.playerToken = playerToken;
         this.orb = orb;
-    }
-
-    public ClientCallbackImpl(QueueView q, Stage stage, String playerToken, ORB orb) {
-        this.queueView = q;
-        this.gameController = null;
-        this.stage = stage;
-        this.playerToken = playerToken;
-        this.orb = orb;
-    }
-
-    public ClientCallbackImpl(GameController controller, Stage stage, String playerToken, ORB orb) {
-        this.queueView = null;
-        this.gameController = controller;
-        this.stage = stage;
-        this.playerToken = playerToken;
-        this.orb = orb;
+        this.selectedCharacter = selectedCharacter; // Store selected character
     }
 
     @Override
@@ -76,7 +62,7 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
             // Ensure the game controller is only initialized once
             if (gameController == null) {
-                gameController = new GameController(playerToken, orb);
+                gameController = new GameController(playerToken, orb, selectedCharacter);
             }
             gameController.onGameStart(wordPlaceholder);
         });
@@ -121,7 +107,7 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
     }
 
     @Override
-    public void onLeaderboardUpdated(WordWarZ.Player[] leaderboard) {
+    public void onLeaderboardUpdated(Player[] leaderboard) {
         // Optional future: update leaderboard
     }
 

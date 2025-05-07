@@ -2,8 +2,11 @@ package client.player.view;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.effect.Glow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -32,6 +35,13 @@ public class MainMenuView {
 
     // Font
     private Font pressStartFont;
+
+    //for character selection
+    private int selectedCharacterIndex = 1; // Default to character 1
+
+    public int getSelectedCharacterIndex() {
+        return selectedCharacterIndex;
+    }
 
     // Image fields
     private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/Sound On.png");
@@ -81,12 +91,101 @@ public class MainMenuView {
         howToPlayBtn.setBackground(Background.EMPTY);
         howToPlayBtn.setPadding(Insets.EMPTY);
 
-        // --- TOP BOX ---
-        HBox topBox = new HBox(10, soundButton, howToPlayBtn);
-        topBox.setAlignment(Pos.TOP_RIGHT);
-        topBox.setPadding(new Insets(10));
-        topBox.setBackground(Background.EMPTY);
-        mainContent.setTop(topBox);
+        // --- CHARACTER SELECTION ---
+        // Create container for character selection section
+        VBox characterSelectionContainer = new VBox(5); // 5px spacing between elements
+        characterSelectionContainer.setAlignment(Pos.CENTER_LEFT);
+        characterSelectionContainer.setPadding(new Insets(10, 0, 0, 20));
+
+        // Create character buttons container
+        HBox characterButtonContainer = new HBox(10);
+        characterButtonContainer.setAlignment(Pos.CENTER_LEFT);
+
+        // Create 5 character buttons with frames
+        for (int i = 1; i <= 5; i++) {
+            // Load character image (use placeholder if not available)
+            Image charImage;
+            try {
+                charImage = new Image("file:res/images/buttons/menu buttons/char" + i + ".png");
+            } catch (Exception e) {
+                charImage = new Image("file:res/images/buttons/menu buttons/placeholder.png");
+            }
+
+
+            // Create image view with uniform sizing
+            ImageView charView = new ImageView(charImage);
+            charView.setPreserveRatio(true);
+            charView.setFitWidth(80);
+            charView.setFitHeight(80);
+
+            // Create frame background
+            Image frameImage = new Image("file:res/images/frames/character_frame.png");
+            ImageView frameView = new ImageView(frameImage);
+            frameView.setPreserveRatio(true);
+            frameView.setFitWidth(90);
+            frameView.setFitHeight(90);
+
+            // Stack frame and character image
+            StackPane framedCharacter = new StackPane();
+            framedCharacter.getChildren().addAll(frameView, charView);
+
+            // Create button with identical style to sound/how-to-play
+            Button charButton = new Button();
+            charButton.setGraphic(framedCharacter);
+            charButton.setBackground(Background.EMPTY);
+            charButton.setPadding(Insets.EMPTY);
+
+            // Add hover effect
+            charButton.setOnMouseEntered(e -> {
+                charButton.setCursor(Cursor.HAND);
+                charView.setEffect(new Glow(0.5));
+            });
+            charButton.setOnMouseExited(e -> {
+                charView.setEffect(null);
+            });
+
+            // Add selection handler
+            final int charIndex = i;
+            charButton.setOnAction(e -> {
+                selectedCharacterIndex = charIndex;
+                System.out.println("Character " + charIndex + " selected");
+                // Add visual feedback for selected character
+                for (Node node : characterButtonContainer.getChildren()) {
+                    if (node instanceof Button) {
+                        Button btn = (Button) node;
+                        if (btn == charButton) {
+                            btn.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,0,0.8), 10, 0, 0, 0);");
+                        } else {
+                            btn.setStyle("");
+                        }
+                    }
+                }
+            });
+            characterButtonContainer.getChildren().add(charButton);
+        }
+
+        // Create "CHARACTER SELECT" label with custom font
+        javafx.scene.control.Label characterSelectLabel = new javafx.scene.control.Label("CHARACTER SELECT");
+        characterSelectLabel.setFont(pressStartFont);
+        characterSelectLabel.setTextFill(Color.WHITE);
+        characterSelectLabel.setStyle("-fx-font-size: 12px;"); // Adjust size as needed
+
+        // Add components to character selection container
+        characterSelectionContainer.getChildren().addAll(characterButtonContainer, characterSelectLabel);
+
+        // --- TOP RIGHT BOX (existing buttons) ---
+        HBox topRightBox = new HBox(10, soundButton, howToPlayBtn);
+        topRightBox.setAlignment(Pos.TOP_RIGHT);
+        topRightBox.setPadding(new Insets(10));
+        topRightBox.setBackground(Background.EMPTY);
+
+        // --- COMBINED TOP SECTION ---
+        BorderPane topRegion = new BorderPane();
+        topRegion.setLeft(characterSelectionContainer);
+        topRegion.setRight(topRightBox);
+        mainContent.setTop(topRegion);
+
+
 
         // --- LOGO ---
         Image logoImg = new Image("file:res/images/others/word war z logo.png");
