@@ -17,6 +17,7 @@ import javafx.util.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.Random;
 
 public class GameView {
     private List<Text> letterTexts = new ArrayList<>();
@@ -85,12 +86,22 @@ public class GameView {
         timerText.setY(70);
         root.getChildren().add(timerText);
 
+        String[] humanIdleImageFiles = {
+                "human1-idle-1.png",
+                "human2-idle-1.png",
+                "human3-idle-1.png",
+                "human4-idle-1.png",
+        };
+
+        Random random = new Random();
+        int randomIndex = random.nextInt(humanIdleImageFiles.length);
+        String selectedHumanImage = humanIdleImageFiles[randomIndex];
 
         // Human (with idle animation)
         humanIdleFrames = new Image[2];
         try {
-            humanIdleFrames[0] = new Image("file:res/images/characters/human/idle/human-idle-1.png");
-            humanIdleFrames[1] = new Image("file:res/images/characters/human/idle/human-idle-2.png");
+            humanIdleFrames[0] = new Image("file:res/images/characters/human/idle/" + selectedHumanImage);
+            humanIdleFrames[1] = new Image("file:res/images/characters/human/idle/" + selectedHumanImage.replace("-1.png", "-2.png"));
         } catch (Exception e) {
             System.out.println("Failed to load human idle animation frames: " + e.getMessage());
         }
