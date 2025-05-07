@@ -27,13 +27,10 @@ public class AdminDashboardView {
     private Button editPlayerBtn;
     private Button editGamePlayBtn;
     private CreatePlayerView createPlayerView;
-    private UpdatePlayerView updatePlayerView;
-    private ReadPlayerView readPlayerView;
-    private DeletePlayerView deletePlayerView;
-    private Runnable onShowReadPlayerView;
-    private Runnable onShowDeletePlayerView;
+    private EditPlayerView editPlayerView;
     private EditGamePlaySettingsView editGamePlaySettingsView;
     private EditGamePlaySettingsController editGamePlaySettingsController;
+    private Runnable onShowEditPlayerView;
 
     public void initializeUI(Stage primaryStage, AdminDashboardModel adminModel, ORB orb, String token) {
         primaryStage.setTitle("Admin Dashboard");
@@ -135,9 +132,7 @@ public class AdminDashboardView {
 
         // Initialize the views
         createPlayerView = new CreatePlayerView(customFont);
-        updatePlayerView = new UpdatePlayerView(customFont);
-        readPlayerView = new ReadPlayerView(customFont);
-        deletePlayerView = new DeletePlayerView(customFont);
+        editPlayerView = new EditPlayerView(customFont);
         editGamePlaySettingsView = new EditGamePlaySettingsView(customFont);
 
         // Initialize EditGamePlaySettingsModel
@@ -172,38 +167,21 @@ public class AdminDashboardView {
         rightContent.getChildren().add(createPlayerView);
     }
 
-    public void showUpdatePlayerView() {
+    public void showEditPlayerView() {
         rightContent.getChildren().clear();
-        rightContent.getChildren().add(updatePlayerView);
-    }
-
-    public void showReadPlayerView() {
-        rightContent.getChildren().clear();
-        rightContent.getChildren().add(readPlayerView);
-        if (onShowReadPlayerView != null) {
-            onShowReadPlayerView.run();
+        rightContent.getChildren().add(editPlayerView);
+        if (onShowEditPlayerView != null) {
+            onShowEditPlayerView.run();
         }
-    }
-
-    public void showDeletePlayerView() {
-        rightContent.getChildren().clear();
-        rightContent.getChildren().add(deletePlayerView);
-        if (onShowDeletePlayerView != null) {
-            onShowDeletePlayerView.run();
-        }
-    }
-
-    public void setOnShowReadPlayerViewListener(Runnable listener) {
-        this.onShowReadPlayerView = listener;
-    }
-
-    public void setOnShowDeletePlayerViewListener(Runnable listener) {
-        this.onShowDeletePlayerView = listener;
     }
 
     public void showEditGameplaySettingsView() {
         rightContent.getChildren().clear();
         rightContent.getChildren().add(editGamePlaySettingsView);
+    }
+
+    public void setOnShowEditPlayerViewListener(Runnable listener) {
+        this.onShowEditPlayerView = listener;
     }
 
     public Button getEditPlayerBtn() {
@@ -218,16 +196,8 @@ public class AdminDashboardView {
         return createPlayerView;
     }
 
-    public UpdatePlayerView getUpdatePlayerView() {
-        return updatePlayerView;
-    }
-
-    public ReadPlayerView getReadPlayerView() {
-        return readPlayerView;
-    }
-
-    public DeletePlayerView getDeletePlayerView() {
-        return deletePlayerView;
+    public EditPlayerView getEditPlayerView() {
+        return editPlayerView;
     }
 
     public EditGamePlaySettingsView getEditGamePlaySettingsView() {

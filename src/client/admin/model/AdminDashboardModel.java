@@ -2,11 +2,7 @@ package client.admin.model;
 
 import WordWarZ.*;
 import org.omg.CORBA.ORB;
-import server.database.DBManager;
 import util.helpers.CORBAConnector;
-
-import java.sql.SQLException;
-import java.util.List;
 
 public class AdminDashboardModel {
     private AdminService adminService;
@@ -36,34 +32,16 @@ public class AdminDashboardModel {
         adminService.updatePlayer(username, newUsername, newPassword);
     }
 
-    public void deletePlayer(String username) throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
-        if (username == null || username.isEmpty()) {
-            System.out.println("Client: Invalid username provided: " + username);
-            throw new IllegalArgumentException("Username cannot be null or empty");
-        }
-        System.out.println("Client: Deleting player: " + username);
-        try {
-            adminService.deletePlayer(username);
-            System.out.println("DeletePlayer call successful for: " + username);
-        } catch (Exception e) {
-            System.out.println("Error in deletePlayer: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
-    }
-
-    public Player getPlayer(String username) throws NotLoggedIn, PlayerNotFound {
-        Player player = adminService.getPlayer(username);
-        return player;
+    public void deletePlayer(String username)
+            throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
+        adminService.deletePlayer(username);
     }
 
     public Player[] getAllPlayers() throws NotLoggedIn, PlayerNotFound {
-        Player[] players = adminService.searchPlayers("");
-        return players;
+        return adminService.searchPlayers("");
     }
 
     public Player[] searchPlayers(String username) throws NotLoggedIn, PlayerNotFound {
-        Player[] players = adminService.searchPlayers(username);
-        return players;
+        return adminService.searchPlayers(username);
     }
 }
