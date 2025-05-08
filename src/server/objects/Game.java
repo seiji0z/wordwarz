@@ -154,6 +154,16 @@ public class Game {
     }
 
     public void clearCurrentWord() {
+        this.currentWord = null; // Ensure `startRound` calls `nextWord` on the next invocation
+    }
+
+    public void resetForNewRound() {
         this.currentWord = null;
+        this.guessedLetters.clear();
+        this.eliminatedPlayers.clear();
+        for (String player : players) {
+            this.resetPlayerGuesses(player);
+            this.wrongGuesses.put(player, 0);
+        }
     }
 }

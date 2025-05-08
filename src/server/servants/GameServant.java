@@ -224,31 +224,30 @@ public class GameServant extends GameServicePOA {
         }
 
         synchronized (session) {
-            // Prevent multiple word generation for a single round
-            if (session.getCurrentWord() == null || session.getCurrentWord().isEmpty()) {
-                String word = session.nextWord();  // Generate the word only once
+            if (session.getCurrentWord() == null) {
+                String word = session.nextWord();
                 System.out.println("New word selected: " + word);
-
-                // Reset player guesses for all players
-                for (String player : session.getPlayers()) {
-                    session.resetPlayerGuesses(player);
-                }
             }
 
-            char[] placeholder = session.getGuessedWord();  // Use existing guessed word state
+            // Reset player guesses for all players
+            for (String player : session.getPlayers()) {
+                session.resetPlayerGuesses(player);
+            }
+
+            char[] placeholder = session.getGuessedWord();
             for (String player : session.getPlayers()) {
                 String playerToken = SessionManager.getTokenByUsername(player);
                 WordWarZ.ClientCallback callback = clientCallbacks.get(playerToken);
                 if (callback != null) {
                     try {
-                        callback.onRoundStarted(placeholder);  // Notify player of round start with one word
+                        callback.onRoundStarted(placeholder);
                     } catch (Exception e) {
                         System.err.println("Failed to notify player " + player + ": " + e.getMessage());
                     }
                 }
             }
 
-            return session.getCurrentWord().length();  // Return the length of the current word
+            return session.getCurrentWord().length();
         }
     }
 
@@ -263,10 +262,63 @@ public class GameServant extends GameServicePOA {
         if (session == null || !session.getPlayers().contains(username)) throw new GameNotFound();
 
         // Process the guess and get updated word state
-        return session.processGuess(username, letter);
+        char[] wordState = session.processGuess(username, letter);
+
+        // Check if the player has won immediately after their guess
+        if (session.hasWon(username)) {
+            // Handle round win scenario
+            try {
+                handleRoundWin(session, username);
+            } catch (GameNotFinished e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return wordState;
     }
 
-    // In GameServant.java
+    private void handleRoundWin(Game session, String winner) throws GameNotFound, NotLoggedIn, NotInGame, GameNotFinished {
+        // Notify all players about the result
+        String word = session.getCurrentWord();
+
+        for (String player : session.getPlayers()) {
+            String playerToken = SessionManager.getTokenByUsername(player);
+            WordWarZ.ClientCallback callback = clientCallbacks.get(playerToken);
+            if (callback != null) {
+                try {
+                    if (player.equals(winner)) {
+                        callback.onRoundWon(word);
+                    } else {
+                        callback.onRoundLost(word, winner);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error notifying player " + player + ": " + e.getMessage());
+                }
+            }
+        }
+
+        // Increment the winner's score
+        session.incrementScore(winner);
+
+        // Check if the game should end
+        if (session.getScores().get(winner) >= 3) {
+            endGame(SessionManager.getTokenByUsername(winner));
+        } else {
+            // Reset game state for next round (but don't generate new word yet)
+            session.resetForNewRound();
+
+            // Start the next round after a delay
+            scheduler.schedule(() -> {
+                try {
+                    String firstPlayerToken = SessionManager.getTokenByUsername(session.getPlayers().get(0));
+                    startRound(firstPlayerToken);
+                } catch (Exception e) {
+                    System.err.println("Error starting next round: " + e.getMessage());
+                }
+            }, 3, TimeUnit.SECONDS);
+        }
+    }
+
     @Override
     public synchronized void endRound(String token) throws NotLoggedIn, NotInGame, GameNotFound {
         if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();
@@ -320,8 +372,6 @@ public class GameServant extends GameServicePOA {
                 game.nextWord();  // Prepare for next round
             }, 3, TimeUnit.SECONDS);  // Delay by 3 seconds
         }
-
-        game.clearCurrentWord();
     }
 
     // In GameServant.java
@@ -355,16 +405,21 @@ public class GameServant extends GameServicePOA {
     public void endGame(String token) throws NotLoggedIn, NotInGame, GameNotFound, GameNotFinished {
         System.out.println("Game ended. Determining the winner...");
 
-        String winner = getWinnerUsername(activeGames.get(SessionManager.getSession(token).getUsername()));
-        for (String player : activeGames.get(SessionManager.getSession(token).getUsername()).getPlayers()) {
+        String username = SessionManager.getSession(token).getUsername();
+        Game game = activeGames.get(username);
+
+        if (game == null) throw new GameNotFound();
+
+        String winner = getWinnerUsername(game);
+        for (String player : game.getPlayers()) {
             String playerToken = SessionManager.getTokenByUsername(player);
-            WordWarZ.ClientCallback cb = clientCallbacks.get(playerToken);
-            if (cb != null) {
+            WordWarZ.ClientCallback callback = clientCallbacks.get(playerToken);
+            if (callback != null) {
                 try {
                     if (player.equals(winner)) {
-                        cb.onGameWon(winner);
+                        callback.onGameWon(winner);
                     } else {
-                        cb.onGameLost(winner);
+                        callback.onGameLost(winner);
                     }
                 } catch (Exception e) {
                     System.err.println("Error notifying player " + player + ": " + e.getMessage());
@@ -372,8 +427,8 @@ public class GameServant extends GameServicePOA {
             }
         }
 
-        // Unregister all players and clear the game
-        activeGames.remove(SessionManager.getSession(token).getUsername());
+        // Cleanup: remove the game instance
+        activeGames.entrySet().removeIf(e -> e.getValue() == game);
     }
 
     @Override

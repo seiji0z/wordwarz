@@ -128,67 +128,38 @@ public class GameController {
         }
     }
 
-    // In GameController.java
-    public void handleRoundLost(String word, String winner) {
-        view.showRoundLost(winner, word);
-        // Prepare for next round after delay
-        new java.util.Timer().schedule(
-                new java.util.TimerTask() {
-                    @Override
-                    public void run() {
-                        Platform.runLater(() -> {
-                            try {
-                                model.startRound();
-                                view.resetRound();
-                            } catch (Exception e) {
-                                view.showErrorMessage("Error starting new round: " + e.getMessage());
-                            }
-                        });
-                    }
-                },
-                3000 // 3 second delay
-        );
-    }
-
     public void handleRoundWon(String word) {
         view.showRoundWon(word);
-        // Prepare for next round after delay
+        prepareNextRound();
+    }
+
+    public void handleRoundLost(String word, String winner) {
+        view.showRoundLost(winner, word);
+        prepareNextRound();
+    }
+
+    private void prepareNextRound() {
+        // Prepare for the next round after a delay
         new java.util.Timer().schedule(
                 new java.util.TimerTask() {
                     @Override
                     public void run() {
                         Platform.runLater(() -> {
                             try {
-                                model.startRound();
-                                view.resetRound();
+                                model.startRound(); // Start a new round
+                                view.resetRound();  // Reset the UI
                             } catch (Exception e) {
                                 view.showErrorMessage("Error starting new round: " + e.getMessage());
                             }
                         });
                     }
                 },
-                3000 // 3 second delay
+                3000 // 3-second delay before the next round
         );
     }
 
     public void handleRoundDrawn(String word) {
         view.showRoundDrawn(word);
-        // Prepare for next round after delay
-        new java.util.Timer().schedule(
-                new java.util.TimerTask() {
-                    @Override
-                    public void run() {
-                        Platform.runLater(() -> {
-                            try {
-                                model.startRound();
-                                view.resetRound();
-                            } catch (Exception e) {
-                                view.showErrorMessage("Error starting new round: " + e.getMessage());
-                            }
-                        });
-                    }
-                },
-                3000 // 3 second delay
-        );
+        prepareNextRound();
     }
 }
