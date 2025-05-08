@@ -365,7 +365,19 @@ public class GameView {
     public void updateHearts() {
         Platform.runLater(() -> {
             for (int i = 0; i < hearts.size(); i++) {
-                hearts.get(i).setVisible(i < remainingGuesses);
+                ImageView heart = hearts.get(i);
+                if (i < remainingGuesses) {
+                    // Display full heart
+                    try {
+                        Image fullHeart = new Image("file:res/images/others/heart.png");
+                        heart.setImage(fullHeart);
+                    } catch (Exception e) {
+                        heart.setOpacity(1.0);
+                    }
+                    heart.setVisible(true);
+                } else {
+                    heart.setVisible(false);
+                }
             }
         });
     }
@@ -563,15 +575,6 @@ public class GameView {
         }
     }
 
-
-    public void showGameWon() {
-        showEndGameOverlay("YOU SURVIVED!", Color.GREEN);
-    }
-
-    public void showGameLost() {
-        showEndGameOverlay("YOU GOT INFECTED!", Color.RED);
-    }
-
     private void showEndGameOverlay(String message, Color color) {
         Platform.runLater(() -> {
             Pane overlay = new Pane();
@@ -653,19 +656,43 @@ public class GameView {
 
     public void resetRound() {
         Platform.runLater(() -> {
+            // Reset the keyboard buttons
             resetKeyboard();
+
+            // Reset hearts to full
             remainingGuesses = 5;
             updateHearts();
 
             // Reset zombie position
             zombieView.setX(1000);
 
-            // Clear any existing word display
+            // Clear any displayed letters
             root.getChildren().removeAll(letterTexts);
             letterTexts.clear();
 
             // Reset timer display
-            timerText.setText(String.format("%02d:%02d", initialRoundDuration/60, initialRoundDuration%60));
+            timerText.setText(String.format("%02d:%02d", initialRoundDuration / 60, initialRoundDuration % 60));
+        });
+    }
+
+    private void showEndGameOverlay(String winner) {
+        Platform.runLater(() -> {
+            Pane overlay = new Pane();
+            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
+            overlay.setPrefSize(1280, 760);
+
+            Text message = new Text(winner + " has won the game!\nThank you for playing!");
+            message.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 50));
+            message.setFill(Color.GOLD);
+            message.setTextAlignment(TextAlignment.CENTER);
+            message.setWrappingWidth(1000);
+            message.setX((1280 - 1000) / 2);
+            message.setY(350);
+
+            overlay.getChildren().add(message);
+            root.getChildren().add(overlay);
+
+            new Timeline(new KeyFrame(Duration.seconds(5), e -> Platform.exit())).play();
         });
     }
 }

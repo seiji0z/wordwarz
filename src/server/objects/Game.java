@@ -139,4 +139,21 @@ public class Game {
     public boolean isPlayerEliminated(String username) {
         return eliminatedPlayers.contains(username);
     }
+
+    public boolean hasAllPlayersLost() {
+        return eliminatedPlayers.size() >= players.size();
+    }
+
+    public String handleRoundWin(String player) { // Player who won
+        incrementScore(player);
+        return player;
+    }
+
+    public void markPlayerAsLost(String player) {
+        eliminatedPlayers.add(player);
+    }
+
+    public void clearCurrentWord() {
+        this.currentWord = null;
+    }
 }
