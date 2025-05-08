@@ -1,11 +1,12 @@
 package client.player.view;
 
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Cursor;
-import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.effect.Glow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -15,6 +16,7 @@ import javafx.scene.media.MediaPlayer;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import java.io.File;
 
 public class MainMenuView {
@@ -24,36 +26,68 @@ public class MainMenuView {
     private boolean isMuted = false;
 
     // UI Components
-    private ImageView soundButtonView;
-    private StackPane overlayPane;
+    private StackPane overlayPane; // For How to Play
+    private StackPane characterOverlayPane; // For Character Selection
     private Button playBtn;
     private Button leaderboardBtn;
     private Button howToPlayBtn;
     private Button quitBtn;
     private Button soundButton;
+    private Button creditsBtn;
     private Button closeHowToPlayBtn;
+    private Button characterSelectBtn; // New button to open character selection overlay
+    private Button closeCharacterOverlayBtn; // Close button for character selection overlay
 
-    // Font
+    // Fonts
     private Font pressStartFont;
+    private Font pressStartFontLarge; // Larger font for How to Play button
 
-    //for character selection
+    // For character selection
     private int selectedCharacterIndex = 1; // Default to character 1
+    private ImageView[] characterViews; // To track character ImageViews for glow effect
+    private Timeline[] characterAnimations; // To manage animations for each character
 
     public int getSelectedCharacterIndex() {
         return selectedCharacterIndex;
     }
 
-    // Image fields
-    private final Image soundOnImg = new Image("file:res/images/buttons/menu buttons/Sound On.png");
-    private final Image soundOffImg = new Image("file:res/images/buttons/menu buttons/Mute.png");
+    // Helper method to update glow effect based on selectedCharacterIndex
+    private void updateGlowEffect() {
+        for (int j = 0; j < characterViews.length; j++) {
+            if (j + 1 == selectedCharacterIndex) {
+                characterViews[j].setEffect(new Glow(0.8));
+            } else {
+                characterViews[j].setEffect(null);
+            }
+        }
+    }
+
+    // Helper method to stop all animations
+    private void stopAllAnimations() {
+        for (Timeline animation : characterAnimations) {
+            if (animation != null) {
+                animation.stop();
+            }
+        }
+    }
+
+    // Helper method to start animation for the selected character
+    private void manageSelectedAnimation() {
+        stopAllAnimations();
+        if (selectedCharacterIndex >= 1 && selectedCharacterIndex <= 4) {
+            characterAnimations[selectedCharacterIndex - 1].play();
+        }
+    }
 
     public void initializeUI(Stage primaryStage) {
-        // Load font
+        // Load PressStart2P font
         try {
             pressStartFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 20);
+            pressStartFontLarge = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 30); // Larger font size for How to Play button
         } catch (Exception e) {
             System.err.println("Failed to load font: res/fonts/PressStart2P-Regular.ttf. Using default font.");
             pressStartFont = Font.font("System", 20);
+            pressStartFontLarge = Font.font("System", 30);
         }
 
         // Main root container
@@ -73,107 +107,330 @@ public class MainMenuView {
         )));
 
         // --- SOUND BUTTON ---
-        soundButtonView = new ImageView(soundOnImg);
-        soundButtonView.setPreserveRatio(true);
-        soundButtonView.setFitWidth(90);
         soundButton = new Button();
-        soundButton.setGraphic(soundButtonView);
-        soundButton.setBackground(Background.EMPTY);
-        soundButton.setPadding(Insets.EMPTY);
+        Image soundOnDefaultImg = new Image("file:res/images/buttons/menu buttons/sound on-1.png");
+        Image soundOnHoverImg = new Image("file:res/images/buttons/menu buttons/sound on-2.png");
+        Image soundOffDefaultImg = new Image("file:res/images/buttons/menu buttons/mute-1.png");
+        Image soundOffHoverImg = new Image("file:res/images/buttons/menu buttons/mute-2.png");
+
+        ImageView soundView = new ImageView(!isMuted ? soundOnDefaultImg : soundOffDefaultImg);
+        soundView.setPreserveRatio(true);
+        soundView.setFitHeight(50); // Reduced height to make image and button smaller
+        soundButton.setGraphic(soundView);
+        soundButton.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        soundButton.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        soundButton.setPadding(new Insets(10, 20, 10, 20));
+        soundButton.setPrefWidth(-1); // Auto-size to image width
+        soundButton.setPrefHeight(70);
+        soundButton.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        soundButton.setOnMouseEntered(e -> {
+            soundView.setImage(isMuted ? soundOffHoverImg : soundOnHoverImg);
+            soundButton.setStyle(
+                    "-fx-background-color: white;" +
+                            "-fx-border-color: white;" +
+                            "-fx-border-width: 2px;" +
+                            "-fx-cursor: hand;"
+            );
+        });
+        soundButton.setOnMouseExited(e -> {
+            soundView.setImage(isMuted ? soundOffDefaultImg : soundOnDefaultImg);
+            soundButton.setStyle(
+                    "-fx-background-color: transparent;" +
+                            "-fx-border-color: white;" +
+                            "-fx-border-width: 2px;" +
+                            "-fx-cursor: hand;"
+            );
+        });
+        soundButton.setOnMousePressed(e -> {
+            soundView.setImage(isMuted ? soundOffHoverImg : soundOnHoverImg);
+            soundButton.setStyle(
+                    "-fx-background-color: grey;" +
+                            "-fx-border-color: white;" +
+                            "-fx-border-width: 2px;" +
+                            "-fx-cursor: hand;"
+            );
+        });
+        soundButton.setOnMouseReleased(e -> {
+            soundView.setImage(isMuted ? soundOffDefaultImg : soundOnDefaultImg);
+            soundButton.setStyle(
+                    "-fx-background-color: white;" +
+                            "-fx-border-color: white;" +
+                            "-fx-border-width: 2px;" +
+                            "-fx-cursor: hand;"
+            );
+        });
+        soundButton.setOnAction(e -> {
+            boolean newMutedState = !isMuted;
+            System.out.println("Sound button clicked! Muted: " + newMutedState);
+            isMuted = newMutedState;
+            mediaPlayer.setMute(isMuted);
+            soundView.setImage(isMuted ? soundOffDefaultImg : soundOnDefaultImg);
+            if (soundToggleHandler != null) {
+                soundToggleHandler.handle(isMuted);
+            }
+        });
 
         // --- HOW TO PLAY BUTTON ---
-        Image howToPlayImg = new Image("file:res/images/buttons/menu buttons/How to Play.png");
-        ImageView howToPlayView = new ImageView(howToPlayImg);
-        howToPlayView.setPreserveRatio(true);
-        howToPlayView.setFitWidth(90);
-        howToPlayBtn = new Button();
-        howToPlayBtn.setGraphic(howToPlayView);
-        howToPlayBtn.setBackground(Background.EMPTY);
-        howToPlayBtn.setPadding(Insets.EMPTY);
+        howToPlayBtn = new Button("?");
+        howToPlayBtn.setFont(pressStartFontLarge); // Use larger font
+        howToPlayBtn.setTextFill(Color.WHITE);
+        howToPlayBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        howToPlayBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        howToPlayBtn.setPadding(new Insets(10, 20, 10, 20));
+        howToPlayBtn.setPrefWidth(100);
+        howToPlayBtn.setPrefHeight(74);
+        howToPlayBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        howToPlayBtn.setOnMouseEntered(e -> howToPlayBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        howToPlayBtn.setOnMouseExited(e -> howToPlayBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        howToPlayBtn.setOnMousePressed(e -> howToPlayBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        howToPlayBtn.setOnMouseReleased(e -> howToPlayBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        howToPlayBtn.setOnAction(ev -> overlayPane.setVisible(true));
 
-        // --- CHARACTER SELECTION ---
-        // Create container for character selection section
-        VBox characterSelectionContainer = new VBox(5); // 5px spacing between elements
-        characterSelectionContainer.setAlignment(Pos.CENTER_LEFT);
-        characterSelectionContainer.setPadding(new Insets(10, 0, 0, 20));
+        // --- CHARACTER SELECT BUTTON ---
+        characterSelectBtn = new Button();
+        Image charSelectImg = new Image("file:res/images/buttons/menu buttons/char1.png");
+        ImageView charSelectView = new ImageView(charSelectImg);
+        charSelectView.setPreserveRatio(true);
+        charSelectView.setFitWidth(60);
+        charSelectView.setFitHeight(60);
+        characterSelectBtn.setGraphic(charSelectView);
+        characterSelectBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        characterSelectBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        characterSelectBtn.setPadding(new Insets(10, 20, 10, 20));
+        characterSelectBtn.setPrefWidth(80);
+        characterSelectBtn.setPrefHeight(54);
+        characterSelectBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        characterSelectBtn.setOnMouseEntered(e -> characterSelectBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        characterSelectBtn.setOnMouseExited(e -> characterSelectBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        characterSelectBtn.setOnMousePressed(e -> characterSelectBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        characterSelectBtn.setOnMouseReleased(e -> characterSelectBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        characterSelectBtn.setOnAction(e -> {
+            characterOverlayPane.setVisible(true);
+            manageSelectedAnimation(); // Ensure selected character's animation plays when overlay opens
+        });
 
-        // Create character buttons container
-        HBox characterButtonContainer = new HBox(10);
-        characterButtonContainer.setAlignment(Pos.CENTER_LEFT);
+        // --- CHARACTER SELECTION OVERLAY ---
+        characterOverlayPane = new StackPane();
+        characterOverlayPane.setBackground(new Background(new BackgroundFill(
+                new Color(0, 0, 0, 0.7), CornerRadii.EMPTY, Insets.EMPTY)));
+        characterOverlayPane.setVisible(false);
 
-        // Create 5 character buttons with frames
-        for (int i = 1; i <= 5; i++) {
-            // Load character image (use placeholder if not available)
-            Image charImage;
-            try {
-                charImage = new Image("file:res/images/buttons/menu buttons/char" + i + ".png");
-            } catch (Exception e) {
-                charImage = new Image("file:res/images/buttons/menu buttons/placeholder.png");
-            }
+        // Initialize character views and animations arrays
+        characterViews = new ImageView[5]; // 4 characters + 1 randomizer
+        characterAnimations = new Timeline[4]; // Only for the 4 animated characters
 
+        // Create HBox for characters
+        HBox characterContainer = new HBox(20);
+        characterContainer.setAlignment(Pos.CENTER);
 
-            // Create image view with uniform sizing
-            ImageView charView = new ImageView(charImage);
-            charView.setPreserveRatio(true);
-            charView.setFitWidth(80);
-            charView.setFitHeight(80);
+        // Add 4 characters (human1 to human4)
+        for (int i = 1; i <= 4; i++) {
+            final int index = i; // Final variable for lambda
+            Image frame1 = new Image("file:res/images/characters/human/idle/human" + index + "-idle-1.png");
+            Image frame2 = new Image("file:res/images/characters/human/idle/human" + index + "-idle-2.png");
+            final Image[] frames = new Image[]{frame1, frame2};
+            ImageView charView = new ImageView(frame1);
+            charView.setFitWidth(200);
+            charView.setFitHeight(200);
+            characterViews[index - 1] = charView;
 
-            // Create frame background
-            Image frameImage = new Image("file:res/images/frames/character_frame.png");
-            ImageView frameView = new ImageView(frameImage);
-            frameView.setPreserveRatio(true);
-            frameView.setFitWidth(90);
-            frameView.setFitHeight(90);
+            // Create animation for this character
+            Timeline animation = new Timeline(new KeyFrame(Duration.millis(250), event -> {
+                if (charView.getImage() == frames[0]) {
+                    charView.setImage(frames[1]);
+                } else {
+                    charView.setImage(frames[0]);
+                }
+            }));
+            animation.setCycleCount(Timeline.INDEFINITE);
+            characterAnimations[index - 1] = animation;
 
-            // Stack frame and character image
-            StackPane framedCharacter = new StackPane();
-            framedCharacter.getChildren().addAll(frameView, charView);
-
-            // Create button with identical style to sound/how-to-play
+            // Create button for the character
             Button charButton = new Button();
-            charButton.setGraphic(framedCharacter);
+            charButton.setGraphic(charView);
             charButton.setBackground(Background.EMPTY);
             charButton.setPadding(Insets.EMPTY);
 
-            // Add hover effect
+            // Hover effects
             charButton.setOnMouseEntered(e -> {
-                charButton.setCursor(Cursor.HAND);
                 charView.setEffect(new Glow(0.5));
-            });
-            charButton.setOnMouseExited(e -> {
-                charView.setEffect(null);
-            });
-
-            // Add selection handler
-            final int charIndex = i;
-            charButton.setOnAction(e -> {
-                selectedCharacterIndex = charIndex;
-                System.out.println("Character " + charIndex + " selected");
-                // Add visual feedback for selected character
-                for (Node node : characterButtonContainer.getChildren()) {
-                    if (node instanceof Button) {
-                        Button btn = (Button) node;
-                        if (btn == charButton) {
-                            btn.setStyle("-fx-effect: dropshadow(three-pass-box, rgba(255,255,0,0.8), 10, 0, 0, 0);");
-                        } else {
-                            btn.setStyle("");
-                        }
-                    }
+                if (selectedCharacterIndex != index) {
+                    animation.play();
                 }
             });
-            characterButtonContainer.getChildren().add(charButton);
+            charButton.setOnMouseExited(e -> {
+                updateGlowEffect();
+                if (selectedCharacterIndex != index) {
+                    animation.stop();
+                    charView.setImage(frame1); // Reset to first frame if not selected
+                }
+            });
+
+            // Selection logic
+            charButton.setOnAction(e -> {
+                selectedCharacterIndex = index;
+                System.out.println("Character " + index + " selected");
+                updateGlowEffect();
+                manageSelectedAnimation();
+            });
+
+            characterContainer.getChildren().add(charButton);
         }
 
-        // Create "CHARACTER SELECT" label with custom font
-        javafx.scene.control.Label characterSelectLabel = new javafx.scene.control.Label("CHARACTER SELECT");
-        characterSelectLabel.setFont(pressStartFont);
-        characterSelectLabel.setTextFill(Color.WHITE);
-        characterSelectLabel.setStyle("-fx-font-size: 12px;"); // Adjust size as needed
+        // Add Randomizer (char5.png)
+        Image randomizerImg = new Image("file:res/images/buttons/menu buttons/char5.png");
+        ImageView randomizerView = new ImageView(randomizerImg);
+        randomizerView.setFitWidth(75);
+        randomizerView.setFitHeight(75);
+        characterViews[4] = randomizerView;
 
-        // Add components to character selection container
-        characterSelectionContainer.getChildren().addAll(characterButtonContainer, characterSelectLabel);
+        Button randomizerButton = new Button();
+        randomizerButton.setGraphic(randomizerView);
+        randomizerButton.setBackground(Background.EMPTY);
+        randomizerButton.setPadding(Insets.EMPTY);
 
-        // --- TOP RIGHT BOX (existing buttons) ---
+        // Hover effects for randomizer
+        randomizerButton.setOnMouseEntered(e -> randomizerView.setEffect(new Glow(0.5)));
+        randomizerButton.setOnMouseExited(e -> updateGlowEffect());
+
+        // Selection logic for randomizer
+        randomizerButton.setOnAction(e -> {
+            selectedCharacterIndex = 5;
+            System.out.println("Randomizer (Character 5) selected");
+            updateGlowEffect();
+            stopAllAnimations(); // Randomizer has no animation
+        });
+
+        characterContainer.getChildren().add(randomizerButton);
+
+        // --- CLOSE BUTTON FOR CHARACTER OVERLAY ---
+        closeCharacterOverlayBtn = new Button("CLOSE");
+        closeCharacterOverlayBtn.setFont(pressStartFont);
+        closeCharacterOverlayBtn.setTextFill(Color.WHITE);
+        closeCharacterOverlayBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        closeCharacterOverlayBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        closeCharacterOverlayBtn.setPadding(new Insets(10, 80, 10, 80));
+        closeCharacterOverlayBtn.setPrefWidth(450);
+        closeCharacterOverlayBtn.setPrefHeight(60);
+        closeCharacterOverlayBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        closeCharacterOverlayBtn.setOnMouseEntered(e -> closeCharacterOverlayBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        closeCharacterOverlayBtn.setOnMouseExited(e -> closeCharacterOverlayBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        closeCharacterOverlayBtn.setOnMousePressed(e -> closeCharacterOverlayBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        closeCharacterOverlayBtn.setOnMouseReleased(e -> closeCharacterOverlayBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        closeCharacterOverlayBtn.setOnAction(e -> {
+            characterOverlayPane.setVisible(false);
+            stopAllAnimations();
+        });
+        VBox.setMargin(closeCharacterOverlayBtn, new Insets(-30, 0, 0, 0));
+
+        // --- ADD CHARACTER SELECT TEXT ---
+        Label characterSelectText = new Label("CHARACTER SELECT");
+        characterSelectText.setFont(pressStartFont);
+        characterSelectText.setTextFill(Color.WHITE);
+        characterSelectText.setAlignment(Pos.CENTER);
+
+        // Add character container, text, and close button to overlay
+        VBox characterOverlayContent = new VBox(50, characterSelectText, characterContainer, closeCharacterOverlayBtn);
+        characterOverlayContent.setAlignment(Pos.CENTER);
+        characterOverlayPane.getChildren().add(characterOverlayContent);
+
+        // --- TOP LEFT: CHARACTER SELECT BUTTON ---
+        VBox characterSelectContainer = new VBox(5);
+        characterSelectContainer.setAlignment(Pos.CENTER_LEFT);
+        characterSelectContainer.setPadding(new Insets(10, 0, 0, 20));
+        characterSelectContainer.getChildren().add(characterSelectBtn);
+
+        // --- TOP RIGHT BOX ---
         HBox topRightBox = new HBox(10, soundButton, howToPlayBtn);
         topRightBox.setAlignment(Pos.TOP_RIGHT);
         topRightBox.setPadding(new Insets(10));
@@ -181,17 +438,16 @@ public class MainMenuView {
 
         // --- COMBINED TOP SECTION ---
         BorderPane topRegion = new BorderPane();
-        topRegion.setLeft(characterSelectionContainer);
+        topRegion.setLeft(characterSelectContainer);
         topRegion.setRight(topRightBox);
         mainContent.setTop(topRegion);
-
-
 
         // --- LOGO ---
         Image logoImg = new Image("file:res/images/others/word war z logo.png");
         ImageView logoView = new ImageView(logoImg);
         logoView.setPreserveRatio(true);
         logoView.setFitWidth(300);
+        logoView.setY(150);
 
         // --- PLAY BUTTON ---
         playBtn = new Button("PLAY");
@@ -201,7 +457,7 @@ public class MainMenuView {
         playBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
         playBtn.setPadding(new Insets(10, 80, 10, 80));
         playBtn.setPrefWidth(450);
-        playBtn.setPrefHeight(60);
+        playBtn.setPrefHeight(70);
         playBtn.setStyle(
                 "-fx-background-color: transparent;" +
                         "-fx-text-fill: white;" +
@@ -246,7 +502,7 @@ public class MainMenuView {
         leaderboardBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
         leaderboardBtn.setPadding(new Insets(10, 80, 10, 80));
         leaderboardBtn.setPrefWidth(450);
-        leaderboardBtn.setPrefHeight(60);
+        leaderboardBtn.setPrefHeight(70);
         leaderboardBtn.setStyle(
                 "-fx-background-color: transparent;" +
                         "-fx-text-fill: white;" +
@@ -291,7 +547,7 @@ public class MainMenuView {
         quitBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
         quitBtn.setPadding(new Insets(10, 80, 10, 80));
         quitBtn.setPrefWidth(450);
-        quitBtn.setPrefHeight(60);
+        quitBtn.setPrefHeight(70);
         quitBtn.setStyle(
                 "-fx-background-color: transparent;" +
                         "-fx-text-fill: white;" +
@@ -338,11 +594,63 @@ public class MainMenuView {
             }
         });
 
+        // --- CREDITS BUTTON ---
+        creditsBtn = new Button("CREDITS");
+        creditsBtn.setFont(pressStartFont);
+        creditsBtn.setTextFill(Color.WHITE);
+        creditsBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        creditsBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        creditsBtn.setPadding(new Insets(10, 80, 10, 80));
+        creditsBtn.setPrefWidth(450);
+        creditsBtn.setPrefHeight(70);
+        creditsBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        creditsBtn.setOnMouseEntered(e -> creditsBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        creditsBtn.setOnMouseExited(e -> creditsBtn.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        creditsBtn.setOnMousePressed(e -> creditsBtn.setStyle(
+                "-fx-background-color: grey;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        creditsBtn.setOnMouseReleased(e -> creditsBtn.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        creditsBtn.setOnAction(e -> {
+            System.out.println("Credits button clicked!");
+            if (creditsButtonHandler != null) {
+                creditsButtonHandler.handle();
+            }
+        });
+
         // --- CENTER BOX ---
-        VBox centerBox = new VBox(20, logoView, playBtn, leaderboardBtn, quitBtn);
+        VBox centerBox = new VBox(20);
+        centerBox.getChildren().addAll(logoView, playBtn, leaderboardBtn, creditsBtn, quitBtn);
         centerBox.setAlignment(Pos.TOP_CENTER);
-        centerBox.setPadding(new Insets(10, 0, 0, 0));
         mainContent.setCenter(centerBox);
+        BorderPane.setMargin(centerBox, new Insets(-25, 0, 0, 0));
 
         // --- OVERLAY PANE (How to Play) ---
         overlayPane = new StackPane();
@@ -350,14 +658,12 @@ public class MainMenuView {
                 new Color(0, 0, 0, 0.7), CornerRadii.EMPTY, Insets.EMPTY)));
         overlayPane.setVisible(false);
 
-        // How to Play content
         Image howToPlayScreen = new Image("file:res/images/frames/how to play.png");
         ImageView howToPlayFullScreen = new ImageView(howToPlayScreen);
         howToPlayFullScreen.setFitWidth(1000);
         howToPlayFullScreen.setFitHeight(650);
         howToPlayFullScreen.setPreserveRatio(false);
 
-        //CLOSE HOW TO PLAY BUTTON
         closeHowToPlayBtn = new Button("CLOSE");
         closeHowToPlayBtn.setFont(pressStartFont);
         closeHowToPlayBtn.setTextFill(Color.WHITE);
@@ -373,8 +679,6 @@ public class MainMenuView {
                         "-fx-border-width: 2px;" +
                         "-fx-cursor: hand;"
         );
-
-
         closeHowToPlayBtn.setOnMouseEntered(e -> closeHowToPlayBtn.setStyle(
                 "-fx-background-color: white;" +
                         "-fx-text-fill: black;" +
@@ -382,7 +686,6 @@ public class MainMenuView {
                         "-fx-border-width: 2px;" +
                         "-fx-cursor: hand;"
         ));
-
         closeHowToPlayBtn.setOnMouseExited(e -> closeHowToPlayBtn.setStyle(
                 "-fx-background-color: transparent;" +
                         "-fx-text-fill: white;" +
@@ -390,7 +693,6 @@ public class MainMenuView {
                         "-fx-border-width: 2px;" +
                         "-fx-cursor: hand;"
         ));
-
         closeHowToPlayBtn.setOnMousePressed(e -> closeHowToPlayBtn.setStyle(
                 "-fx-background-color: grey;" +
                         "-fx-text-fill: white;" +
@@ -398,7 +700,6 @@ public class MainMenuView {
                         "-fx-border-width: 2px;" +
                         "-fx-cursor: hand;"
         ));
-
         closeHowToPlayBtn.setOnMouseReleased(e -> closeHowToPlayBtn.setStyle(
                 "-fx-background-color: white;" +
                         "-fx-text-fill: black;" +
@@ -406,14 +707,12 @@ public class MainMenuView {
                         "-fx-border-width: 2px;" +
                         "-fx-cursor: hand;"
         ));
+        closeHowToPlayBtn.setOnAction(e -> overlayPane.setVisible(false));
+        VBox.setMargin(closeHowToPlayBtn, new Insets(-30, 0, 0, 0));
 
-        closeHowToPlayBtn.setOnAction(ev -> overlayPane.setVisible(false));
-
-        VBox overlayContent = new VBox(20, howToPlayFullScreen, closeHowToPlayBtn);
+        VBox overlayContent = new VBox(5, howToPlayFullScreen, closeHowToPlayBtn);
         overlayContent.setAlignment(Pos.CENTER);
         overlayPane.getChildren().add(overlayContent);
-
-        howToPlayBtn.setOnAction(ev -> overlayPane.setVisible(true));
 
         // --- PLAY MUSIC ---
         File musicFile = new File("res/music/menu music.mp3");
@@ -423,7 +722,7 @@ public class MainMenuView {
         mediaPlayer.play();
 
         // --- SETUP SCENE ---
-        root.getChildren().addAll(mainContent, overlayPane);
+        root.getChildren().addAll(mainContent, overlayPane, characterOverlayPane);
         Scene scene = new Scene(root);
         primaryStage.setTitle("Word War Z - Main Menu");
         primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
@@ -452,11 +751,16 @@ public class MainMenuView {
         void handle(boolean isMuted);
     }
 
+    public interface CreditsButtonHandler {
+        void handle();
+    }
+
     private PlayButtonHandler playButtonHandler;
     private LeaderboardButtonHandler leaderboardButtonHandler;
     private HowToPlayButtonHandler howToPlayButtonHandler;
     private QuitButtonHandler quitButtonHandler;
     private SoundToggleHandler soundToggleHandler;
+    private CreditsButtonHandler creditsButtonHandler;
 
     public void setPlayButtonHandler(PlayButtonHandler handler) {
         this.playButtonHandler = handler;
@@ -499,13 +803,22 @@ public class MainMenuView {
     public void setSoundToggleHandler(SoundToggleHandler handler) {
         this.soundToggleHandler = handler;
         soundButton.setOnAction(e -> {
-            System.out.println("Sound button clicked! Muted: " + !isMuted);
-            isMuted = !isMuted;
+            boolean newMutedState = !isMuted;
+            System.out.println("Sound button clicked! Muted: " + newMutedState);
+            isMuted = newMutedState;
+            ((ImageView) soundButton.getGraphic()).setImage(isMuted ? new Image("file:res/images/buttons/menu buttons/mute-1.png") : new Image("file:res/images/buttons/menu buttons/sound on-1.png"));
             mediaPlayer.setMute(isMuted);
-            soundButtonView.setImage(isMuted ? soundOffImg : soundOnImg);
             if (handler != null) {
-                handler.handle(isMuted);
+                soundToggleHandler.handle(isMuted);
             }
+        });
+    }
+
+    public void setCreditsButtonHandler(CreditsButtonHandler handler) {
+        this.creditsButtonHandler = handler;
+        creditsBtn.setOnAction(e -> {
+            System.out.println("Credits button clicked!");
+            handler.handle();
         });
     }
 
