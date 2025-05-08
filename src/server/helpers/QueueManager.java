@@ -3,6 +3,7 @@ package server.helpers;
 import server.objects.Game;
 import server.objects.GameConfig;
 import server.servants.GameServant;
+import WordWarZ.NoOpponentFound;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -51,8 +52,12 @@ public class QueueManager {
             broadcastCountdownUpdate();
 
             if (remainingTime <= 0) {
-                System.out.println("Countdown finished, starting game");
-                startGame();
+                System.out.println("Countdown finished, processing queue");
+                try {
+                    startGame();
+                } catch (NoOpponentFound e) {
+                    System.err.println("No opponent found: " + e.reason);
+                }
                 countdownTask.cancel(false);
             }
         }, 1, 1, TimeUnit.SECONDS);
@@ -67,8 +72,15 @@ public class QueueManager {
         System.out.println("Countdown canceled");
     }
 
-    private static synchronized void startGame() {
-        if (waitingPlayers.size() >= 2) {
+    private static synchronized void startGame() throws NoOpponentFound {
+        if (waitingPlayers.size() == 1) {
+            String username = waitingPlayers.get(0);
+            waitingPlayers.clear();
+            countdownStarted = false;
+            cancelCountdown();
+            GameServant.notifyNoOpponent(username);
+            throw new NoOpponentFound("No opponent found after countdown expired");
+        } else if (waitingPlayers.size() >= 2) {
             System.out.println("Starting game with players: " + waitingPlayers);
 
             System.out.println("Attempting to create game. Countdown started: " + countdownStarted + ", Remaining time: " + remainingTime);
@@ -87,11 +99,6 @@ public class QueueManager {
         }
     }
 
-    private static void notifyNoOpponent(String username) {
-        System.out.println("Notifying no opponent for " + username);
-    }
-
-
     private static void broadcastQueueUpdate() {
         System.out.println("Broadcasting queue update: " + waitingPlayers.size() + " players");
         GameServant.notifyQueueUpdate(waitingPlayers.size());
@@ -100,8 +107,8 @@ public class QueueManager {
     private static void broadcastCountdownUpdate() {
         System.out.println("Broadcasting countdown update: " + remainingTime + " seconds");
         GameServant gameServant = new GameServant();
-        // Notify all clients about the countdown
-        gameServant.notifyCountdownUpdate(remainingTime);    }
+        gameServant.notifyCountdownUpdate(remainingTime);
+    }
 
     public static synchronized int getQueueSize() {
         System.out.println("Queue size requested. Current players: " + waitingPlayers);

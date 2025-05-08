@@ -14,6 +14,9 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 public class QueueView extends Application {
     private Pane root;
@@ -21,6 +24,7 @@ public class QueueView extends Application {
     private Text playerCountText;
     private Pane usernamesPane;
     private Button cancelButton;
+    private Text noOpponentText;
     private Stage stage;
 
     @Override
@@ -29,7 +33,7 @@ public class QueueView extends Application {
         root = new Pane();
         Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 25);
         if (customFont == null) {
-            System.out.println("Failed to load custom font, falling back to default.");
+            System.out.println("[QueueView] Failed to load custom font, falling back to default.");
             customFont = new Font("System", 30);
         }
 
@@ -93,12 +97,21 @@ public class QueueView extends Application {
         cancelButton.setLayoutY(650);
         root.getChildren().add(cancelButton);
 
+        noOpponentText = new Text("NO OPPONENT FOUND!");
+        noOpponentText.setFont(customFont);
+        noOpponentText.setFill(Color.RED);
+        noOpponentText.setX(380);
+        noOpponentText.setY(530);
+        noOpponentText.setVisible(false);
+        root.getChildren().add(noOpponentText);
+
         Scene scene = new Scene(root, 1280, 760);
         primaryStage.setTitle("Word War Z - Queue");
         primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
+        System.out.println("[QueueView] QueueView started");
     }
 
     public void setCancelButtonHandler(EventHandler<ActionEvent> handler) {
@@ -109,21 +122,34 @@ public class QueueView extends Application {
         Platform.runLater(() -> {
             String formatted = String.format("00:%02d", secondsLeft);
             timerText.setText(formatted);
-            System.out.println("Timer updated to: " + formatted);
+            System.out.println("[QueueView] Timer updated to: " + formatted);
         });
     }
 
     public void updatePlayerCount(int count) {
         Platform.runLater(() -> {
             playerCountText.setText("Player count: " + count);
-            System.out.println("Player count updated to: " + count);
+            System.out.println("[QueueView] Player count updated to: " + count);
+        });
+    }
+
+    public void showNoOpponentMessage() {
+        Platform.runLater(() -> {
+            noOpponentText.setVisible(true);
+            System.out.println("[QueueView] Showing 'NO OPPONENT FOUND!' message");
+            ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+            scheduler.schedule(() -> Platform.runLater(() -> {
+                noOpponentText.setVisible(false);
+                System.out.println("[QueueView] Hiding 'NO OPPONENT FOUND!' message");
+            }), 2, TimeUnit.SECONDS);
+            scheduler.shutdown();
         });
     }
 
     public void close() {
         if (stage != null) {
             stage.close();
+            System.out.println("[QueueView] QueueView closed");
         }
-        // Clear any other resources
     }
-    }
+}

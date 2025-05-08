@@ -2,6 +2,8 @@ package client.player.model;
 
 import WordWarZ.GameService;
 import WordWarZ.GameServiceHelper;
+import WordWarZ.NoOpponentFound;
+import WordWarZ.NotLoggedIn;
 import org.omg.CORBA.ORB;
 import util.helpers.CORBAConnector;
 
@@ -23,11 +25,17 @@ public class QueueModel {
         }
     }
 
-    public void startGame() {
+    public void startGame() throws NotLoggedIn, NoOpponentFound {
         try {
             gameService.startGame(playerToken);
+        } catch (NotLoggedIn e) {
+            System.out.println("Error starting game: Not logged in");
+            throw e;
+        } catch (NoOpponentFound e) {
+            System.out.println("Error starting game: No opponent found");
+            throw e;
         } catch (Exception e) {
-            System.out.println("Error starting game: " + e.getMessage());
+            System.out.println("Unexpected error starting game: " + e.getMessage());
         }
     }
 

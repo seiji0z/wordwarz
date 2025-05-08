@@ -426,6 +426,7 @@ public class MainMenuView {
         root.getChildren().addAll(mainContent, overlayPane);
         Scene scene = new Scene(root);
         primaryStage.setTitle("Word War Z - Main Menu");
+        primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
         primaryStage.show();
     }

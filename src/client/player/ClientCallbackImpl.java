@@ -3,6 +3,7 @@ package client.player;
 import WordWarZ.ClientCallbackPOA;
 import WordWarZ.Player;
 import client.player.controller.GameController;
+import client.player.controller.QueueController;
 import client.player.view.QueueView;
 import javafx.application.Platform;
 import javafx.stage.Stage;
@@ -15,32 +16,38 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
     private final String playerToken;
     private final ORB orb;
     private boolean gameStarted = false;
-    private int selectedCharacter = 0;
+    private final int selectedCharacter;
+    private final QueueController queueController;
 
-    public ClientCallbackImpl(QueueView q, Stage stage, String playerToken, ORB orb, int selectedCharacter) {
+    public ClientCallbackImpl(QueueView q, Stage stage, String playerToken, ORB orb, int selectedCharacter, QueueController queueController) {
         this.queueView = q;
         this.stage = stage;
         this.playerToken = playerToken;
         this.orb = orb;
-        this.selectedCharacter = selectedCharacter; // Store selected character
+        this.selectedCharacter = selectedCharacter;
+        this.queueController = queueController;
+        System.out.println("[ClientCallbackImpl] Initialized for token: " + playerToken);
     }
 
     @Override
     public void onQueueUpdated(int playerCount) {
+        System.out.println("[ClientCallbackImpl] Queue updated, player count: " + playerCount + " for token: " + playerToken);
         if (queueView != null) {
             queueView.updatePlayerCount(playerCount);
+            if (playerCount == 0 && !gameStarted) {
+                System.out.println("[ClientCallbackImpl] No opponents, triggering handleNoOpponentFound for token: " + playerToken);
+                queueController.handleNoOpponentFound();
+            }
         }
     }
 
     @Override
     public void onGameCountdown(int secondsLeft) {
+        System.out.println("[ClientCallbackImpl] Countdown updated, seconds left: " + secondsLeft + " for token: " + playerToken);
         if (queueView != null) {
-            // Update the queue view timer display
             queueView.updateTimer(secondsLeft);
-
-            // Check if the countdown is complete
             if (secondsLeft <= 0) {
-                System.out.println("Countdown reached 0. Game is ready to start.");
+                System.out.println("[ClientCallbackImpl] Countdown reached 0 for token: " + playerToken);
             }
         }
     }
@@ -48,29 +55,29 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
     @Override
     public void onRoundStarted(char[] wordPlaceholder) {
         if (gameStarted) {
-            return; // Prevent duplicate initialization
+            System.out.println("[ClientCallbackImpl] Game already started, ignoring for token: " + playerToken);
+            return;
         }
         gameStarted = true;
 
-        System.out.println("Round started callback received");
+        System.out.println("[ClientCallbackImpl] Round started for token: " + playerToken);
         Platform.runLater(() -> {
-            // Clear the queue view reference to prevent memory leaks
             if (queueView != null) {
                 queueView.close();
-                queueView = null; // Remove reference
+                queueView = null;
             }
 
-            // Ensure the game controller is only initialized once
             if (gameController == null) {
                 gameController = new GameController(playerToken, orb, selectedCharacter);
+                System.out.println("[ClientCallbackImpl] GameController initialized for token: " + playerToken);
             }
             gameController.onGameStart(wordPlaceholder);
         });
     }
 
-    // In ClientCallbackImpl.java
     @Override
     public void onRoundLost(String word, String winner) {
+        System.out.println("[ClientCallbackImpl] Round lost, word: " + word + ", winner: " + winner + " for token: " + playerToken);
         Platform.runLater(() -> {
             if (gameController != null) {
                 gameController.handleRoundLost(word, winner);
@@ -80,6 +87,7 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     @Override
     public void onRoundWon(String word) {
+        System.out.println("[ClientCallbackImpl] Round won, word: " + word + " for token: " + playerToken);
         Platform.runLater(() -> {
             if (gameController != null) {
                 gameController.handleRoundWon(word);
@@ -89,6 +97,7 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     @Override
     public void onRoundDrawn(String word) {
+        System.out.println("[ClientCallbackImpl] Round drawn, word: " + word + " for token: " + playerToken);
         Platform.runLater(() -> {
             if (gameController != null) {
                 gameController.handleRoundDrawn(word);
@@ -98,22 +107,17 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     @Override
     public void onGameLost(String winnerUsername) {
-
     }
 
     @Override
     public void onGameWon(String winnerUsername) {
-
     }
 
     @Override
     public void onLeaderboardUpdated(Player[] leaderboard) {
-        // Optional future: update leaderboard
     }
 
     @Override
     public void onForceLogout() {
-        // Optional future: logout force handling
     }
-
 }
