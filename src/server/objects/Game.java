@@ -22,6 +22,7 @@ public class Game {
         for (String player : players) {
             scores.put(player, 0);
             wrongGuesses.put(player, 0);
+            playerGuesses.put(player, new HashSet<>());
         }
     }
 
@@ -36,26 +37,6 @@ public class Game {
 
     public char[] getGuessedWord() {
         return guessedWord.clone();
-    }
-
-    public boolean guessLetter(String player, char letter) {
-        letter = Character.toUpperCase(letter);
-        if (guessedLetters.contains(letter)) return false;
-
-        guessedLetters.add(letter);
-        boolean hit = false;
-        for (int i = 0; i < currentWord.length(); i++) {
-            if (currentWord.charAt(i) == letter) {
-                guessedWord[i] = letter;
-                hit = true;
-            }
-        }
-
-        if (!hit) {
-            wrongGuesses.put(player, wrongGuesses.get(player) + 1);
-        }
-
-        return hit;
     }
 
     public char[] processGuess(String username, char letter) throws CharacterAlreadyGuessed {
@@ -77,23 +58,22 @@ public class Game {
         return result;
     }
 
-
-    public char[] getPlayerWordState(String username) {
-        char[] result = new char[currentWord.length()];
-        for (int i = 0; i < currentWord.length(); i++) {
-            char c = currentWord.charAt(i);
-            result[i] = playerGuesses.get(username).contains(c) ? c : '_';
-        }
-        return result;
-    }
-
     public void resetPlayerGuesses(String username) {
         playerGuesses.put(username, new HashSet<>());
     }
 
     public boolean hasWon(String player) {
+        if (currentWord == null) {
+            return false;
+        }
+
+        playerGuesses.putIfAbsent(player, new HashSet<>());
         Set<Character> guesses = playerGuesses.get(player);
-        if (guesses == null) return false;
+
+        if (guesses == null) {
+            System.err.println("Player guesses not initialized for player: " + player);
+            return false;
+        }
 
         for (char c : currentWord.toCharArray()) {
             if (!guesses.contains(c)) {
@@ -101,10 +81,6 @@ public class Game {
             }
         }
         return true;
-    }
-
-    public boolean hasLost(String player) {
-        return wrongGuesses.get(player) >= 5;
     }
 
     public void incrementScore(String player) {
@@ -121,8 +97,6 @@ public class Game {
 
     public String getCurrentWord() { return currentWord; }
 
-    public Set<Character> getGuessedLetters() { return guessedLetters; }
-
     public Map<String, Integer> getScores() {
         // Return a copy of the scores map to prevent outside modification
         return new HashMap<>(scores);
@@ -136,33 +110,12 @@ public class Game {
         return eliminatedPlayers.size() == players.size();
     }
 
-    public boolean isPlayerEliminated(String username) {
-        return eliminatedPlayers.contains(username);
-    }
-
-    public boolean hasAllPlayersLost() {
-        return eliminatedPlayers.size() >= players.size();
-    }
-
-    public String handleRoundWin(String player) { // Player who won
-        incrementScore(player);
-        return player;
-    }
-
-    public void markPlayerAsLost(String player) {
-        eliminatedPlayers.add(player);
-    }
-
-    public void clearCurrentWord() {
-        this.currentWord = null; // Ensure `startRound` calls `nextWord` on the next invocation
-    }
-
     public void resetForNewRound() {
         this.currentWord = null;
         this.guessedLetters.clear();
         this.eliminatedPlayers.clear();
         for (String player : players) {
-            this.resetPlayerGuesses(player);
+            resetPlayerGuesses(player);
             this.wrongGuesses.put(player, 0);
         }
     }

@@ -138,6 +138,11 @@ public class GameController {
         prepareNextRound();
     }
 
+    public void handleRoundDrawn(String word) {
+        view.showRoundDrawn(word);
+        prepareNextRound();
+    }
+
     private void prepareNextRound() {
         // Prepare for the next round after a delay
         new java.util.Timer().schedule(
@@ -156,10 +161,5 @@ public class GameController {
                 },
                 3000 // 3-second delay before the next round
         );
-    }
-
-    public void handleRoundDrawn(String word) {
-        view.showRoundDrawn(word);
-        prepareNextRound();
     }
 }

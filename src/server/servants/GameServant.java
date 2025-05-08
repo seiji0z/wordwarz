@@ -327,15 +327,20 @@ public class GameServant extends GameServicePOA {
         Game game = activeGames.get(username);
         if (game == null || !game.getPlayers().contains(username)) throw new GameNotFound();
 
-        // Notify all players about round outcome
+        // Get current word or empty string if null
         String word = game.getCurrentWord();
+        String wordToSend = word != null ? word : "";  // Never send null
+
         boolean wordGuessed = false;
 
-        // Check if any player guessed the word
-        for (String player : game.getPlayers()) {
-            if (game.hasWon(player)) {
-                wordGuessed = true;
-                break;
+        // Only check for winners if there's a current word
+        if (word != null) {
+            // Check if any player guessed the word
+            for (String player : game.getPlayers()) {
+                if (game.hasWon(player)) {
+                    wordGuessed = true;
+                    break;
+                }
             }
         }
 
@@ -347,12 +352,12 @@ public class GameServant extends GameServicePOA {
                 try {
                     if (wordGuessed) {
                         if (game.hasWon(player)) {
-                            cb.onRoundWon(word);
+                            cb.onRoundWon(wordToSend);
                         } else {
-                            cb.onRoundLost(word, getWinnerUsername(game));
+                            cb.onRoundLost(wordToSend, getWinnerUsername(game));
                         }
                     } else {
-                        cb.onRoundDrawn(word);
+                        cb.onRoundDrawn(wordToSend);
                     }
                 } catch (Exception e) {
                     System.err.println("Failed to notify player " + player + ": " + e.getMessage());
@@ -367,10 +372,18 @@ public class GameServant extends GameServicePOA {
                 throw new RuntimeException(e);
             }
         } else {
+            // Reset game state for next round
+            game.resetForNewRound();
+
             // Delay the next round preparation
             scheduler.schedule(() -> {
-                game.nextWord();  // Prepare for next round
-            }, 3, TimeUnit.SECONDS);  // Delay by 3 seconds
+                try {
+                    String firstPlayerToken = SessionManager.getTokenByUsername(game.getPlayers().get(0));
+                    startRound(firstPlayerToken);
+                } catch (Exception e) {
+                    System.err.println("Error starting next round: " + e.getMessage());
+                }
+            }, 3, TimeUnit.SECONDS);
         }
     }
 
@@ -453,9 +466,5 @@ public class GameServant extends GameServicePOA {
         } catch (NotLoggedIn e) {
             System.out.println(e.getMessage());
         }
-    }
-
-    public static Game getActiveGame(String username) {
-        return activeGames.get(username);
     }
 }
