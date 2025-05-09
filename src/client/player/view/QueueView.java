@@ -14,6 +14,9 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.stage.Stage;
+import javafx.animation.Timeline;
+import javafx.animation.KeyFrame;
+import javafx.util.Duration;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -25,7 +28,9 @@ public class QueueView extends Application {
     private Pane usernamesPane;
     private Button cancelButton;
     private Text noOpponentText;
+    private Text waitingText; // Instance variable for animation access
     private Stage stage;
+    private Timeline dotsAnimation; // For the "WAITING FOR PLAYERS..." dots animation
 
     @Override
     public void start(Stage primaryStage) {
@@ -70,12 +75,21 @@ public class QueueView extends Application {
         queueRect.setY(400);
         root.getChildren().add(queueRect);
 
-        Text waitingText = new Text("WAITING FOR PLAYERS...");
+        waitingText = new Text("WAITING FOR PLAYERS.");
         waitingText.setFont(customFont);
         waitingText.setFill(Color.WHITE);
         waitingText.setX(380);
         waitingText.setY(470);
         root.getChildren().add(waitingText);
+
+        // Animation for the dots in "WAITING FOR PLAYERS..."
+        dotsAnimation = new Timeline(
+                new KeyFrame(Duration.seconds(0.5), e -> waitingText.setText("WAITING FOR PLAYERS.")),
+                new KeyFrame(Duration.seconds(1.0), e -> waitingText.setText("WAITING FOR PLAYERS..")),
+                new KeyFrame(Duration.seconds(1.5), e -> waitingText.setText("WAITING FOR PLAYERS..."))
+        );
+        dotsAnimation.setCycleCount(Timeline.INDEFINITE);
+        dotsAnimation.play();
 
         playerCountText = new Text("Player count: 0");
         playerCountText.setFont(customFont);
@@ -134,12 +148,22 @@ public class QueueView extends Application {
 
     public void showNoOpponentMessage() {
         Platform.runLater(() -> {
+            // Stop the dots animation when showing the message
+            if (dotsAnimation != null) {
+                dotsAnimation.stop();
+                waitingText.setText("WAITING FOR PLAYERS"); // Reset to initial state
+            }
+
             noOpponentText.setVisible(true);
             System.out.println("[QueueView] Showing 'NO OPPONENT FOUND!' message");
             ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
             scheduler.schedule(() -> Platform.runLater(() -> {
                 noOpponentText.setVisible(false);
                 System.out.println("[QueueView] Hiding 'NO OPPONENT FOUND!' message");
+                // Restart the dots animation after hiding the message
+                if (dotsAnimation != null) {
+                    dotsAnimation.play();
+                }
             }), 2, TimeUnit.SECONDS);
             scheduler.shutdown();
         });
@@ -147,6 +171,10 @@ public class QueueView extends Application {
 
     public void close() {
         if (stage != null) {
+            // Stop the animation when closing
+            if (dotsAnimation != null) {
+                dotsAnimation.stop();
+            }
             stage.close();
             System.out.println("[QueueView] QueueView closed");
         }
