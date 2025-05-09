@@ -372,15 +372,6 @@ public class GameView {
         });
     }
 
-    public void closeApplication() {
-        Platform.runLater(() -> {
-            if (timerTimeline != null) {
-                timerTimeline.stop();
-            }
-            primaryStage.close();
-        });
-    }
-
     public void initializeWordDisplay(int wordLength) {
         Platform.runLater(() -> {
             revealedLetters = new boolean[wordLength]; // Initialize the array
@@ -682,24 +673,40 @@ public class GameView {
         });
     }
 
-    private void showEndGameOverlay(String winner) {
+    public void showEndGameOverlay(String message) {
         Platform.runLater(() -> {
             Pane overlay = new Pane();
-            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
+            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8);");
             overlay.setPrefSize(1280, 760);
 
-            Text message = new Text(winner + " has won the game!\nThank you for playing!");
-            message.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 50));
-            message.setFill(Color.GOLD);
-            message.setTextAlignment(TextAlignment.CENTER);
-            message.setWrappingWidth(1000);
-            message.setX((1280 - 1000) / 2);
-            message.setY(350);
+            Font font = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 50);
+            Text text = new Text(message + "\nReturning to main menu...");
+            text.setFont(font);
+            text.setFill(Color.GOLD);
+            text.setTextAlignment(TextAlignment.CENTER);
+            text.setWrappingWidth(1000);
+            text.setX((1280 - text.getLayoutBounds().getWidth()) / 2);
+            text.setY(350);
 
-            overlay.getChildren().add(message);
+            overlay.getChildren().add(text);
             root.getChildren().add(overlay);
+        });
+    }
 
-            new Timeline(new KeyFrame(Duration.seconds(5), e -> Platform.exit())).play();
+    public void closeApplication() {
+        Platform.runLater(() -> {
+            // Stop all animations and timers
+            if (timerTimeline != null) {
+                timerTimeline.stop();
+            }
+            if (humanIdleAnimation != null) {
+                humanIdleAnimation.stop();
+            }
+            if (zombieIdleAnimation != null) {
+                zombieIdleAnimation.stop();
+            }
+
+            primaryStage.close();
         });
     }
 }

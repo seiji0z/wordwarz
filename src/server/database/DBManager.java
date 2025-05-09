@@ -276,6 +276,24 @@ public class DBManager {
 
         return 30;
     }
+
+    /**
+     * Increments the win count for a specific player
+     * @param username The username of the player who won
+     * @return true if successful, false otherwise
+     */
+    public static boolean incrementWinCount(String username) {
+        String query = "UPDATE user SET wins = wins + 1 WHERE username = ?";
+
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, username);
+            int rowsAffected = stmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.out.println("Error incrementing win count for " + username + ": " + e.getMessage());
+            return false;
+        }
+    }
 }
 
 

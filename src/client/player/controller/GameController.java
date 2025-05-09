@@ -2,6 +2,7 @@ package client.player.controller;
 import WordWarZ.CharacterAlreadyGuessed;
 import client.player.model.GameModel;
 import client.player.view.GameView;
+import client.player.view.MainMenuView;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
@@ -100,31 +101,42 @@ public class GameController {
         }
     }
 
-    private void updateGameState(char[] wordState) {
-        // Check if word is complete
-        boolean wordComplete = true;
-        for (char c : wordState) {
-            if (c == '_') {
-                wordComplete = false;
-                break;
-            }
-        }
+    public void handleGameOver(boolean won, String winner) {
+        try {
+            // Show end game overlay
+            view.showEndGameOverlay(won ? "You won the game!" : winner + " won the game!");
 
-        if (wordComplete) {
-            handleGameOver(true);
+            // Schedule return to main menu after delay
+            new java.util.Timer().schedule(
+                    new java.util.TimerTask() {
+                        @Override
+                        public void run() {
+                            Platform.runLater(() -> {
+                                // Close current game window
+                                view.closeApplication();
+
+                                // Return to main menu
+                                showMainMenu();
+                            });
+                        }
+                    },
+                    5000 // 5 second delay
+            );
+        } catch (Exception e) {
+            view.showErrorMessage("Error handling game over: " + e.getMessage());
         }
     }
 
-    private void handleGameOver(boolean won) {
+    private void showMainMenu() {
         try {
-            if (won) {
-                System.out.println("panalo");;
-            } else {
-                System.out.println("talo");;
-            }
-            model.endGame();
+            Stage stage = new Stage();
+            MainMenuView mainMenuView = new MainMenuView();
+            mainMenuView.initializeUI(stage);
+            new MainMenuController(playerToken, orb, mainMenuView, stage);
+            stage.setTitle("Word War Z - Main Menu");
+            stage.show();
         } catch (Exception e) {
-            view.showErrorMessage("Error ending game: " + e.getMessage());
+            System.err.println("Error showing main menu: " + e.getMessage());
         }
     }
 
@@ -143,7 +155,6 @@ public class GameController {
         prepareNextRound();
     }
 
-    // In GameController.java
     private void prepareNextRound() {
         new java.util.Timer().schedule(
                 new java.util.TimerTask() {

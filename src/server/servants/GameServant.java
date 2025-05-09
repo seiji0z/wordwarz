@@ -2,6 +2,7 @@ package server.servants;
 
 import WordWarZ.*;
 import org.omg.CORBA.ORB;
+import server.database.DBManager;
 import server.helpers.QueueManager;
 import server.helpers.SessionManager;
 import server.objects.Game;
@@ -413,7 +414,27 @@ public class GameServant extends GameServicePOA {
 
         if (game == null) throw new GameNotFound();
 
-        String winner = getWinnerUsername(game);
+        // Determine winner (player with highest score)
+        String winner = "";
+        int highestScore = -1;
+        for (Map.Entry<String, Integer> entry : game.getScores().entrySet()) {
+            if (entry.getValue() > highestScore) {
+                highestScore = entry.getValue();
+                winner = entry.getKey();
+            }
+        }
+
+        // Update winner's win count in database
+        if (!winner.isEmpty()) {
+            try {
+                DBManager.incrementWinCount(winner);
+                System.out.println("Updated win count for winner: " + winner);
+            } catch (Exception e) {
+                System.err.println("Failed to update win count: " + e.getMessage());
+            }
+        }
+
+        // Notify all players
         for (String player : game.getPlayers()) {
             String playerToken = SessionManager.getTokenByUsername(player);
             WordWarZ.ClientCallback callback = clientCallbacks.get(playerToken);
@@ -430,8 +451,25 @@ public class GameServant extends GameServicePOA {
             }
         }
 
-        // Cleanup: remove the game instance
-        activeGames.entrySet().removeIf(e -> e.getValue() == game);
+        // Schedule cleanup after a delay
+        scheduler.schedule(() -> {
+            // Remove all players from this game
+            for (String player : game.getPlayers()) {
+                activeGames.remove(player);
+            }
+
+            // Clear callbacks for these players (they'll need to re-register when they return)
+            clientCallbacks.entrySet().removeIf(entry ->
+            {
+                try {
+                    return game.getPlayers().contains(SessionManager.getSession(entry.getKey()).getUsername());
+                } catch (NotLoggedIn e) {
+                    throw new RuntimeException(e);
+                }
+            });
+
+            System.out.println("Game cleanup complete for players: " + game.getPlayers());
+        }, 5, TimeUnit.SECONDS);
     }
 
     @Override

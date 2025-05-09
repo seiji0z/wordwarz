@@ -107,10 +107,22 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     @Override
     public void onGameLost(String winnerUsername) {
+        System.out.println("[ClientCallbackImpl] Game lost, winner: " + winnerUsername + " for token: " + playerToken);
+        Platform.runLater(() -> {
+            if (gameController != null) {
+                gameController.handleGameOver(false, winnerUsername);
+            }
+        });
     }
 
     @Override
     public void onGameWon(String winnerUsername) {
+        System.out.println("[ClientCallbackImpl] Game won! for token: " + playerToken);
+        Platform.runLater(() -> {
+            if (gameController != null) {
+                gameController.handleGameOver(true, winnerUsername);
+            }
+        });
     }
 
     @Override
