@@ -15,6 +15,7 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 import java.util.Random;
@@ -315,12 +316,16 @@ public class GameView {
     }
 
     public void startTimer(int duration) {
-        this.initialRoundDuration = duration;
-        this.timeRemaining = duration; // Reset time remaining
-
+        // Stop any existing timer
         if (timerTimeline != null) {
             timerTimeline.stop();
+            timerTimeline = null;
         }
+
+        this.initialRoundDuration = duration;
+        this.timeRemaining = duration; // Reset time remaining
+        updateTimerDisplay(timeRemaining);
+        zombieView.setX(1000); // Reset zombie position
 
         timerTimeline = new Timeline(
                 new KeyFrame(Duration.seconds(1), event -> {
@@ -332,8 +337,8 @@ public class GameView {
                         timerTimeline.stop();
                         handleTimeOut();
                     }
-                })
-        );
+                }
+                ));
         timerTimeline.setCycleCount(Timeline.INDEFINITE);
         timerTimeline.play();
     }
@@ -377,36 +382,42 @@ public class GameView {
     }
 
     public void initializeWordDisplay(int wordLength) {
-        revealedLetters = new boolean[wordLength]; // Initialize the array
+        Platform.runLater(() -> {
+            revealedLetters = new boolean[wordLength]; // Initialize the array
+            Arrays.fill(revealedLetters, false);
 
-        // Clear existing display (both letter texts and underscored lines)
-        root.getChildren().removeAll(letterTexts);
-        letterTexts.clear();
+            // Clear existing display (both letter texts and underscored lines)
+            root.getChildren().removeAll(letterTexts);
+            letterTexts.clear();
 
-        // Gather and remove any existing underscores (Rectangles)
-        root.getChildren().removeIf(node -> node instanceof Rectangle);
+            // Remove any existing underscores (Rectangles)
+            root.getChildren().removeIf(node -> node instanceof Rectangle &&
+                    node.getUserData() != null && node.getUserData().equals("wordLine"));
 
-        double letterWidth = 60;
-        double gap = 25;
-        double startX = (1280 - (wordLength * letterWidth + (wordLength - 1) * gap)) / 2.0;
+            double letterWidth = 60;
+            double gap = 25;
+            double startX = (1280 - (wordLength * letterWidth + (wordLength - 1) * gap)) / 2.0;
 
-        // Create new placeholders
-        for (int i = 0; i < wordLength; i++) {
-            Rectangle line = new Rectangle(letterWidth, 8);
-            line.setX(startX + i * (letterWidth + gap));
-            line.setY(470);
-            line.setFill(Color.WHITE);
-            root.getChildren().add(line);
+            // Create new placeholders
+            for (int i = 0; i < wordLength; i++) {
+                Rectangle line = new Rectangle(letterWidth, 8);
+                line.setX(startX + i * (letterWidth + gap));
+                line.setY(470);
+                line.setFill(Color.WHITE);
+                line.setUserData("wordLine"); // Mark as word line
+                root.getChildren().add(line);
 
-            Text letterText = new Text();
-            letterText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40));
-            letterText.setFill(Color.WHITE);
-            letterText.setX(startX + i * (letterWidth + gap) + letterWidth / 2 - 15);
-            letterText.setY(470 - 16);
-            letterText.setVisible(false);
-            root.getChildren().add(letterText);
-            letterTexts.add(letterText);
-        }
+                Text letterText = new Text();
+                letterText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40));
+                letterText.setFill(Color.WHITE);
+                letterText.setX(startX + i * (letterWidth + gap) + letterWidth / 2 - 15);
+                letterText.setY(470 - 16);
+                letterText.setVisible(false);
+                letterText.setUserData("letterText"); // Mark as letter text
+                root.getChildren().add(letterText);
+                letterTexts.add(letterText);
+            }
+        });
     }
 
     public void updateWordDisplay(char[] wordState) {
@@ -645,6 +656,7 @@ public class GameView {
             // Stop any existing timer
             if (timerTimeline != null) {
                 timerTimeline.stop();
+                timerTimeline = null;
             }
 
             // Reset the keyboard buttons
@@ -664,7 +676,7 @@ public class GameView {
             revealedLetters = new boolean[0]; // Reset the array
 
             // Reset timer display
-            timerText.setText(String.format("%02d:%02d", initialRoundDuration / 60, initialRoundDuration % 60));
+            updateTimerDisplay(initialRoundDuration);
         });
     }
 
