@@ -306,21 +306,6 @@ public class GameView {
         zombieIdleAnimation.play();
     }
 
-    public void startTimer() {
-        final int[] timeRemaining = {30};
-        timerTimeline = new Timeline(
-                new KeyFrame(Duration.seconds(1), e -> {
-                    timeRemaining[0]--;
-                    updateTimerDisplay(timeRemaining[0]);
-                    if (timeRemaining[0] <= 0) {
-                        closeApplication();
-                    }
-                })
-        );
-        timerTimeline.setCycleCount(Timeline.INDEFINITE);
-        timerTimeline.play();
-    }
-
     private void updateTimerDisplay(int seconds) {
         Platform.runLater(() -> {
             int mins = seconds / 60;
@@ -331,7 +316,7 @@ public class GameView {
 
     public void startTimer(int duration) {
         this.initialRoundDuration = duration;
-        timeRemaining = duration;
+        this.timeRemaining = duration; // Reset time remaining
 
         if (timerTimeline != null) {
             timerTimeline.stop();
@@ -392,18 +377,16 @@ public class GameView {
     }
 
     public void initializeWordDisplay(int wordLength) {
-
-        revealedLetters = new boolean[wordLength]; // Initialize the array
-
         // Clear existing display
         root.getChildren().removeAll(letterTexts);
         letterTexts.clear();
+        revealedLetters = new boolean[wordLength]; // Reset with new length
 
         double letterWidth = 60;
         double gap = 25;
         double startX = (1280 - (wordLength * letterWidth + (wordLength - 1) * gap)) / 2.0;
 
-        // Create underscore placeholders
+        // Create new placeholders
         for (int i = 0; i < wordLength; i++) {
             Rectangle line = new Rectangle(letterWidth, 8);
             line.setX(startX + i * (letterWidth + gap));
@@ -411,7 +394,6 @@ public class GameView {
             line.setFill(Color.WHITE);
             root.getChildren().add(line);
 
-            // Invisible text (will be shown when letter is guessed)
             Text letterText = new Text();
             letterText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40));
             letterText.setFill(Color.WHITE);
@@ -656,6 +638,11 @@ public class GameView {
 
     public void resetRound() {
         Platform.runLater(() -> {
+            // Stop any existing timer
+            if (timerTimeline != null) {
+                timerTimeline.stop();
+            }
+
             // Reset the keyboard buttons
             resetKeyboard();
 
@@ -663,12 +650,14 @@ public class GameView {
             remainingGuesses = 5;
             updateHearts();
 
-            // Reset zombie position
+            // Reset zombie position and timer state
+            timeRemaining = initialRoundDuration;
             zombieView.setX(1000);
 
             // Clear any displayed letters
             root.getChildren().removeAll(letterTexts);
             letterTexts.clear();
+            revealedLetters = new boolean[0]; // Reset the array
 
             // Reset timer display
             timerText.setText(String.format("%02d:%02d", initialRoundDuration / 60, initialRoundDuration % 60));

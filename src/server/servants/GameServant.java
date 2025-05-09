@@ -306,16 +306,6 @@ public class GameServant extends GameServicePOA {
         } else {
             // Reset game state for next round (but don't generate new word yet)
             session.resetForNewRound();
-
-            // Start the next round after a delay
-            scheduler.schedule(() -> {
-                try {
-                    String firstPlayerToken = SessionManager.getTokenByUsername(session.getPlayers().get(0));
-                    startRound(firstPlayerToken);
-                } catch (Exception e) {
-                    System.err.println("Error starting next round: " + e.getMessage());
-                }
-            }, 3, TimeUnit.SECONDS);
         }
     }
 

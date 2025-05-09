@@ -143,23 +143,32 @@ public class GameController {
         prepareNextRound();
     }
 
+    // In GameController.java
     private void prepareNextRound() {
-        // Prepare for the next round after a delay
         new java.util.Timer().schedule(
                 new java.util.TimerTask() {
                     @Override
                     public void run() {
                         Platform.runLater(() -> {
                             try {
-                                model.startRound(); // Start a new round
-                                view.resetRound();  // Reset the UI
+                                // 1. Reset view first
+                                view.resetRound();
+
+                                // 2. Start new round and get word length
+                                int wordLength = model.startRound();
+
+                                // 3. Initialize display with new word length
+                                view.initializeWordDisplay(wordLength);
+
+                                // 4. Start timer
+                                view.startTimer(model.getRoundDuration());
                             } catch (Exception e) {
                                 view.showErrorMessage("Error starting new round: " + e.getMessage());
                             }
                         });
                     }
                 },
-                3000 // 3-second delay before the next round
+                3000 // 3-second delay
         );
     }
 }
