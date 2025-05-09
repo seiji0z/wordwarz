@@ -45,63 +45,62 @@ public class QueueView extends Application {
 
         Image logoImage = new Image("file:res/images/others/word war z logo.png");
         ImageView logoView = new ImageView(logoImage);
-        logoView.setFitWidth(500);
-        logoView.setFitHeight(280);
-        logoView.setX(380);
-        logoView.setY(30);
+        logoView.setPreserveRatio(true);
+        logoView.setFitWidth(300);
+        logoView.setX(480);
+        logoView.setY(80);
         root.getChildren().add(logoView);
 
         Rectangle timerRect = new Rectangle(200, 52, Color.BLACK);
         timerRect.setOpacity(0.5);
         timerRect.setX(535);
-        timerRect.setY(318);
+        timerRect.setY(338);
         root.getChildren().add(timerRect);
 
         timerText = new Text("00:10");
         timerText.setFont(customFont);
         timerText.setFill(Color.WHITE);
         timerText.setX(570);
-        timerText.setY(360);
+        timerText.setY(380);
         root.getChildren().add(timerText);
 
-        Rectangle queueRect = new Rectangle(690, 320, Color.BLACK);
+        Rectangle queueRect = new Rectangle(690, 280, Color.BLACK);
         queueRect.setOpacity(0.5);
         queueRect.setX(300);
-        queueRect.setY(380);
+        queueRect.setY(400);
         root.getChildren().add(queueRect);
 
         Text waitingText = new Text("WAITING FOR PLAYERS...");
         waitingText.setFont(customFont);
         waitingText.setFill(Color.WHITE);
         waitingText.setX(380);
-        waitingText.setY(430);
+        waitingText.setY(470);
         root.getChildren().add(waitingText);
 
         playerCountText = new Text("Player count: 0");
         playerCountText.setFont(customFont);
         playerCountText.setFill(Color.WHITE);
         playerCountText.setX(380);
-        playerCountText.setY(480);
+        playerCountText.setY(520);
         root.getChildren().add(playerCountText);
-
-        usernamesPane = new Pane();
-        usernamesPane.setLayoutX(540);
-        usernamesPane.setLayoutY(320);
-        root.getChildren().add(usernamesPane);
 
         cancelButton = new Button("CANCEL QUEUE");
         cancelButton.setFont(customFont);
         cancelButton.setTextFill(Color.WHITE);
         cancelButton.setStyle("-fx-background-color: transparent; -fx-border-color: red; -fx-border-width: 2;");
         cancelButton.setLayoutX(470);
-        cancelButton.setLayoutY(650);
+        cancelButton.setLayoutY(630);
+        cancelButton.setOnMouseEntered(e -> cancelButton.setStyle("-fx-background-color: red; -fx-text-fill: black; -fx-border-color: red; -fx-border-width: 2;"));
+        cancelButton.setOnMouseExited(e -> cancelButton.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: red; -fx-border-width: 2;"));
+        cancelButton.setOnMousePressed(e -> cancelButton.setStyle("-fx-background-color: darkred; -fx-text-fill: black; -fx-border-color: red; -fx-border-width: 2;"));
+        cancelButton.setOnMouseReleased(e -> cancelButton.setStyle("-fx-background-color: red; -fx-text-fill: white; -fx-border-color: red; -fx-border-width: 2;"));
         root.getChildren().add(cancelButton);
 
         noOpponentText = new Text("NO OPPONENT FOUND!");
         noOpponentText.setFont(customFont);
         noOpponentText.setFill(Color.RED);
         noOpponentText.setX(380);
-        noOpponentText.setY(530);
+        noOpponentText.setY(570);
         noOpponentText.setVisible(false);
         root.getChildren().add(noOpponentText);
 

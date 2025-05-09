@@ -289,7 +289,7 @@ public class MainMenuView {
         // --- CHARACTER SELECTION OVERLAY ---
         characterOverlayPane = new StackPane();
         characterOverlayPane.setBackground(new Background(new BackgroundFill(
-                new Color(0, 0, 0, 0.7), CornerRadii.EMPTY, Insets.EMPTY)));
+                new Color(0, 0, 0, 0.8), CornerRadii.EMPTY, Insets.EMPTY)));
         characterOverlayPane.setVisible(false);
 
         // Initialize character views and animations arrays
@@ -329,16 +329,10 @@ public class MainMenuView {
             charButton.setPadding(Insets.EMPTY);
 
             // Hover effects
-            charButton.setOnMouseEntered(e -> {
-                charView.setEffect(new Glow(0.5));
-                if (selectedCharacterIndex != index) {
-                    animation.play();
-                }
-            });
+            charButton.setOnMouseEntered(e -> charView.setEffect(new Glow(0.5)));
             charButton.setOnMouseExited(e -> {
                 updateGlowEffect();
                 if (selectedCharacterIndex != index) {
-                    animation.stop();
                     charView.setImage(frame1); // Reset to first frame if not selected
                 }
             });
@@ -355,7 +349,7 @@ public class MainMenuView {
             characterContainer.getChildren().add(charButton);
         }
 
-        // Add Randomizer (randomizer.png)
+// Add Randomizer (randomizer.png)
         Image randomizerImg = new Image("file:res/images/buttons/menu buttons/randomizer.png");
         ImageView randomizerView = new ImageView(randomizerImg);
         randomizerView.setFitWidth(75);
@@ -367,11 +361,11 @@ public class MainMenuView {
         randomizerButton.setBackground(Background.EMPTY);
         randomizerButton.setPadding(Insets.EMPTY);
 
-        // Hover effects for randomizer
+// Hover effects for randomizer
         randomizerButton.setOnMouseEntered(e -> randomizerView.setEffect(new Glow(0.5)));
         randomizerButton.setOnMouseExited(e -> updateGlowEffect());
 
-        // Selection logic for randomizer
+// Selection logic for randomizer
         randomizerButton.setOnAction(e -> {
             // Randomly select a character between 1 and 4
             selectedCharacterIndex = random.nextInt(4) + 1; // Generates 1 to 4
@@ -676,7 +670,7 @@ public class MainMenuView {
         // --- OVERLAY PANE (How to Play) ---
         overlayPane = new StackPane();
         overlayPane.setBackground(new Background(new BackgroundFill(
-                new Color(0, 0, 0, 0.7), CornerRadii.EMPTY, Insets.EMPTY)));
+                new Color(0, 0, 0, 0.8), CornerRadii.EMPTY, Insets.EMPTY)));
         overlayPane.setVisible(false);
 
         Image howToPlayScreen = new Image("file:res/images/frames/how to play.png");
