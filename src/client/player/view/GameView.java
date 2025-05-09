@@ -377,10 +377,14 @@ public class GameView {
     }
 
     public void initializeWordDisplay(int wordLength) {
-        // Clear existing display
+        revealedLetters = new boolean[wordLength]; // Initialize the array
+
+        // Clear existing display (both letter texts and underscored lines)
         root.getChildren().removeAll(letterTexts);
         letterTexts.clear();
-        revealedLetters = new boolean[wordLength]; // Reset with new length
+
+        // Gather and remove any existing underscores (Rectangles)
+        root.getChildren().removeIf(node -> node instanceof Rectangle);
 
         double letterWidth = 60;
         double gap = 25;
@@ -397,7 +401,7 @@ public class GameView {
             Text letterText = new Text();
             letterText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40));
             letterText.setFill(Color.WHITE);
-            letterText.setX(startX + i * (letterWidth + gap) + letterWidth/2 - 15);
+            letterText.setX(startX + i * (letterWidth + gap) + letterWidth / 2 - 15);
             letterText.setY(470 - 16);
             letterText.setVisible(false);
             root.getChildren().add(letterText);
