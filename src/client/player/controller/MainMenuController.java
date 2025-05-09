@@ -1,10 +1,14 @@
 package client.player.controller;
 
+import WordWarZ.Player;
 import client.player.model.MainMenuModel;
+import client.player.view.LeaderboardView;
 import client.player.view.MainMenuView;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
+
+import java.util.Arrays;
 
 public class MainMenuController {
     private final MainMenuModel model;
@@ -12,6 +16,10 @@ public class MainMenuController {
     private final String playerToken;
     private final ORB orb;
     private final Stage stage;
+    private Stage leaderboardStage;
+    private LeaderboardView leaderboardView;
+
+
 
     // Constructor for LoginController (creates new view and stage)
     public MainMenuController(String token, ORB orb) {
@@ -19,6 +27,7 @@ public class MainMenuController {
         this.playerToken = token;
         this.model = new MainMenuModel(token, orb);
         this.view = new MainMenuView();
+        this.leaderboardView = new LeaderboardView();
         this.stage = new Stage();
         view.initializeUI(stage);
         setupEventHandlers();
@@ -33,6 +42,7 @@ public class MainMenuController {
         this.stage = stage;
         setupEventHandlers();
     }
+
 
     private void setupEventHandlers() {
         view.setPlayButtonHandler(() -> {
@@ -55,7 +65,30 @@ public class MainMenuController {
 
 
     private void handleLeaderboard() {
-        model.getLeaderboard();
+        // Get leaderboard data from model
+        Player[] leaderboardData = model.getLeaderboard();
+
+        Platform.runLater(() -> {
+            if (leaderboardStage == null) {
+                leaderboardStage = new Stage();
+                leaderboardView = new LeaderboardView();
+                leaderboardView.initializeUI(leaderboardStage); // Initialize first
+
+                // Update the leaderboard with current data after initialization
+                if (leaderboardData != null) {
+                    leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
+                }
+
+                leaderboardStage.setOnCloseRequest(e -> leaderboardStage = null);
+                leaderboardStage.show();
+            } else {
+                // If stage already exists, just update the data
+                if (leaderboardData != null) {
+                    leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
+                }
+                leaderboardStage.show();
+            }
+        });
     }
 
     private void handleHowToPlay() {

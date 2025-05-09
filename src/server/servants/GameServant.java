@@ -7,6 +7,7 @@ import server.helpers.QueueManager;
 import server.helpers.SessionManager;
 import server.objects.Game;
 import server.objects.GameConfig;
+import server.database.DBManager;
 
 import java.util.Arrays;
 import java.util.List;
@@ -208,7 +209,12 @@ public class GameServant extends GameServicePOA {
 
     @Override
     public Player[] getLeaderboard(String token) throws NotLoggedIn {
-        return new Player[0];
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+
+        List<Player> topPlayers = DBManager.getTopPlayers(5);
+        return topPlayers.toArray(new Player[0]);
     }
 
     @Override

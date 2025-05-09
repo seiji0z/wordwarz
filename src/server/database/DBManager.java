@@ -1,8 +1,14 @@
 package server.database;
 
+import WordWarZ.Player;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static server.database.DBConnection.con;
 
 public class DBManager {
 
@@ -11,7 +17,7 @@ public class DBManager {
 
     public static boolean userExists(String username) {
         String query = "SELECT username FROM credentials WHERE username = ?";
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next();
@@ -30,7 +36,7 @@ public class DBManager {
         String query = "SELECT u.is_admin FROM credentials c NATURAL JOIN user u" +
                 " WHERE c.username = ? AND c.password = ?";
 
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, username);
             stmt.setString(2, password);
 
@@ -50,7 +56,7 @@ public class DBManager {
         config[0] = 10; // default waiting time
         config[1] = 30; // default round duration
 
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query);
+        try (PreparedStatement stmt = con.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
             if (rs.next()) {
                 config[0] = rs.getInt("waiting_time");
@@ -65,7 +71,7 @@ public class DBManager {
 
     public static void updateGameConfig(int newWaitingTime, int newRoundDuration) throws SQLException {
         String query = "UPDATE gameconfig SET waiting_time = ?, round_duration = ? WHERE config_id = 50001";
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setInt(1, newWaitingTime);
             stmt.setInt(2, newRoundDuration);
             stmt.executeUpdate();
@@ -75,7 +81,7 @@ public class DBManager {
 
     public static boolean isAdmin(String username) {
         String query = "SELECT is_admin FROM user WHERE username = ?";
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, username);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
@@ -92,7 +98,7 @@ public class DBManager {
     // generate new user_id for new players
     public static int getNextUserId() {
         String query = "SELECT MAX(user_id) AS max_id FROM user";
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query);
+        try (PreparedStatement stmt = con.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
             if (rs.next()) {
                 return rs.getInt("max_id") + 1;
@@ -117,7 +123,7 @@ public class DBManager {
 
         try {
             // Insert into the 'user' table
-            try (PreparedStatement userStmt = DBConnection.con.prepareStatement(userQuery)) {
+            try (PreparedStatement userStmt = con.prepareStatement(userQuery)) {
                 userStmt.setInt(1, userId);  // User ID
                 userStmt.setString(2, username);  // Username
                 userStmt.setString(3, isAdmin);  // 'Y' for admin, 'N' for regular user
@@ -125,7 +131,7 @@ public class DBManager {
             }
 
             // Insert into the 'credentials' table
-            try (PreparedStatement credStmt = DBConnection.con.prepareStatement(credentialsQuery)) {
+            try (PreparedStatement credStmt = con.prepareStatement(credentialsQuery)) {
                 credStmt.setInt(1, userId);  // User ID
                 credStmt.setString(2, username);  // Username
                 credStmt.setString(3, password);  // Password
@@ -147,7 +153,7 @@ public class DBManager {
         }
 
 
-        DBConnection.con.setAutoCommit(false);
+        con.setAutoCommit(false);
 
 
         try {
@@ -160,7 +166,7 @@ public class DBManager {
 
             // Update credentials table
             String credentialsQuery = "UPDATE credentials SET username = ?, password = ? WHERE user_id = ?";
-            try (PreparedStatement credStmt = DBConnection.con.prepareStatement(credentialsQuery)) {
+            try (PreparedStatement credStmt = con.prepareStatement(credentialsQuery)) {
                 credStmt.setString(1, newUsername.isEmpty() ? username : newUsername);
                 credStmt.setString(2, newPassword.isEmpty() ? getCurrentPassword(username) : newPassword);
                 credStmt.setInt(3, userId);
@@ -171,7 +177,7 @@ public class DBManager {
             // Update user table if username changed
             if (!newUsername.isEmpty()) {
                 String userQuery = "UPDATE user SET username = ? WHERE user_id = ?";
-                try (PreparedStatement userStmt = DBConnection.con.prepareStatement(userQuery)) {
+                try (PreparedStatement userStmt = con.prepareStatement(userQuery)) {
                     userStmt.setString(1, newUsername);
                     userStmt.setInt(2, userId);
                     userStmt.executeUpdate();
@@ -179,14 +185,14 @@ public class DBManager {
             }
 
 
-            DBConnection.con.commit();
+            con.commit();
             return true;
         } catch (SQLException e) {
-            DBConnection.con.rollback();
+            con.rollback();
             System.out.println("Error updating player: " + e.getMessage());
             throw e;
         } finally {
-            DBConnection.con.setAutoCommit(true);
+            con.setAutoCommit(true);
         }
     }
 
@@ -194,7 +200,7 @@ public class DBManager {
     // Helper method to get user_id
     private static int getUserId(String username) throws SQLException {
         String query = "SELECT user_id FROM credentials WHERE username = ?";
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
             return rs.next() ? rs.getInt("user_id") : -1;
@@ -205,7 +211,7 @@ public class DBManager {
     // Helper method to get current password
     private static String getCurrentPassword(String username) throws SQLException {
         String query = "SELECT password FROM credentials WHERE username = ?";
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
             return rs.next() ? rs.getString("password") : null;
@@ -224,7 +230,7 @@ public class DBManager {
     public static boolean updateGameConfigurations(int waitingTime, int roundDuration) {
         String query = "INSERT INTO gameconfig (waiting_time, round_duration) VALUES (?, ?)";
 
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setInt(1, waitingTime);
             stmt.setInt(2, roundDuration);
             stmt.executeUpdate();
@@ -243,7 +249,7 @@ public class DBManager {
     public static int getGameWaitingTime() {
         String query = "SELECT waiting_time FROM gameconfig WHERE config_id = 1";
 
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt("waiting_time");
@@ -264,7 +270,7 @@ public class DBManager {
     public static int getGameRoundDuration() {
         String query = "SELECT round_duration FROM gameconfig WHERE config_id = 1";
 
-        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     return rs.getInt("round_duration");
@@ -293,6 +299,26 @@ public class DBManager {
             System.out.println("Error incrementing win count for " + username + ": " + e.getMessage());
             return false;
         }
+    }
+
+    public static List<Player> getTopPlayers(int limit) {
+        List<Player> players = new ArrayList<>();
+        try {
+            String sql = "SELECT username, wins FROM user ORDER BY wins DESC LIMIT ?";
+            PreparedStatement stmt = con.prepareStatement(sql);
+            stmt.setInt(1, limit);
+            ResultSet rs = stmt.executeQuery();
+
+            while(rs.next()) {
+                Player player = new Player();
+                player.username = rs.getString("username");
+                player.wins = rs.getInt("wins");
+                players.add(player);
+            }
+        } catch (SQLException e) {
+            System.out.println("Error fetching leaderboard: " + e.getMessage());
+        }
+        return players;
     }
 }
 
