@@ -18,6 +18,7 @@ import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import java.io.File;
+import java.util.Random;
 
 public class MainMenuView {
 
@@ -35,8 +36,9 @@ public class MainMenuView {
     private Button soundButton;
     private Button creditsBtn;
     private Button closeHowToPlayBtn;
-    private Button characterSelectBtn; // New button to open character selection overlay
+    private Button characterSelectBtn; // Button to open character selection overlay
     private Button closeCharacterOverlayBtn; // Close button for character selection overlay
+    private ImageView charSelectView; // ImageView for character select button
 
     // Fonts
     private Font pressStartFont;
@@ -46,6 +48,10 @@ public class MainMenuView {
     private int selectedCharacterIndex = 1; // Default to character 1
     private ImageView[] characterViews; // To track character ImageViews for glow effect
     private Timeline[] characterAnimations; // To manage animations for each character
+    private Image[] characterHeadImages; // To store head images for character select button
+
+    // Random number generator for randomizer
+    private Random random = new Random();
 
     public int getSelectedCharacterIndex() {
         return selectedCharacterIndex;
@@ -79,6 +85,12 @@ public class MainMenuView {
         }
     }
 
+    // Helper method to update the character select button image
+    private void updateCharacterSelectButtonImage() {
+        // selectedCharacterIndex is 1 to 4, map to array index 0 to 3
+        charSelectView.setImage(characterHeadImages[selectedCharacterIndex - 1]);
+    }
+
     public void initializeUI(Stage primaryStage) {
         // Load PressStart2P font
         try {
@@ -88,6 +100,12 @@ public class MainMenuView {
             System.err.println("Failed to load font: res/fonts/PressStart2P-Regular.ttf. Using default font.");
             pressStartFont = Font.font("System", 20);
             pressStartFontLarge = Font.font("System", 30);
+        }
+
+        // Preload character head images (char1.png to char4.png)
+        characterHeadImages = new Image[4]; // Only 4 characters
+        for (int i = 1; i <= 4; i++) {
+            characterHeadImages[i - 1] = new Image("file:res/images/buttons/menu buttons/char" + i + ".png");
         }
 
         // Main root container
@@ -223,8 +241,7 @@ public class MainMenuView {
 
         // --- CHARACTER SELECT BUTTON ---
         characterSelectBtn = new Button();
-        Image charSelectImg = new Image("file:res/images/buttons/menu buttons/char1.png");
-        ImageView charSelectView = new ImageView(charSelectImg);
+        charSelectView = new ImageView(characterHeadImages[0]); // Default to char1.png
         charSelectView.setPreserveRatio(true);
         charSelectView.setFitWidth(60);
         charSelectView.setFitHeight(60);
@@ -332,13 +349,14 @@ public class MainMenuView {
                 System.out.println("Character " + index + " selected");
                 updateGlowEffect();
                 manageSelectedAnimation();
+                updateCharacterSelectButtonImage(); // Update the button image
             });
 
             characterContainer.getChildren().add(charButton);
         }
 
-        // Add Randomizer (char5.png)
-        Image randomizerImg = new Image("file:res/images/buttons/menu buttons/char5.png");
+        // Add Randomizer (randomizer.png)
+        Image randomizerImg = new Image("file:res/images/buttons/menu buttons/randomizer.png");
         ImageView randomizerView = new ImageView(randomizerImg);
         randomizerView.setFitWidth(75);
         randomizerView.setFitHeight(75);
@@ -355,10 +373,12 @@ public class MainMenuView {
 
         // Selection logic for randomizer
         randomizerButton.setOnAction(e -> {
-            selectedCharacterIndex = 5;
-            System.out.println("Randomizer (Character 5) selected");
+            // Randomly select a character between 1 and 4
+            selectedCharacterIndex = random.nextInt(4) + 1; // Generates 1 to 4
+            System.out.println("Random character selected: Character " + selectedCharacterIndex);
             updateGlowEffect();
-            stopAllAnimations(); // Randomizer has no animation
+            manageSelectedAnimation();
+            updateCharacterSelectButtonImage(); // Update the button image to the randomly selected character
         });
 
         characterContainer.getChildren().add(randomizerButton);
@@ -410,12 +430,13 @@ public class MainMenuView {
         closeCharacterOverlayBtn.setOnAction(e -> {
             characterOverlayPane.setVisible(false);
             stopAllAnimations();
+            updateCharacterSelectButtonImage(); // Ensure the button image reflects the last selection
         });
-        VBox.setMargin(closeCharacterOverlayBtn, new Insets(-30, 0, 0, 0));
+        VBox.setMargin(closeCharacterOverlayBtn, new Insets(20, 0, 0, 0)); // Increased margin to move close button down
 
         // --- ADD CHARACTER SELECT TEXT ---
         Label characterSelectText = new Label("CHARACTER SELECT");
-        characterSelectText.setFont(pressStartFont);
+        characterSelectText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40)); // Increased text size to 40
         characterSelectText.setTextFill(Color.WHITE);
         characterSelectText.setAlignment(Pos.CENTER);
 
