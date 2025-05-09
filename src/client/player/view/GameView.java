@@ -14,6 +14,9 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -188,12 +191,73 @@ public class GameView {
 
         // --- SCENE & STAGE ---
         Scene scene = new Scene(root, 1280, 760); // Explicitly set size
+
+        scene.setOnKeyPressed(this::handleKeyPress);
+
         primaryStage.setTitle("Word War Z");
         primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
         primaryStage.setResizable(false);
         primaryStage.show();
     }
+
+    private void handleKeyPress(KeyEvent event) {
+        if (event.getCode().isLetterKey()) {
+            char pressedChar = event.getCode().toString().charAt(0);
+            handleLetterInput(pressedChar);
+        }
+    }
+
+    private void handleLetterInput(char letter) {
+        // Convert to uppercase for consistency
+        letter = Character.toUpperCase(letter);
+
+        // Find the corresponding button
+        ImageView button = findButtonForLetter(letter);
+        if (button != null && !button.isDisable()) {
+            // Trigger the same handling as a mouse click
+            handleLetterClick(String.valueOf(letter), button);
+
+            // Add visual feedback animation
+            animateButtonPress(button);
+
+            // Notify controller
+            if (onLetterPressed != null) {
+                onLetterPressed.accept(letter);
+            }
+        }
+    }
+
+    private ImageView findButtonForLetter(char letter) {
+        String letterStr = String.valueOf(letter);
+        for (Node node : root.getChildren()) {
+            if (node instanceof ImageView && node.getUserData() != null) {
+                ImageView button = (ImageView) node;
+                if (letterStr.equals(button.getUserData())) {
+                    return button;
+                }
+            }
+        }
+        return null;
+    }
+
+    private void animateButtonPress(ImageView button) {
+        ScaleTransition scaleDown = new ScaleTransition(Duration.millis(100), button);
+        scaleDown.setFromX(1.0);
+        scaleDown.setFromY(1.0);
+        scaleDown.setToX(0.9);
+        scaleDown.setToY(0.9);
+
+        ScaleTransition scaleUp = new ScaleTransition(Duration.millis(100), button);
+        scaleUp.setFromX(0.9);
+        scaleUp.setFromY(0.9);
+        scaleUp.setToX(1.0);
+        scaleUp.setToY(1.0);
+
+        SequentialTransition pressAnimation = new SequentialTransition(scaleDown, scaleUp);
+        pressAnimation.play();
+    }
+
 
     public void setOnLetterPressed(Consumer<Character> handler) {
         this.onLetterPressed = handler;
