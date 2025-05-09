@@ -677,6 +677,8 @@ public class GameView {
 
             // Reset timer display
             updateTimerDisplay(initialRoundDuration);
+
+            startTimer(initialRoundDuration);
         });
     }
 
