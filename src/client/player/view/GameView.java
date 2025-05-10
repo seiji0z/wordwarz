@@ -48,6 +48,7 @@ public class GameView {
     private boolean[] revealedLetters;
     private Runnable timeOutHandler;
     private Pane currentRoundOverlay;
+    private boolean isStartingOverlayRemoved = false;
 
     public GameView(Stage primaryStage, int selectedCharacter) {
         this.primaryStage = primaryStage;
@@ -202,6 +203,10 @@ public class GameView {
     }
 
     private void handleKeyPress(KeyEvent event) {
+        if (!isStartingOverlayRemoved) {
+            return;
+        }
+
         if (event.getCode().isLetterKey()) {
             char pressedChar = event.getCode().toString().charAt(0);
             handleLetterInput(pressedChar);
@@ -332,6 +337,7 @@ public class GameView {
                         if (onOverlayEnd != null) {
                             onOverlayEnd.run();
                         }
+                        isStartingOverlayRemoved = true;
                     }));
             overlayTimer.play();
         });
