@@ -2,10 +2,7 @@ package client.admin.controller;
 
 import WordWarZ.*;
 import client.admin.model.AdminDashboardModel;
-import client.admin.view.AdminDashboardView;
-import client.admin.view.CreatePlayerView;
-import client.admin.view.EditGamePlaySettingsView;
-import client.admin.view.UpdatePlayerView;
+import client.admin.view.*;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
@@ -30,34 +27,55 @@ public class AdminDashboardController {
 
     private void initializeView() {
         Stage adminStage = new Stage();
-        view.initializeUI(adminStage);
+        view.initializeUI(adminStage, model, orb, token);
     }
 
     private void setupEventHandlers() {
         // Main dashboard buttons
-        view.getEditPlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        view.getEditGamePlayBtn().setOnAction(e -> view.showEditGameplaySettingsView());
+        view.getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
+        view.getEditGamePlayBtn().setOnAction(e -> handleEditGamePlay());
 
         // Create Player View handlers
         CreatePlayerView createView = view.getCreatePlayerView();
-        createView.getCreateBtn().setOnAction(e -> view.showCreatePlayerView());
-        // createView.getReadBtn().setOnAction(e -> handleReadPlayers());
-        createView.getUpdateBtn().setOnAction(e -> view.showUpdatePlayerView());
-        createView.getDeleteBtn().setOnAction(e -> view.showUpdatePlayerView());
+        createView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
+        createView.getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
         createView.getConfirmBtn().setOnAction(e -> handleCreatePlayer());
 
-        // Update Player View handlers
-        UpdatePlayerView updateView = view.getUpdatePlayerView();
-        updateView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        // updateView.getReadPlayersBtn().setOnAction(e -> handleReadPlayers());
-        updateView.getUpdateButton().setOnAction(e -> view.showUpdatePlayerView());
-        // updateView.getDeletePlayerBtn().setOnAction(e -> handleDeletePlayer());
-        // updateView.getSearchButton().setOnAction(e -> handleSearchPlayer());
-        updateView.getConfirmBtn().setOnAction(e -> handleUpdatePlayer());
+        // Edit Player View handlers
+        EditPlayerView editView = view.getEditPlayerView();
+        editView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
+        editView.getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
+        editView.getSearchButton().setOnAction(e -> handleSearchPlayers(editView.getSearchField().getText()));
+        editView.getClearBtn().setOnAction(e -> editView.getSearchField().clear());
+        editView.getConfirmUpdateBtn().setOnAction(e -> handleUpdatePlayer());
+
+        editView.getConfirmDeleteBtn().setOnAction(e -> {
+            // Get the selected player directly from the table
+            Player selectedPlayer = editView.getPlayerTable()
+                    .getSelectionModel()
+                    .getSelectedItem();
+
+            if (selectedPlayer != null) {
+                handleDeletePlayer(); // Your existing delete logic
+            } else {
+                editView.showError("No player selected");
+            }
+        });
+        editView.getSearchField().textProperty().addListener((obs, oldValue, newValue) -> {
+            handleSearchPlayers(newValue);
+        });
+
+        // Load players automatically when view is shown
+        view.setOnShowEditPlayerViewListener(this::handleReadAllPlayers);
     }
 
     private void handleEditGamePlay() {
-        System.out.println("handleEditGamePlay");
+        try {
+            view.showEditGameplaySettingsView();
+            view.getEditGamePlaySettingsView().getController().loadCurrentSettings();
+        } catch (Exception e) {
+            System.err.println("Error loading gameplay settings: " + e.getMessage());
+        }
     }
 
     private void handleCreatePlayer() {
@@ -69,6 +87,7 @@ public class AdminDashboardController {
             model.createPlayer(username, password);
             createView.showSuccess("Player created successfully");
             createView.clearFields();
+            handleReadAllPlayers(); // Refresh the player list
         } catch (NotLoggedIn e) {
             createView.showError("Error: Admin not logged in");
         } catch (UsernameAlreadyExists e) {
@@ -77,35 +96,101 @@ public class AdminDashboardController {
     }
 
     private void handleUpdatePlayer() {
-        UpdatePlayerView updateView = view.getUpdatePlayerView();
-        String username = updateView.getSearchField().getText().trim();
-        String newPassword = updateView.getPasswordField().getText().trim();
-        String newUsername = updateView.getUsernameField().getText().trim();
+        EditPlayerView editView = view.getEditPlayerView();
+        String newUsername = editView.getUsernameField().getText().trim();
+        String newPassword = editView.getPasswordField().getText().trim();
 
-        // Input validation
-        if (username.isEmpty()) {
-            updateView.showError("Please enter a username to update");
+        Player selectedPlayer = editView.getPlayerTable().getSelectionModel().getSelectedItem();
+        if (selectedPlayer == null) {
+            editView.showError("Please select a player to update");
             return;
         }
+        if (!editView.getUpdateFormContainer().isVisible()) {
+            editView.showError("Please select a player first");
+            return;
+        }
+
+        String currentUsername = selectedPlayer.username;
+
         if (newUsername.isEmpty() && newPassword.isEmpty()) {
-            updateView.showError("Please enter at least one field to update");
+            editView.showError("Please enter at least one field to update");
             return;
         }
 
         try {
-            // Correct parameter order
-            model.updatePlayer(username, newUsername, newPassword);
-            updateView.showSuccess("Player updated successfully");
-            updateView.getPasswordField().clear();
-            updateView.getUsernameField().clear();
+            if (editView.showUpdateConfirmation(currentUsername)) {
+                model.updatePlayer(currentUsername, newUsername, newPassword);
+                editView.showSuccess("Player updated successfully");
+                editView.getPasswordField().clear();
+                editView.getUsernameField().clear();
+                editView.hideUpdateForm();
+                handleReadAllPlayers(); // Refresh the table
+            }
         } catch (NotLoggedIn e) {
-            updateView.showError("Error: Admin not logged in");
+            editView.showError("Error: Admin not logged in");
         } catch (PlayerNotFound e) {
-            updateView.showError("Error: Player not found");
+            editView.showError("Error: Player not found");
         } catch (PlayerCurrentlyLoggedIn e) {
-            updateView.showError("Error: Player is currently logged in");
+            editView.showError("Error: Player is currently logged in");
         } catch (Exception e) {
-            updateView.showError("Unexpected error: " + e.getMessage());
+            editView.showError("Unexpected error: " + e.getMessage());
+        }
+    }
+    private void handleDeletePlayer() {
+        System.out.println("[CONTROLLER] handleDeletePlayer called");
+
+        EditPlayerView editView = view.getEditPlayerView();
+        Player selectedPlayer = editView.getPlayerTable().getSelectionModel().getSelectedItem();
+
+        if (selectedPlayer == null) {
+            editView.showError("Please select a player to delete");
+            return;
+        }
+
+        String username = selectedPlayer.username;
+
+        try {
+
+            // Attempt deletion
+            model.deletePlayer(username);
+            editView.showSuccess("Player deleted successfully");
+            handleReadAllPlayers();
+
+        } catch (PlayerNotFound e) {
+            // If player not found, refresh the list and show message
+            System.out.println("[CONTROLLER] Player not found - refreshing view");
+            editView.showError("Player no longer exists - list refreshed");
+            handleReadAllPlayers();
+        } catch (NotLoggedIn e) {
+            editView.showError("Error: Admin not logged in");
+        } catch (PlayerCurrentlyLoggedIn e) {
+            editView.showError("Error: Player is currently logged in");
+        } catch (Exception e) {
+            editView.showError("Unexpected error: " + e.getMessage());
+        }
+    }
+
+    private void handleReadAllPlayers() {
+        EditPlayerView editView = view.getEditPlayerView();
+        try {
+            Player[] players = model.getAllPlayers();
+            editView.displayPlayers(players);
+        } catch (NotLoggedIn e) {
+            editView.showError("Error: Admin not logged in");
+        } catch (PlayerNotFound e) {
+            editView.showError("Error: No players found");
+        }
+    }
+
+    private void handleSearchPlayers(String searchText) {
+        EditPlayerView editView = view.getEditPlayerView();
+        try {
+            Player[] players = model.searchPlayers(searchText.trim());
+            editView.displayPlayers(players);
+        } catch (NotLoggedIn e) {
+            editView.showError("Error: Admin not logged in");
+        } catch (PlayerNotFound e) {
+            editView.showError("Error: No players found matching the search");
         }
     }
 }

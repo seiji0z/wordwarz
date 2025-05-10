@@ -197,25 +197,119 @@ public class DBManager {
     }
 
 
-    // Helper method to get user_id
+    public static boolean deletePlayer(String username) throws SQLException {
+        System.out.println("Attempting to delete player: " + username);
+
+        if (!userExists(username)) {
+            System.out.println("[ERROR] User " + username + " not found in credentials table");
+            throw new SQLException("User not found");
+        }
+
+        // Verify database connection
+        if (DBConnection.con == null || DBConnection.con.isClosed()) {
+            System.out.println("[ERROR] Database connection is null or closed");
+            throw new SQLException("Database connection is not available");
+        }
+
+        DBConnection.con.setAutoCommit(false);
+
+        try {
+            int userId = getUserId(username);
+            if (userId == -1) {
+                System.out.println("[ERROR] User ID not found for username: " + username);
+                throw new SQLException("User ID not found");
+            }
+            System.out.println("Found user_id: " + userId + " for username: " + username);
+
+            // First delete from child tables
+            String[] childTables = {"credentials", "player_stats", "game_history"}; // Add all child tables
+            for (String table : childTables) {
+                try {
+                    String deleteQuery = "DELETE FROM " + table + " WHERE user_id = ?";
+                    System.out.println("Executing query: " + deleteQuery);
+                    try (PreparedStatement stmt = DBConnection.con.prepareStatement(deleteQuery)) {
+                        stmt.setInt(1, userId);
+                        int rows = stmt.executeUpdate();
+                        System.out.println("Deleted " + rows + " rows from " + table);
+                    }
+                } catch (SQLException e) {
+                    System.out.println("Warning: Could not delete from " + table +
+                            " - " + e.getMessage());
+                }
+            }
+
+            // Then delete from user table
+            String userQuery = "DELETE FROM user WHERE user_id = ?";
+            System.out.println("Executing final query: " + userQuery);
+            try (PreparedStatement userStmt = DBConnection.con.prepareStatement(userQuery)) {
+                userStmt.setInt(1, userId);
+                int userRows = userStmt.executeUpdate();
+                System.out.println("Rows affected in user: " + userRows);
+                if (userRows == 0) {
+                    throw new SQLException("No rows deleted from user table");
+                }
+            }
+
+            DBConnection.con.commit();
+            System.out.println("Player " + username + " deleted successfully");
+            return true;
+        } catch (SQLException e) {
+            System.out.println("Error deleting player: " + e.getMessage());
+            System.out.println("SQL State: " + e.getSQLState());
+            System.out.println("Error Code: " + e.getErrorCode());
+            DBConnection.con.rollback();
+            throw e;
+        } finally {
+            DBConnection.con.setAutoCommit(true);
+        }
+    }
     private static int getUserId(String username) throws SQLException {
         String query = "SELECT user_id FROM credentials WHERE username = ?";
-        try (PreparedStatement stmt = con.prepareStatement(query)) {
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
             return rs.next() ? rs.getInt("user_id") : -1;
         }
     }
 
-
-    // Helper method to get current password
     private static String getCurrentPassword(String username) throws SQLException {
         String query = "SELECT password FROM credentials WHERE username = ?";
-        try (PreparedStatement stmt = con.prepareStatement(query)) {
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
             stmt.setString(1, username);
             ResultSet rs = stmt.executeQuery();
             return rs.next() ? rs.getString("password") : null;
         }
+    }
+
+    public static Player getPlayer(String username) throws SQLException {
+        String query = "SELECT username, wins FROM user WHERE username = ?";
+
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, username);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return new Player(rs.getString("username"), rs.getInt("wins"));
+                }
+                return null;
+            }
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+
+    public static List<Player> searchPlayers(String searchQuery) throws SQLException {
+        List<Player> players = new ArrayList<>();
+        String query = "SELECT username, wins FROM user WHERE username LIKE ? AND is_admin <> 'Y' ORDER BY wins DESC;";
+
+        try (PreparedStatement stmt = DBConnection.con.prepareStatement(query)) {
+            stmt.setString(1, "%" + searchQuery + "%");
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    players.add(new Player(rs.getString("username"), rs.getInt("wins")));
+                }
+            }
+        }
+        return players;
     }
 
 

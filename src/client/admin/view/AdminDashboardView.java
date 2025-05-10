@@ -1,6 +1,8 @@
 package client.admin.view;
 
 import client.admin.controller.EditGamePlaySettingsController;
+import client.admin.model.AdminDashboardModel;
+import client.admin.model.EditGamePlaySettingsModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -13,6 +15,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
+import org.omg.CORBA.ORB;
 
 public class AdminDashboardView {
     private static final String BACKGROUND_IMAGE_PATH = "file:res/images/backgrounds/menu bg.png";
@@ -24,11 +27,12 @@ public class AdminDashboardView {
     private Button editPlayerBtn;
     private Button editGamePlayBtn;
     private CreatePlayerView createPlayerView;
-    private UpdatePlayerView updatePlayerView;
+    private EditPlayerView editPlayerView;
     private EditGamePlaySettingsView editGamePlaySettingsView;
     private EditGamePlaySettingsController editGamePlaySettingsController;
+    private Runnable onShowEditPlayerView;
 
-    public void initializeUI(Stage primaryStage) {
+    public void initializeUI(Stage primaryStage, AdminDashboardModel adminModel, ORB orb, String token) {
         primaryStage.setTitle("Admin Dashboard");
 
         // Load the custom font
@@ -128,9 +132,15 @@ public class AdminDashboardView {
 
         // Initialize the views
         createPlayerView = new CreatePlayerView(customFont);
-        updatePlayerView = new UpdatePlayerView(customFont);
+        editPlayerView = new EditPlayerView(customFont);
         editGamePlaySettingsView = new EditGamePlaySettingsView(customFont);
 
+        // Initialize EditGamePlaySettingsModel
+        EditGamePlaySettingsModel gamePlayModel = new EditGamePlaySettingsModel(orb);
+
+        // Initialize the EditGamePlaySettingsController
+        editGamePlaySettingsController = new EditGamePlaySettingsController(gamePlayModel, editGamePlaySettingsView, orb, token);
+        editGamePlaySettingsView.setController(editGamePlaySettingsController);
     }
 
     private Button createStyledButton(String text) {
@@ -157,14 +167,21 @@ public class AdminDashboardView {
         rightContent.getChildren().add(createPlayerView);
     }
 
-    public void showUpdatePlayerView() {
+    public void showEditPlayerView() {
         rightContent.getChildren().clear();
-        rightContent.getChildren().add(updatePlayerView);
+        rightContent.getChildren().add(editPlayerView);
+        if (onShowEditPlayerView != null) {
+            onShowEditPlayerView.run();
+        }
     }
 
-    public void showEditGameplaySettingsView(){
+    public void showEditGameplaySettingsView() {
         rightContent.getChildren().clear();
         rightContent.getChildren().add(editGamePlaySettingsView);
+    }
+
+    public void setOnShowEditPlayerViewListener(Runnable listener) {
+        this.onShowEditPlayerView = listener;
     }
 
     public Button getEditPlayerBtn() {
@@ -179,9 +196,11 @@ public class AdminDashboardView {
         return createPlayerView;
     }
 
-    public UpdatePlayerView getUpdatePlayerView() {
-        return updatePlayerView;
+    public EditPlayerView getEditPlayerView() {
+        return editPlayerView;
     }
 
-    public EditGamePlaySettingsView getEditGamePlaySettingsView() {return editGamePlaySettingsView;}
+    public EditGamePlaySettingsView getEditGamePlaySettingsView() {
+        return editGamePlaySettingsView;
+    }
 }

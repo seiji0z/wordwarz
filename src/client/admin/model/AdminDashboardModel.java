@@ -32,19 +32,17 @@ public class AdminDashboardModel {
         adminService.updatePlayer(username, newUsername, newPassword);
     }
 
-//    public void deletePlayer(String username)
-//            throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
-//        adminService.deletePlayer(token, username);
-//    }
+    public void deletePlayer(String username)
+            throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
+        System.out.println("[MODEL] deletePlayer called for username: " + username);
+        adminService.deletePlayer(username);
+    }
 
-//    public Player getPlayer(String username)
-//            throws NotLoggedIn, PlayerNotFound {
-//        return adminService.getPlayer(token, username);
-//    }
-//
-//    public Player[] searchPlayers(String query)
-//            throws NotLoggedIn, PlayerNotFound {
-//        Leaderboard leaderboard = adminService.searchPlayers(token, query);
-//        return leaderboard.players;
-//    }
+    public Player[] getAllPlayers() throws NotLoggedIn, PlayerNotFound {
+        return adminService.searchPlayers("");
+    }
+
+    public Player[] searchPlayers(String username) throws NotLoggedIn, PlayerNotFound {
+        return adminService.searchPlayers(username);
+    }
 }
