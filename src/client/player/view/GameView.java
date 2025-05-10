@@ -138,9 +138,9 @@ public class GameView {
         }
         zombieView = new ImageView(zombieIdleFrames[0]);
         zombieView.setX(1000); // Initial position (lives=5)
-        zombieView.setY(315);
-        zombieView.setFitWidth(90); // Hard-coded size
-        zombieView.setFitHeight(140);
+        zombieView.setY(265);
+        zombieView.setFitWidth(190);
+        zombieView.setFitHeight(190);
         root.getChildren().add(zombieView);
         startZombieIdleAnimation();
 
