@@ -15,7 +15,6 @@ import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +47,7 @@ public class GameView {
     private Consumer<Character> onLetterPressed;
     private boolean[] revealedLetters;
     private Runnable timeOutHandler;
+    private Pane currentRoundOverlay;
 
     public GameView(Stage primaryStage, int selectedCharacter) {
         this.primaryStage = primaryStage;
@@ -673,6 +673,10 @@ public class GameView {
 
     private void showRoundEndOverlay(String message, Color color) {
         Platform.runLater(() -> {
+            if (currentRoundOverlay != null && root.getChildren().contains(currentRoundOverlay)) {
+                return; // Keep the existing overlay
+            }
+
             Pane overlay = new Pane();
             overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8);");
             overlay.setPrefSize(1280, 760);
@@ -688,6 +692,8 @@ public class GameView {
 
             overlay.getChildren().add(text);
             root.getChildren().add(overlay);
+
+            currentRoundOverlay = overlay;
 
             // Remove overlay after 3 seconds
             new Timeline(new KeyFrame(Duration.seconds(3), e -> {
