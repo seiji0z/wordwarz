@@ -48,6 +48,20 @@ public class Game {
         // Record the guess
         playerGuesses.get(username).add(letter);
 
+        boolean isCorrect = false;
+        // Check if the letter is in the word
+        for (char c : currentWord.toCharArray()) {
+            if (Character.toUpperCase(c) == Character.toUpperCase(letter)) {
+                isCorrect = true;
+                break;
+            }
+        }
+
+        // Increment wrong guess count if incorrect
+        if (!isCorrect) {
+            wrongGuesses.put(username, wrongGuesses.get(username) + 1);
+        }
+
         // Build response showing only this player's correct guesses
         char[] result = new char[currentWord.length()];
         for (int i = 0; i < currentWord.length(); i++) {
@@ -118,5 +132,15 @@ public class Game {
             resetPlayerGuesses(player);
             this.wrongGuesses.put(player, 0);
         }
+    }
+
+    public boolean allPlayersOutOfGuesses() {
+        for (String player : players) {
+            Integer remainingGuesses = wrongGuesses.get(player);
+            if (remainingGuesses != null && remainingGuesses < 5) {
+                return false; // If any player still has guesses, return false
+            }
+        }
+        return true; // If all players are out of guesses
     }
 }

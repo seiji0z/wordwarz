@@ -49,6 +49,7 @@ public class GameView {
     private Runnable timeOutHandler;
     private Pane currentRoundOverlay;
     private boolean isStartingOverlayRemoved = false;
+    private boolean isRoundDrawnOverlayShown = false;
 
     public GameView(Stage primaryStage, int selectedCharacter) {
         this.primaryStage = primaryStage;
@@ -635,8 +636,13 @@ public class GameView {
     }
 
     public void showDeathOverlay() {
+        // Prevent the death overlay if the round drawn overlay is already active
+        if (isRoundDrawnOverlayShown) {
+            return;
+        }
+
         Platform.runLater(() -> {
-            // Create overlay if it doesn't exist
+            // Existing logic to show the death overlay
             Pane deathOverlay = new Pane();
             deathOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
             deathOverlay.setPrefSize(1280, 760);
@@ -685,8 +691,11 @@ public class GameView {
     }
 
     public void showRoundDrawn(String word) {
+        isRoundDrawnOverlayShown = true;
         removeDeathOverlay();
-        showRoundEndOverlay("Time's up! No one guessed the word: " + word, Color.YELLOW);
+        showRoundEndOverlay("Round drawn! No one guessed the word: " + word, Color.YELLOW);
+
+        new Timeline(new KeyFrame(Duration.seconds(3), e -> isRoundDrawnOverlayShown = false)).play();
     }
 
     private void showRoundEndOverlay(String message, Color color) {

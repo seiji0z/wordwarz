@@ -7,16 +7,13 @@ import server.helpers.QueueManager;
 import server.helpers.SessionManager;
 import server.objects.Game;
 import server.objects.GameConfig;
-import server.database.DBManager;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class GameServant extends GameServicePOA {
@@ -281,6 +278,14 @@ public class GameServant extends GameServicePOA {
             }
         }
 
+        else if (session.allPlayersOutOfGuesses()) {
+            try {
+                endRound(token);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         return wordState;
     }
 
@@ -483,15 +488,6 @@ public class GameServant extends GameServicePOA {
         return "";
     }
 
-    @Override
-    public int getRemainingGuesses(String token) throws NotLoggedIn, NotInGame {
-        return 0;
-    }
-
-    @Override
-    public int getRemainingTime(String token) throws NotLoggedIn, NotInGame {
-        return 0;
-    }
 
     public static void registerActiveGame(String playerToken, Game game) {
         try {
