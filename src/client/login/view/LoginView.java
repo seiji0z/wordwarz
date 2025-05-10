@@ -155,10 +155,6 @@ public class LoginView {
                         "-fx-border-width: 2px;" +
                         "-fx-cursor: hand;"
         ));
-        playButton.setOnAction(e -> {
-            System.out.println("Login attempted with: " + usernameField.getText());
-            // Add your login logic here
-        });
 
         errorText = new Text();
         errorText.setFont(Font.loadFont(new FileInputStream("res/fonts/PressStart2P-Regular.ttf"), 12));
@@ -203,6 +199,15 @@ public class LoginView {
         primaryStage.setTitle("WordWar Z - Login");
         primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
+        scene.setOnKeyPressed(event -> {
+            switch (event.getCode()) {
+                case ENTER:
+                    validateAndRun(() -> playButton.fire());
+                    break;
+                default:
+                    break;
+            }
+        });
         primaryStage.show();
     }
 
@@ -265,22 +270,25 @@ public class LoginView {
         return passwordField;
     }
 
-    public Button getPlayButton() {
-        return playButton;
+    public void setOnPlay(Runnable action) {
+        // Handle button click
+        playButton.setOnAction(e -> validateAndRun(action));
+
+        // Handle Enter key in text fields
+        usernameField.setOnAction(e -> validateAndRun(action));
+        passwordField.setOnAction(e -> validateAndRun(action));
     }
 
-    public void setOnPlay(Runnable action) {
-        playButton.setOnAction(e -> {
-            String username = usernameField.getText().trim();
-            String password = passwordField.getText().trim();
+    private void validateAndRun(Runnable action) {
+        String username = usernameField.getText().trim();
+        String password = passwordField.getText().trim();
 
-            if (username.isEmpty() || password.isEmpty()) {
-                showError("Fields cannot be empty.");
-            } else {
-                clearError();
-                action.run();
-            }
-        });
+        if (username.isEmpty() || password.isEmpty()) {
+            showError("Fields cannot be empty.");
+        } else {
+            clearError();
+            action.run();
+        }
     }
 
 }
