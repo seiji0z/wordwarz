@@ -90,7 +90,6 @@ public class GameController {
     private void handleWrongGuess() {
         view.loseHeart();
         if (view.getRemainingGuesses() <= 0) {
-            view.showWaitingForOthers();
             for (char c = 'A'; c <= 'Z'; c++) {
                 view.disableLetterButton(c);
             }

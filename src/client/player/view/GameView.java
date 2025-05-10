@@ -536,6 +536,7 @@ public class GameView {
             // Disable all buttons if no guesses left
             if (remainingGuesses <= 0) {
                 disableAllLetterButtons();
+                showDeathOverlay(); // Show the death overlay
             }
         });
     }
@@ -633,6 +634,40 @@ public class GameView {
         }
     }
 
+    public void showDeathOverlay() {
+        Platform.runLater(() -> {
+            // Create overlay if it doesn't exist
+            Pane deathOverlay = new Pane();
+            deathOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
+            deathOverlay.setPrefSize(1280, 760);
+
+            Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 30);
+            Text overlayText = new Text("You died!\nWaiting for the round to end.");
+            overlayText.setFont(customFont);
+            overlayText.setFill(Color.RED);
+            overlayText.setTextAlignment(TextAlignment.CENTER);
+            overlayText.setWrappingWidth(1000);
+            overlayText.setX((1280 - overlayText.getLayoutBounds().getWidth()) / 2);
+            overlayText.setY(350);
+            deathOverlay.getChildren().add(overlayText);
+
+            // Add overlay to root
+            root.getChildren().add(deathOverlay);
+
+            // Store reference to remove it later
+            deathOverlay.setUserData("deathOverlay");
+        });
+    }
+
+    public void removeDeathOverlay() {
+        Platform.runLater(() -> {
+            // Remove the death overlay if it exists
+            root.getChildren().removeIf(node ->
+                    node instanceof Pane && "deathOverlay".equals(node.getUserData())
+            );
+        });
+    }
+
     public int getRemainingGuesses() {
         return this.remainingGuesses;
     }
@@ -640,8 +675,8 @@ public class GameView {
     public void showErrorMessage(String s) {
     }
 
-    // In GameView.java
     public void showRoundLost(String winner, String word) {
+        removeDeathOverlay();
         showRoundEndOverlay("You got eaten by " + winner + "!\nThe word was: " + word, Color.RED);
     }
 
@@ -650,11 +685,8 @@ public class GameView {
     }
 
     public void showRoundDrawn(String word) {
+        removeDeathOverlay();
         showRoundEndOverlay("Time's up! No one guessed the word: " + word, Color.YELLOW);
-    }
-
-    public void showWaitingForOthers() {
-        showRoundEndOverlay("You got eaten!\nWaiting for round to end...", Color.ORANGE);
     }
 
     private void showRoundEndOverlay(String message, Color color) {
