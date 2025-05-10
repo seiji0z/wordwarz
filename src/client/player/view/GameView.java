@@ -633,26 +633,6 @@ public class GameView {
         }
     }
 
-    private void showEndGameOverlay(String message, Color color) {
-        Platform.runLater(() -> {
-            Pane overlay = new Pane();
-            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.8);");
-            overlay.setPrefSize(1280, 760);
-
-            Font font = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 50);
-            Text text = new Text(message);
-            text.setFont(font);
-            text.setFill(color);
-            text.setTextAlignment(TextAlignment.CENTER);
-            text.setWrappingWidth(1000);
-            text.setX((1280 - text.getLayoutBounds().getWidth()) / 2);
-            text.setY(380);
-
-            overlay.getChildren().add(text);
-            root.getChildren().add(overlay);
-        });
-    }
-
     public int getRemainingGuesses() {
         return this.remainingGuesses;
     }
@@ -765,8 +745,52 @@ public class GameView {
             text.setY(350);
 
             overlay.getChildren().add(text);
-            root.getChildren().add(overlay);
+
+            // Delay showing of overlay by 3 seconds
+            Timeline delayTimeline = new Timeline(new KeyFrame(Duration.seconds(3), event -> {
+                root.getChildren().add(overlay);
+            }));
+
+            delayTimeline.play();
         });
+    }
+
+    public void createConfetti() {
+        // Confetti pane
+        Pane confettiPane = new Pane();
+        confettiPane.setPrefSize(1280, 760);
+
+        // Random generator for positioning and colors
+        Random random = new Random();
+
+        for (int i = 0; i < 100; i++) {
+            Rectangle confetti = new Rectangle(10, 20); // Small rectangles
+            confetti.setFill(Color.color(random.nextDouble(), random.nextDouble(), random.nextDouble())); // Random color
+            confetti.setX(random.nextInt(1280)); // Random position
+            confetti.setY(-random.nextInt(200)); // Start above the screen
+
+            // Add falling animation
+            TranslateTransition fallAnimation = new TranslateTransition(Duration.seconds(3 + random.nextDouble()), confetti);
+            fallAnimation.setByY(960); // Fall to bottom of the screen
+            fallAnimation.setCycleCount(1);
+            fallAnimation.setOnFinished(e -> confettiPane.getChildren().remove(confetti)); // Remove when done
+
+            // Add rotation for some effect
+            RotateTransition rotateAnimation = new RotateTransition(Duration.seconds(3 + random.nextDouble()), confetti);
+            rotateAnimation.setByAngle(360);
+            rotateAnimation.setCycleCount(1);
+
+            // Play animations together
+            ParallelTransition confettiAnimation = new ParallelTransition(fallAnimation, rotateAnimation);
+            confettiAnimation.play();
+
+            confettiPane.getChildren().add(confetti);
+        }
+
+        root.getChildren().add(confettiPane);
+
+        // Remove confetti after the animation finishes
+        new Timeline(new KeyFrame(Duration.seconds(6), e -> root.getChildren().remove(confettiPane))).play();
     }
 
     public void closeApplication() {

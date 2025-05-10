@@ -3,8 +3,11 @@ import WordWarZ.CharacterAlreadyGuessed;
 import client.player.model.GameModel;
 import client.player.view.GameView;
 import client.player.view.MainMenuView;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import org.omg.CORBA.ORB;
 
 public class GameController {
@@ -103,8 +106,14 @@ public class GameController {
 
     public void handleGameOver(boolean won, String winner) {
         try {
-            // Show end game overlay
-            view.showEndGameOverlay(won ? "You won the game!" : winner + " won the game!");
+            if (won) {
+                view.showEndGameOverlay("You won the game!");
+
+                // sync
+                new Timeline(new KeyFrame(Duration.seconds(3), event -> view.createConfetti())).play();
+            } else {
+                view.showEndGameOverlay(winner + " won the game!");
+            }
 
             // Schedule return to main menu after delay
             new java.util.Timer().schedule(
@@ -120,7 +129,7 @@ public class GameController {
                             });
                         }
                     },
-                    5000 // 5 second delay
+                    5000 // 5-second delay
             );
         } catch (Exception e) {
             view.showErrorMessage("Error handling game over: " + e.getMessage());
