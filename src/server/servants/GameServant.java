@@ -62,7 +62,6 @@ public class GameServant extends GameServicePOA {
     }
 
     public static void createAndStartGame(List<String> usernames) {
-        // Wait until countdown is actually complete
         if (QueueManager.getRemainingTime() > 0) {
             return;
         }
@@ -75,11 +74,12 @@ public class GameServant extends GameServicePOA {
             registerActiveGame(token, newGame);
         }
 
-        // Start round only once (for the first player)
         if (!usernames.isEmpty()) {
             String firstPlayerToken = SessionManager.getTokenByUsername(usernames.get(0));
             try {
-                instance.startRound(firstPlayerToken);
+                if (!instance.isGameEnding(newGame)) {
+                    instance.startRound(firstPlayerToken);
+                }
             } catch (Exception e) {
                 System.err.println("Error starting round: " + e.getMessage());
             }
@@ -220,14 +220,20 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();
 
         String username = SessionManager.getSession(token).getUsername();
-        System.out.println("Starting round for: " + username);
 
         Game session = activeGames.get(username);
         if (session == null || !session.getPlayers().contains(username)) {
             throw new GameNotFound();
         }
 
+        if (isGameEnding(session)) {
+            throw new GameNotFound("Game is ending"); // Prevent starting a new round if the game is ending
+        }
+
+        System.out.println("Starting round for: " + username);
+
         synchronized (session) {
+
             if (session.getCurrentWord() == null) {
                 String word = session.nextWord();
                 System.out.println("New word selected: " + word);
@@ -389,7 +395,10 @@ public class GameServant extends GameServicePOA {
         }
     }
 
-    // In GameServant.java
+    private boolean isGameEnding(Game game) {
+        return game.getScores().values().stream().anyMatch(score -> score >= 3);
+    }
+
     @Override
     public void notifyPlayerLost(String token) throws NotLoggedIn, NotInGame, GameNotFound {
         if (!SessionManager.isTokenValid(token)) throw new NotLoggedIn();

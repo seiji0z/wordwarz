@@ -16,6 +16,7 @@ public class GameController {
     private final String playerToken;
     private final ORB orb;
     private boolean roundActive = false;
+    private boolean gameEnding = false;
 
     public GameController(String token, ORB orb, int selectedCharacter) {
         this.orb = orb;
@@ -31,7 +32,7 @@ public class GameController {
     }
 
     public void onGameStart(char[] wordPlaceholder) {
-        if (roundActive) return; // Prevent concurrent rounds
+        if (roundActive  || gameEnding) return; // Prevent concurrent rounds
         roundActive = true;
 
         Platform.runLater(() -> {
@@ -103,7 +104,14 @@ public class GameController {
         }
     }
 
+    public boolean isGameEnding() {
+        return gameEnding;
+    }
+
     public void handleGameOver(boolean won, String winner) {
+        if (gameEnding) return;
+        gameEnding = true;
+
         try {
             if (won) {
                 view.showEndGameOverlay("You won the game!");
