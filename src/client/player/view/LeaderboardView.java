@@ -91,8 +91,8 @@ public class LeaderboardView extends Application {
                     nameLabels[i].setText(truncateUsername(p.username));
                     winLabels[i].setText(String.valueOf(p.wins));
                 } else {
-                    nameLabels[i].setText("---");
-                    winLabels[i].setText("0");
+                    nameLabels[i].setText("");
+                    winLabels[i].setText("");
                 }
             }
         });

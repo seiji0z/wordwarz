@@ -398,7 +398,7 @@ public class DBManager {
     public static List<Player> getTopPlayers(int limit) {
         List<Player> players = new ArrayList<>();
         try {
-            String sql = "SELECT username, wins FROM user ORDER BY wins DESC LIMIT ?";
+            String sql = "SELECT username, wins FROM user WHERE wins > 0 ORDER BY wins DESC LIMIT ?";
             PreparedStatement stmt = con.prepareStatement(sql);
             stmt.setInt(1, limit);
             ResultSet rs = stmt.executeQuery();
