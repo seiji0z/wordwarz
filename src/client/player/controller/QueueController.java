@@ -26,14 +26,16 @@ public class QueueController {
     private final Stage stage;
     private final int selectedCharacter;
     private ClientCallbackImpl callbackImpl;
+    private MainMenuView mainMenuView; // Store reference to the original MainMenuView
 
-    public QueueController(String playerToken, ORB orb, Stage stage, int selectedCharacter) {
+    public QueueController(String playerToken, ORB orb, Stage stage, int selectedCharacter, MainMenuView mainMenuView) {
         this.orb = orb;
         this.playerToken = playerToken;
         this.model = new QueueModel(playerToken, orb);
         this.view = new QueueView();
         this.stage = stage;
         this.selectedCharacter = selectedCharacter;
+        this.mainMenuView = mainMenuView;
         System.out.println("[QueueController] Initializing for token: " + playerToken);
 
         initializeListeners();
@@ -111,12 +113,26 @@ public class QueueController {
         Platform.runLater(() -> {
             view.close();
             System.out.println("[QueueController] QueueView closed for token: " + playerToken);
-            MainMenuView mainMenuView = new MainMenuView();
-            mainMenuView.initializeUI(stage);
-            new MainMenuController(playerToken, orb, mainMenuView, stage);
-            stage.setTitle("Word War Z - Main Menu");
-            stage.show();
-            System.out.println("[QueueController] MainMenuView opened for token: " + playerToken);
+            if (mainMenuView != null) {
+                // Restore the MainMenuView scene instead of reinitializing
+                stage.setScene(mainMenuView.getScene());
+                stage.setTitle("Word War Z - Main Menu");
+                stage.show();
+                new MainMenuController(playerToken, orb, mainMenuView, stage);
+                System.out.println("[QueueController] MainMenuView scene restored for token: " + playerToken);
+                // Ensure music resumes if it was playing
+                if (mainMenuView.getMediaPlayer() != null && !mainMenuView.isMuted()) {
+                    mainMenuView.getMediaPlayer().play();
+                }
+            } else {
+                System.err.println("[QueueController] MainMenuView reference is null, creating new instance for token: " + playerToken);
+                mainMenuView = new MainMenuView();
+                mainMenuView.initializeUI(stage);
+                new MainMenuController(playerToken, orb, mainMenuView, stage);
+                stage.setTitle("Word War Z - Main Menu");
+                stage.show();
+                System.out.println("[QueueController] MainMenuView created as fallback for token: " + playerToken);
+            }
         });
     }
 
@@ -125,6 +141,9 @@ public class QueueController {
         Platform.runLater(() -> {
             view.close();
             stage.close();
+            if (mainMenuView != null) {
+                mainMenuView.close();
+            }
             System.out.println("[QueueController] Login screen transition completed for token: " + playerToken);
         });
     }

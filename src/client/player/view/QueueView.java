@@ -28,9 +28,9 @@ public class QueueView extends Application {
     private Pane usernamesPane;
     private Button cancelButton;
     private Text noOpponentText;
-    private Text waitingText; // Instance variable for animation access
+    private Text waitingText;
     private Stage stage;
-    private Timeline dotsAnimation; // For the "WAITING FOR PLAYERS..." dots animation
+    private Timeline dotsAnimation;
 
     @Override
     public void start(Stage primaryStage) {
@@ -82,7 +82,6 @@ public class QueueView extends Application {
         waitingText.setY(470);
         root.getChildren().add(waitingText);
 
-        // Animation for the dots in "WAITING FOR PLAYERS..."
         dotsAnimation = new Timeline(
                 new KeyFrame(Duration.seconds(0.5), e -> waitingText.setText("WAITING FOR PLAYERS.")),
                 new KeyFrame(Duration.seconds(1.0), e -> waitingText.setText("WAITING FOR PLAYERS..")),
@@ -127,6 +126,10 @@ public class QueueView extends Application {
         System.out.println("[QueueView] QueueView started");
     }
 
+    public Pane getRoot() {
+        return root;
+    }
+
     public void setCancelButtonHandler(EventHandler<ActionEvent> handler) {
         cancelButton.setOnAction(handler);
     }
@@ -148,10 +151,9 @@ public class QueueView extends Application {
 
     public void showNoOpponentMessage() {
         Platform.runLater(() -> {
-            // Stop the dots animation when showing the message
             if (dotsAnimation != null) {
                 dotsAnimation.stop();
-                waitingText.setText("WAITING FOR PLAYERS"); // Reset to initial state
+                waitingText.setText("WAITING FOR PLAYERS");
             }
 
             noOpponentText.setVisible(true);
@@ -160,7 +162,6 @@ public class QueueView extends Application {
             scheduler.schedule(() -> Platform.runLater(() -> {
                 noOpponentText.setVisible(false);
                 System.out.println("[QueueView] Hiding 'NO OPPONENT FOUND!' message");
-                // Restart the dots animation after hiding the message
                 if (dotsAnimation != null) {
                     dotsAnimation.play();
                 }
@@ -171,11 +172,10 @@ public class QueueView extends Application {
 
     public void close() {
         if (stage != null) {
-            // Stop the animation when closing
             if (dotsAnimation != null) {
                 dotsAnimation.stop();
             }
-            stage.close();
+            // Don't close the stage, just prepare for reuse
             System.out.println("[QueueView] QueueView closed");
         }
     }

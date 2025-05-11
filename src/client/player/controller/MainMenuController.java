@@ -19,8 +19,6 @@ public class MainMenuController {
     private Stage leaderboardStage;
     private LeaderboardView leaderboardView;
 
-
-
     // Constructor for LoginController (creates new view and stage)
     public MainMenuController(String token, ORB orb) {
         this.orb = orb;
@@ -43,7 +41,6 @@ public class MainMenuController {
         setupEventHandlers();
     }
 
-
     private void setupEventHandlers() {
         view.setPlayButtonHandler(() -> {
             System.out.println("Play button clicked - starting game");
@@ -56,25 +53,21 @@ public class MainMenuController {
         view.setSoundToggleHandler(this::handleSoundToggle);
     }
 
-    // In MainMenuController.java
     private void startGame() {
         System.out.println("Attempting to start game...");
         int selectedChar = view.getSelectedCharacterIndex();
-        new QueueController(playerToken, orb, stage, selectedChar);
+        new QueueController(playerToken, orb, stage, selectedChar, view);
     }
 
-
     private void handleLeaderboard() {
-        // Get leaderboard data from model
         Player[] leaderboardData = model.getLeaderboard();
 
         Platform.runLater(() -> {
             if (leaderboardStage == null) {
                 leaderboardStage = new Stage();
                 leaderboardView = new LeaderboardView();
-                leaderboardView.initializeUI(leaderboardStage); // Initialize first
+                leaderboardView.initializeUI(leaderboardStage);
 
-                // Update the leaderboard with current data after initialization
                 if (leaderboardData != null) {
                     leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
                 }
@@ -82,7 +75,6 @@ public class MainMenuController {
                 leaderboardStage.setOnCloseRequest(e -> leaderboardStage = null);
                 leaderboardStage.show();
             } else {
-                // If stage already exists, just update the data
                 if (leaderboardData != null) {
                     leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
                 }
@@ -98,6 +90,7 @@ public class MainMenuController {
     private void handleQuit() {
         try {
             model.logout();
+            view.close();
             Platform.exit();
         } catch (Exception e) {
             System.err.println("Error during logout: " + e.getMessage());
