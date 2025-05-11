@@ -858,4 +858,31 @@ public class MainMenuView {
     public void showHowToPlay() {
         overlayPane.setVisible(true);
     }
+
+    public void closeApplication() {
+        // Stop and clean up the MediaPlayer if it exists
+        if (mediaPlayer != null) {
+            mediaPlayer.stop();
+            mediaPlayer.dispose();
+        }
+
+        // Stop all ongoing animations
+        stopAllAnimations();
+
+        // Hide overlays
+        if (overlayPane != null) {
+            overlayPane.setVisible(false);
+        }
+        if (characterOverlayPane != null) {
+            characterOverlayPane.setVisible(false);
+        }
+
+        // Close the window (stage)
+        if (playBtn != null && playBtn.getScene() != null) {
+            Stage stage = (Stage) playBtn.getScene().getWindow();
+            if (stage != null) {
+                stage.close();
+            }
+        }
+    }
 }

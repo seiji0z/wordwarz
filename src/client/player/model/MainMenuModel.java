@@ -49,4 +49,8 @@ public class MainMenuModel {
             e.printStackTrace();
         }
     }
+
+    public GameService getGameService() {
+        return gameService;
+    }
 }

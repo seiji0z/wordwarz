@@ -3,6 +3,7 @@ package client.player;
 import WordWarZ.ClientCallbackPOA;
 import WordWarZ.Player;
 import client.player.controller.GameController;
+import client.player.controller.MainMenuController;
 import client.player.controller.QueueController;
 import client.player.view.QueueView;
 import javafx.application.Platform;
@@ -18,6 +19,7 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
     private boolean gameStarted = false;
     private final int selectedCharacter;
     private final QueueController queueController;
+    private MainMenuController mainMenuController;
 
     public ClientCallbackImpl(QueueView q, Stage stage, String playerToken, ORB orb, int selectedCharacter, QueueController queueController) {
         this.queueView = q;
@@ -27,6 +29,10 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
         this.selectedCharacter = selectedCharacter;
         this.queueController = queueController;
         System.out.println("[ClientCallbackImpl] Initialized for token: " + playerToken);
+    }
+
+    public void setMainMenuController(MainMenuController controller) {
+        this.mainMenuController = controller;
     }
 
     @Override
@@ -132,5 +138,23 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     @Override
     public void onForceLogout() {
+        System.out.println("[ClientCallbackImpl] Received force logout for token: " + playerToken);
+        if (gameController != null) {
+            gameController.handleForceLogout();
+        } else if (queueController != null) {
+            queueController.handleForceLogout();
+        } else if (mainMenuController != null) {
+            mainMenuController.handleForceLogout();
+        }
+    }
+
+    @Override
+    public void onPlayerDisconnected(String username) {
+        System.out.println("[ClientCallbackImpl] Player disconnected: " + username + " for token: " + playerToken);
+        Platform.runLater(() -> {
+            if (gameController != null) {
+                gameController.handlePlayerDisconnected(username);
+            }
+        });
     }
 }

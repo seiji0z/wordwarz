@@ -854,4 +854,32 @@ public class GameView {
             primaryStage.close();
         });
     }
+
+    public void showForceLogoutMessage() {
+        Platform.runLater(() -> {
+            // Create a blocking overlay
+            Pane overlay = new Pane();
+            overlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.9);");
+            overlay.setPrefSize(1280, 760);
+
+            Font font = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 30);
+            Text text = new Text("You have been logged out\nReturning to login screen...");
+            text.setFont(font);
+            text.setFill(Color.WHITE);
+            text.setTextAlignment(TextAlignment.CENTER);
+            text.setWrappingWidth(1000);
+            text.setX((1280 - text.getLayoutBounds().getWidth()) / 2);
+            text.setY(350);
+
+            overlay.getChildren().add(text);
+            root.getChildren().add(overlay);
+
+            new Timeline(new KeyFrame(Duration.seconds(3), e -> {
+                closeApplication();
+            })).play();
+        });
+    }
+
+    public void showPlayerDisconnected(String username) {
+    }
 }

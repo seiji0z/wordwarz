@@ -17,7 +17,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class GameServant extends GameServicePOA {
-    private static final ConcurrentHashMap<String, WordWarZ.ClientCallback> clientCallbacks = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<String, WordWarZ.ClientCallback> clientCallbacks = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<String, Long> waitingPlayers = new ConcurrentHashMap<>();
     private static final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
     private static final Map<String, Game> activeGames = new ConcurrentHashMap<>();
@@ -38,8 +38,10 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
-        clientCallbacks.put(token, callback);
-        System.out.println("Callback registered for token: " + token + ", username: " + SessionManager.getSession(token).getUsername());
+        if (clientCallbacks.containsKey(token)) {
+            unregisterCallback(token); // Cleanup existing callback
+        }
+        clientCallbacks.put(token, callback);        System.out.println("Callback registered for token: " + token + ", username: " + SessionManager.getSession(token).getUsername());
     }
 
     @Override
@@ -57,6 +59,7 @@ public class GameServant extends GameServicePOA {
             throw new NotLoggedIn();
         }
         String username = SessionManager.getSession(token).getUsername();
+        activeGames.remove(username);
         System.out.println("Starting game for token: " + token + ", username: " + username);
         QueueManager.joinQueue(username);
     }
@@ -187,22 +190,6 @@ public class GameServant extends GameServicePOA {
         }
     }
 
-    public static void clearCallbacksExcept(List<String> currentUsernames) {
-        clientCallbacks.entrySet().removeIf(entry -> {
-            String token = entry.getKey();
-            try {
-                String username = SessionManager.getSession(token).getUsername();
-                if (!currentUsernames.contains(username)) {
-                    System.out.println("Removing stale callback for token: " + token + ", username: " + username);
-                    return true;
-                }
-                return false;
-            } catch (NotLoggedIn e) {
-                System.out.println("Removing invalid callback for token: " + token + " (session expired)");
-                return true;
-            }
-        });
-    }
 
     @Override
     public Player[] getLeaderboard(String token) throws NotLoggedIn {
@@ -423,6 +410,74 @@ public class GameServant extends GameServicePOA {
             }
         }
         return "";
+    }
+
+    private void notifySessionExpired(String token) {
+        WordWarZ.ClientCallback callback = clientCallbacks.get(token);
+        if (callback != null) {
+            try {
+                callback.onForceLogout();
+                System.out.println("Notified token: " + token + " that session has expired");
+            } catch (Exception e) {
+                System.err.println("Error notifying session expired for token " + token + ": " + e.getMessage());
+            }
+        }
+    }
+
+    public static void cleanupExpiredSession(String token) {
+        try {
+            // Notify client their session has expired
+            instance.notifySessionExpired(token);
+
+            // Remove from callbacks
+            clientCallbacks.remove(token);
+
+            // Handle game cleanup if player was in a game
+            String username = SessionManager.getSession(token).getUsername();
+            Game game = activeGames.get(username);
+
+            if (game != null) {
+                // Player was in a game - handle their departure
+                game.markPlayerEliminated(username);
+
+                // Notify other players
+                for (String player : game.getPlayers()) {
+                    if (!player.equals(username)) {
+                        String playerToken = SessionManager.getTokenByUsername(player);
+                        WordWarZ.ClientCallback cb = clientCallbacks.get(playerToken);
+                        if (cb != null) {
+                            try {
+                                cb.onPlayerDisconnected(username);
+                            } catch (Exception e) {
+                                System.err.println("Error notifying player " + player + " about disconnect: " + e.getMessage());
+                            }
+                        }
+                    }
+                }
+
+                // Check if game should end
+                if (game.allPlayersEliminated()) {
+                    try {
+                        instance.endRound(token);
+                    } catch (Exception e) {
+                        System.err.println("Error ending round during session cleanup: " + e.getMessage());
+                    }
+                }
+
+                // Remove from active games
+                activeGames.remove(username);
+            }
+
+            // Remove from queue if they were in it
+            if (QueueManager.isInQueue(username)) {
+                QueueManager.leaveQueue(username);
+                notifyQueueUpdate(QueueManager.getQueueSize());
+            }
+
+            System.out.println("Cleaned up resources for expired session with token: " + token);
+        } catch (NotLoggedIn e) {
+            System.out.println("Session already invalid during cleanup: " + token);
+        }
     }
 
     @Override

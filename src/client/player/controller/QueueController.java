@@ -1,5 +1,6 @@
 package client.player.controller;
 
+import client.login.controller.LoginController;
 import client.player.ClientCallbackImpl;
 import client.player.model.QueueModel;
 import client.player.view.MainMenuView;
@@ -8,6 +9,7 @@ import WordWarZ.GameService;
 import WordWarZ.NoOpponentFound;
 import WordWarZ.NotLoggedIn;
 import WordWarZ.PlayerNotInQueue;
+import javafx.scene.control.Alert;
 import org.omg.CORBA.ORB;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
@@ -26,16 +28,14 @@ public class QueueController {
     private final Stage stage;
     private final int selectedCharacter;
     private ClientCallbackImpl callbackImpl;
-    private MainMenuView mainMenuView; // Store reference to the original MainMenuView
 
-    public QueueController(String playerToken, ORB orb, Stage stage, int selectedCharacter, MainMenuView mainMenuView) {
+    public QueueController(String playerToken, ORB orb, Stage stage, int selectedCharacter) {
         this.orb = orb;
         this.playerToken = playerToken;
         this.model = new QueueModel(playerToken, orb);
         this.view = new QueueView();
         this.stage = stage;
         this.selectedCharacter = selectedCharacter;
-        this.mainMenuView = mainMenuView;
         System.out.println("[QueueController] Initializing for token: " + playerToken);
 
         initializeListeners();
@@ -111,27 +111,22 @@ public class QueueController {
     private void transitionToMainMenu() {
         System.out.println("[QueueController] Transitioning to MainMenuView for token: " + playerToken);
         Platform.runLater(() -> {
-            view.close();
-            System.out.println("[QueueController] QueueView closed for token: " + playerToken);
-            if (mainMenuView != null) {
-                // Restore the MainMenuView scene instead of reinitializing
-                stage.setScene(mainMenuView.getScene());
-                stage.setTitle("Word War Z - Main Menu");
-                stage.show();
-                new MainMenuController(playerToken, orb, mainMenuView, stage);
-                System.out.println("[QueueController] MainMenuView scene restored for token: " + playerToken);
-                // Ensure music resumes if it was playing
-                if (mainMenuView.getMediaPlayer() != null && !mainMenuView.isMuted()) {
-                    mainMenuView.getMediaPlayer().play();
-                }
-            } else {
-                System.err.println("[QueueController] MainMenuView reference is null, creating new instance for token: " + playerToken);
-                mainMenuView = new MainMenuView();
+            try {
+                view.close();
+                System.out.println("[QueueController] QueueView closed for token: " + playerToken);
+                MainMenuView mainMenuView = new MainMenuView();
                 mainMenuView.initializeUI(stage);
-                new MainMenuController(playerToken, orb, mainMenuView, stage);
+                MainMenuController mainMenuController = new MainMenuController(playerToken, orb, mainMenuView, stage);
+
+                if (callbackImpl != null) {
+                    callbackImpl.setMainMenuController(mainMenuController);
+                }
+
                 stage.setTitle("Word War Z - Main Menu");
                 stage.show();
-                System.out.println("[QueueController] MainMenuView created as fallback for token: " + playerToken);
+                System.out.println("[QueueController] MainMenuView opened for token: " + playerToken);
+            } catch (Exception e) {
+                System.err.println("[QueueController] Error transitioning to main menu: " + e.getMessage());
             }
         });
     }
@@ -141,10 +136,29 @@ public class QueueController {
         Platform.runLater(() -> {
             view.close();
             stage.close();
-            if (mainMenuView != null) {
-                mainMenuView.close();
-            }
             System.out.println("[QueueController] Login screen transition completed for token: " + playerToken);
+        });
+    }
+
+    public void handleForceLogout() {
+        Platform.runLater(() -> {
+            try {
+                // Close current queue window
+                if (view != null) {
+                    view.close();
+                }
+
+                new LoginController(orb);
+
+                // Show alert message
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Session Expired");
+                alert.setHeaderText("You have been logged out");
+                alert.setContentText("Your session has expired or you were logged out from another device.");
+                alert.showAndWait();
+            } catch (Exception e) {
+                System.err.println("Error handling force logout: " + e.getMessage());
+            }
         });
     }
 

@@ -1,11 +1,14 @@
 package client.player.controller;
 import WordWarZ.CharacterAlreadyGuessed;
+import client.login.controller.LoginController;
+import client.login.view.LoginView;
 import client.player.model.GameModel;
 import client.player.view.GameView;
 import client.player.view.MainMenuView;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.omg.CORBA.ORB;
@@ -104,10 +107,6 @@ public class GameController {
         }
     }
 
-    public boolean isGameEnding() {
-        return gameEnding;
-    }
-
     public void handleGameOver(boolean won, String winner) {
         if (gameEnding) return;
         gameEnding = true;
@@ -197,5 +196,36 @@ public class GameController {
                 },
                 3000 // 3-second delay
         );
+    }
+
+    public void handleForceLogout() {
+        Platform.runLater(() -> {
+            try {
+                // Close current game window
+                if (view != null) {
+                    view.closeApplication();
+                }
+
+                new LoginController(orb);
+
+                // Show alert message
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Session Expired");
+                alert.setHeaderText("You have been logged out");
+                alert.setContentText("Your session has expired or you were logged out from another device.");
+                alert.showAndWait();
+            } catch (Exception e) {
+                System.err.println("Error handling force logout: " + e.getMessage());
+            }
+        });
+    }
+
+    public void handlePlayerDisconnected(String username) {
+        // Update UI to show the player has disconnected
+        if (view != null) {
+            view.showPlayerDisconnected(username);
+        }
+
+       // TODO : Handle player disconnected, mag-isang naglalaro player after madisconnect lahat ng players
     }
 }

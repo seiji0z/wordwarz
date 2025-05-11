@@ -2,6 +2,7 @@ package server.helpers;
 
 import WordWarZ.NotLoggedIn;
 import server.objects.Session;
+import server.servants.GameServant;
 
 import java.util.Map;
 import java.util.UUID;
@@ -28,9 +29,13 @@ public class SessionManager {
     }
 
     public static void removeSession(String token) {
-        session = tokenMap.remove(token);
-        System.out.println(userToTokenMap.get(session.getUsername()) + " removed.");
+        Session session = tokenMap.get(token);
         if (session != null) {
+            // Clean up game state first
+            GameServant.cleanupExpiredSession(token);
+
+            // Remove from maps
+            tokenMap.remove(token);
             userToTokenMap.remove(session.getUsername());
         }
     }

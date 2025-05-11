@@ -1,10 +1,13 @@
 package client.player.controller;
 
 import WordWarZ.Player;
+import client.login.controller.LoginController;
+import client.player.ClientCallbackImpl;
 import client.player.model.MainMenuModel;
 import client.player.view.LeaderboardView;
 import client.player.view.MainMenuView;
 import javafx.application.Platform;
+import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
 
@@ -18,6 +21,7 @@ public class MainMenuController {
     private final Stage stage;
     private Stage leaderboardStage;
     private LeaderboardView leaderboardView;
+    private ClientCallbackImpl callbackImpl;
 
     // Constructor for LoginController (creates new view and stage)
     public MainMenuController(String token, ORB orb) {
@@ -29,6 +33,7 @@ public class MainMenuController {
         this.stage = new Stage();
         view.initializeUI(stage);
         setupEventHandlers();
+        registerCallback();
     }
 
     // Constructor for QueueController (uses existing view and stage)
@@ -39,6 +44,26 @@ public class MainMenuController {
         this.view = view;
         this.stage = stage;
         setupEventHandlers();
+        registerCallback();
+    }
+
+
+    private void registerCallback() {
+        try {
+            org.omg.CORBA.Object obj = orb.resolve_initial_references("RootPOA");
+            org.omg.PortableServer.POA rootPOA = org.omg.PortableServer.POAHelper.narrow(obj);
+            rootPOA.the_POAManager().activate();
+
+            callbackImpl = new ClientCallbackImpl(null, stage, playerToken, orb, 0, null);
+            callbackImpl.setMainMenuController(this);
+
+            org.omg.CORBA.Object callbackObj = rootPOA.servant_to_reference(callbackImpl);
+            WordWarZ.ClientCallback callback = WordWarZ.ClientCallbackHelper.narrow(callbackObj);
+            model.getGameService().registerCallback(playerToken, callback);
+            System.out.println("[MainMenuController] Callback registered for token: " + playerToken);
+        } catch (Exception e) {
+            System.err.println("[MainMenuController] Error registering callback: " + e.getMessage());
+        }
     }
 
     private void setupEventHandlers() {
@@ -53,21 +78,25 @@ public class MainMenuController {
         view.setSoundToggleHandler(this::handleSoundToggle);
     }
 
+    // In MainMenuController.java
     private void startGame() {
         System.out.println("Attempting to start game...");
         int selectedChar = view.getSelectedCharacterIndex();
-        new QueueController(playerToken, orb, stage, selectedChar, view);
+        new QueueController(playerToken, orb, stage, selectedChar);
     }
 
+
     private void handleLeaderboard() {
+        // Get leaderboard data from model
         Player[] leaderboardData = model.getLeaderboard();
 
         Platform.runLater(() -> {
             if (leaderboardStage == null) {
                 leaderboardStage = new Stage();
                 leaderboardView = new LeaderboardView();
-                leaderboardView.initializeUI(leaderboardStage);
+                leaderboardView.initializeUI(leaderboardStage); // Initialize first
 
+                // Update the leaderboard with current data after initialization
                 if (leaderboardData != null) {
                     leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
                 }
@@ -75,6 +104,7 @@ public class MainMenuController {
                 leaderboardStage.setOnCloseRequest(e -> leaderboardStage = null);
                 leaderboardStage.show();
             } else {
+                // If stage already exists, just update the data
                 if (leaderboardData != null) {
                     leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
                 }
@@ -90,7 +120,6 @@ public class MainMenuController {
     private void handleQuit() {
         try {
             model.logout();
-            view.close();
             Platform.exit();
         } catch (Exception e) {
             System.err.println("Error during logout: " + e.getMessage());
@@ -100,5 +129,32 @@ public class MainMenuController {
 
     private void handleSoundToggle(boolean isMuted) {
         System.out.println("Sound is now " + (isMuted ? "muted" : "unmuted"));
+    }
+
+    public void handleForceLogout() {
+        Platform.runLater(() -> {
+            try {
+                // Close current game window
+                if (view != null) {
+                    view.closeApplication();
+                }
+
+                // Close leaderboard if open
+                if (leaderboardStage != null) {
+                    leaderboardStage.close();
+                }
+
+                new LoginController(orb);
+
+                // Show alert message
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Session Expired");
+                alert.setHeaderText("You have been logged out");
+                alert.setContentText("Your session has expired or you were logged out from another device.");
+                alert.showAndWait();
+            } catch (Exception e) {
+                System.err.println("Error handling force logout: " + e.getMessage());
+            }
+        });
     }
 }
