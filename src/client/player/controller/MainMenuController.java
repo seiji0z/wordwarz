@@ -92,39 +92,30 @@ public class MainMenuController {
         Player[] leaderboardData = model.getLeaderboard();
 
         Platform.runLater(() -> {
-            if (leaderboardStage == null) {
-                leaderboardStage = stage; // Use the same stage as main menu
-                leaderboardView = new LeaderboardView();
-                leaderboardView.initializeUI(leaderboardStage);
+            leaderboardView = new LeaderboardView();
+            leaderboardStage = stage; // Use the same stage as main menu
+            leaderboardView.initializeUI(leaderboardStage);
 
-                // Set the refresh button handler
-                leaderboardView.setRefreshButtonHandler(() -> {
-                    Player[] refreshedData = model.getLeaderboard();
-                    if (refreshedData != null) {
-                        leaderboardView.updateLeaderboard(Arrays.asList(refreshedData));
-                    }
-                });
-
-                if (leaderboardData != null) {
-                    leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
+            // Set the refresh button handler
+            leaderboardView.setRefreshButtonHandler(() -> {
+                Player[] refreshedData = model.getLeaderboard();
+                if (refreshedData != null) {
+                    leaderboardView.updateLeaderboard(Arrays.asList(refreshedData));
                 }
+            });
 
-                leaderboardStage.setOnCloseRequest(e -> {
-                    leaderboardStage.hide(); // Hide instead of null to reuse
-                    leaderboardStage.setScene(null); // Clear the scene
-                });
+            // Set the back button handler
+            leaderboardView.setBackButtonHandler(() -> {
+                leaderboardStage.hide();
+                stage.setScene(view.getScene()); // Restore the main menu scene
+                stage.show();
+            });
 
-                // Store the leaderboard scene to reuse
-                Scene leaderboardScene = leaderboardStage.getScene();
-                leaderboardStage.setScene(leaderboardScene);
-                leaderboardStage.show();
-            } else {
-                // If stage already exists, just update the data
-                if (leaderboardData != null) {
-                    leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
-                }
-                leaderboardStage.show();
+            if (leaderboardData != null) {
+                leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
             }
+
+            leaderboardStage.show();
         });
     }
 

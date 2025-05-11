@@ -14,6 +14,8 @@ import javafx.stage.Stage;
 import javafx.scene.control.Label;
 import javafx.scene.text.Font;
 import javafx.scene.paint.Color;
+
+import java.util.Arrays;
 import java.util.List;
 
 public class LeaderboardView extends Application {
@@ -24,7 +26,8 @@ public class LeaderboardView extends Application {
     private ImageView[] zombieHandViews = new ImageView[5];
     private boolean initialized = false;
     private Button refreshButton;
-
+    private Button backButton;
+    private boolean[] hasPlayer = new boolean[5];
 
     public LeaderboardView() {
         for (int i = 0; i < 5; i++) {
@@ -37,12 +40,12 @@ public class LeaderboardView extends Application {
             StackPane tombContainer = new StackPane();
             tombContainer.setAlignment(Pos.BOTTOM_CENTER); // Align children to bottom
 
-            // Create a VBox for the labels
+            // VBox for the labels
             VBox labelBox = new VBox(2);
             labelBox.setAlignment(Pos.CENTER);
             labelBox.getChildren().addAll(nameLabels[i], winLabels[i]);
 
-            // Add tombstone and hand to container (order matters)
+            // Tombstone and hand to container (order matters)
             tombContainer.getChildren().addAll(tombViews[i], zombieHandViews[i]);
 
             // Main player pane contains tombstone container and labels
@@ -56,21 +59,24 @@ public class LeaderboardView extends Application {
             final int index = i;
             playerPanes[i].setOnMouseEntered(e -> {
                 // Reset and show hand animation
-                zombieHandViews[index].setImage(null);
-                zombieHandViews[index].setImage(new Image("file:res/images/others/zombie hand.gif"));
-                zombieHandViews[index].setVisible(true);
-                zombieHandViews[index].setTranslateY(20); // Reset position
+                if (hasPlayer[index]) {
+                    zombieHandViews[index].setImage(null);
+                    zombieHandViews[index].setImage(new Image("file:res/images/others/zombie hand.gif"));
+                    zombieHandViews[index].setVisible(true);
+                    zombieHandViews[index].setTranslateY(20);
 
-                nameLabels[index].setTextFill(Color.RED);
-                winLabels[index].setTextFill(Color.RED);
+                    nameLabels[index].setTextFill(Color.RED);
+                    winLabels[index].setTextFill(Color.RED);
+                }
             });
 
             playerPanes[i].setOnMouseExited(e -> {
                 // Hide hand
-                zombieHandViews[index].setVisible(false);
-
-                nameLabels[index].setTextFill(Color.WHITE);
-                winLabels[index].setTextFill(Color.WHITE);
+                if (hasPlayer[index]) {
+                    zombieHandViews[index].setVisible(false);
+                    nameLabels[index].setTextFill(Color.WHITE);
+                    winLabels[index].setTextFill(Color.WHITE);
+                }
             });
         }
     }
@@ -166,7 +172,38 @@ public class LeaderboardView extends Application {
                         "-fx-cursor: hand;"
         ));
 
-        root.getChildren().add(refreshButton);
+        // Back Button
+        backButton = new Button("BACK");
+        backButton.setFont(pressStartFont);
+        backButton.setTextFill(Color.WHITE);
+        backButton.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        backButton.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        backButton.setPadding(new Insets(10, 20, 10, 20));
+        backButton.setLayoutX(50);
+        backButton.setLayoutY(50);
+        backButton.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        backButton.setOnMouseEntered(e -> backButton.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        backButton.setOnMouseExited(e -> backButton.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+
+        root.getChildren().addAll(refreshButton, backButton);
 
         Scene scene = new Scene(root);
         primaryStage.setTitle("Word War Z - Leaderboard");
@@ -183,15 +220,26 @@ public class LeaderboardView extends Application {
         int[] visualOrder = {3, 2, 0, 1, 4};
 
         Platform.runLater(() -> {
+            // Reset hasPlayer array
+            Arrays.fill(hasPlayer, false);
+
             for (int i = 0; i < 5; i++) {
                 int sortedIndex = visualOrder[i];
                 if (sortedIndex < sorted.size()) {
                     Player p = sorted.get(sortedIndex);
                     nameLabels[i].setText(truncateUsername(p.username));
                     winLabels[i].setText(p.wins + " Wins");
+                    hasPlayer[i] = true; // Mark this position as having a player
+
+                    // Hand is hidden initially
+                    zombieHandViews[i].setVisible(false);
                 } else {
                     nameLabels[i].setText("");
                     winLabels[i].setText("");
+                    hasPlayer[i] = false;
+
+                    // Hand is hidden for empty positions
+                    zombieHandViews[i].setVisible(false);
                 }
             }
         });
@@ -201,10 +249,15 @@ public class LeaderboardView extends Application {
         return (username.length() > 9) ? username.substring(0, 6) + "..." : username;
     }
 
-    // Add this method to set the refresh button action
     public void setRefreshButtonHandler(Runnable handler) {
         if (refreshButton != null) {
             refreshButton.setOnAction(e -> handler.run());
+        }
+    }
+
+    public void setBackButtonHandler(Runnable handler) {
+        if (backButton != null) {
+            backButton.setOnAction(e -> handler.run());
         }
     }
 }
