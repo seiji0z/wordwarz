@@ -71,11 +71,11 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
             if (queueView != null) {
                 queueView.close();
                 queueView = null;
-                queueController.getStage().close(); // Close the queue stage
             }
 
             if (gameController == null) {
-                gameController = new GameController(playerToken, orb, selectedCharacter);
+                stage.setTitle("Word War Z - Game");
+                gameController = new GameController(playerToken, orb, selectedCharacter, stage);
                 System.out.println("[ClientCallbackImpl] GameController initialized for token: " + playerToken);
             }
             gameController.onGameStart(wordPlaceholder);

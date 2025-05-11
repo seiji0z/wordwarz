@@ -21,11 +21,11 @@ public class GameController {
     private boolean roundActive = false;
     private boolean gameEnding = false;
 
-    public GameController(String token, ORB orb, int selectedCharacter) {
+    public GameController(String token, ORB orb, int selectedCharacter, Stage stage) {
         this.orb = orb;
         this.playerToken = token;
         this.model = new GameModel(token, orb);
-        this.view = new GameView(new Stage(), selectedCharacter );
+        this.view = new GameView(stage, selectedCharacter);
 
         setupEventHandlers();
     }

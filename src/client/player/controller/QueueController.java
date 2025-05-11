@@ -6,7 +6,6 @@ import client.player.model.QueueModel;
 import client.player.view.MainMenuView;
 import client.player.view.QueueView;
 import WordWarZ.GameService;
-import WordWarZ.NoOpponentFound;
 import WordWarZ.NotLoggedIn;
 import WordWarZ.PlayerNotInQueue;
 import javafx.scene.control.Alert;

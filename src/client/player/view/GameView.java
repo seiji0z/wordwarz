@@ -73,7 +73,6 @@ public class GameView {
     }
 
     public void initialize() {
-        this.primaryStage = primaryStage;
         root = new Pane();
 
         Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40);
