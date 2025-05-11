@@ -30,7 +30,9 @@ public class QueueView extends Application {
     private Text noOpponentText;
     private Text waitingText;
     private Stage stage;
-    private Timeline dotsAnimation;
+    private Timeline loadingAnimation;
+    private ImageView loadingImageView;
+    private Image[] loadingFrames;
 
     @Override
     public void start(Stage primaryStage) {
@@ -75,25 +77,38 @@ public class QueueView extends Application {
         queueRect.setY(400);
         root.getChildren().add(queueRect);
 
-        waitingText = new Text("WAITING FOR PLAYERS.");
+        waitingText = new Text("WAITING FOR PLAYERS");
         waitingText.setFont(customFont);
         waitingText.setFill(Color.WHITE);
-        waitingText.setX(380);
+        waitingText.setX(340);
         waitingText.setY(470);
         root.getChildren().add(waitingText);
 
-        dotsAnimation = new Timeline(
-                new KeyFrame(Duration.seconds(0.5), e -> waitingText.setText("WAITING FOR PLAYERS.")),
-                new KeyFrame(Duration.seconds(1.0), e -> waitingText.setText("WAITING FOR PLAYERS..")),
-                new KeyFrame(Duration.seconds(1.5), e -> waitingText.setText("WAITING FOR PLAYERS..."))
+        // Load and set up the loading animation frames
+        loadingFrames = new Image[8];
+        for (int i = 1; i <= 8; i++) {
+            loadingFrames[i - 1] = new Image("file:res/images/characters/zombie/loading/zombie-load-" + i + ".png");
+        }
+        loadingImageView = new ImageView(loadingFrames[0]);
+        loadingImageView.setFitWidth(60);
+        loadingImageView.setFitHeight(60);
+        loadingImageView.setX(830);
+        loadingImageView.setY(410);
+        root.getChildren().add(loadingImageView);
+
+        loadingAnimation = new Timeline(
+                new KeyFrame(Duration.millis(100), event -> {
+                    int currentIndex = (int) (System.currentTimeMillis() / 100 % 8);
+                    loadingImageView.setImage(loadingFrames[currentIndex]);
+                })
         );
-        dotsAnimation.setCycleCount(Timeline.INDEFINITE);
-        dotsAnimation.play();
+        loadingAnimation.setCycleCount(Timeline.INDEFINITE);
+        loadingAnimation.play();
 
         playerCountText = new Text("Player count: 0");
         playerCountText.setFont(customFont);
         playerCountText.setFill(Color.WHITE);
-        playerCountText.setX(380);
+        playerCountText.setX(340);
         playerCountText.setY(520);
         root.getChildren().add(playerCountText);
 
@@ -112,7 +127,7 @@ public class QueueView extends Application {
         noOpponentText = new Text("NO OPPONENT FOUND!");
         noOpponentText.setFont(customFont);
         noOpponentText.setFill(Color.RED);
-        noOpponentText.setX(380);
+        noOpponentText.setX(340);
         noOpponentText.setY(570);
         noOpponentText.setVisible(false);
         root.getChildren().add(noOpponentText);
@@ -151,19 +166,17 @@ public class QueueView extends Application {
 
     public void showNoOpponentMessage() {
         Platform.runLater(() -> {
-            if (dotsAnimation != null) {
-                dotsAnimation.stop();
-                waitingText.setText("WAITING FOR PLAYERS");
+            if (loadingAnimation != null) {
+                loadingAnimation.stop();
             }
-
             noOpponentText.setVisible(true);
             System.out.println("[QueueView] Showing 'NO OPPONENT FOUND!' message");
             ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
             scheduler.schedule(() -> Platform.runLater(() -> {
                 noOpponentText.setVisible(false);
                 System.out.println("[QueueView] Hiding 'NO OPPONENT FOUND!' message");
-                if (dotsAnimation != null) {
-                    dotsAnimation.play();
+                if (loadingAnimation != null) {
+                    loadingAnimation.play();
                 }
             }), 2, TimeUnit.SECONDS);
             scheduler.shutdown();
@@ -172,8 +185,8 @@ public class QueueView extends Application {
 
     public void close() {
         if (stage != null) {
-            if (dotsAnimation != null) {
-                dotsAnimation.stop();
+            if (loadingAnimation != null) {
+                loadingAnimation.stop();
             }
             // Don't close the stage, just prepare for reuse
             System.out.println("[QueueView] QueueView closed");
