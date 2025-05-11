@@ -7,6 +7,7 @@ import client.player.model.MainMenuModel;
 import client.player.view.LeaderboardView;
 import client.player.view.MainMenuView;
 import javafx.application.Platform;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
@@ -92,16 +93,30 @@ public class MainMenuController {
 
         Platform.runLater(() -> {
             if (leaderboardStage == null) {
-                leaderboardStage = new Stage();
+                leaderboardStage = stage; // Use the same stage as main menu
                 leaderboardView = new LeaderboardView();
-                leaderboardView.initializeUI(leaderboardStage); // Initialize first
+                leaderboardView.initializeUI(leaderboardStage);
 
-                // Update the leaderboard with current data after initialization
+                // Set the refresh button handler
+                leaderboardView.setRefreshButtonHandler(() -> {
+                    Player[] refreshedData = model.getLeaderboard();
+                    if (refreshedData != null) {
+                        leaderboardView.updateLeaderboard(Arrays.asList(refreshedData));
+                    }
+                });
+
                 if (leaderboardData != null) {
                     leaderboardView.updateLeaderboard(Arrays.asList(leaderboardData));
                 }
 
-                leaderboardStage.setOnCloseRequest(e -> leaderboardStage = null);
+                leaderboardStage.setOnCloseRequest(e -> {
+                    leaderboardStage.hide(); // Hide instead of null to reuse
+                    leaderboardStage.setScene(null); // Clear the scene
+                });
+
+                // Store the leaderboard scene to reuse
+                Scene leaderboardScene = leaderboardStage.getScene();
+                leaderboardStage.setScene(leaderboardScene);
                 leaderboardStage.show();
             } else {
                 // If stage already exists, just update the data

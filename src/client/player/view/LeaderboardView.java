@@ -3,8 +3,10 @@ package client.player.view;
 import WordWarZ.Player;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -21,6 +23,8 @@ public class LeaderboardView extends Application {
     private ImageView[] tombViews = new ImageView[5];
     private ImageView[] zombieHandViews = new ImageView[5];
     private boolean initialized = false;
+    private Button refreshButton;
+
 
     public LeaderboardView() {
         for (int i = 0; i < 5; i++) {
@@ -132,6 +136,38 @@ public class LeaderboardView extends Application {
             root.getChildren().add(playerPanes[i]);
         }
 
+        refreshButton = new Button("REFRESH");
+        refreshButton.setFont(pressStartFont);
+        refreshButton.setTextFill(Color.WHITE);
+        refreshButton.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
+        refreshButton.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
+        refreshButton.setPadding(new Insets(10, 20, 10, 20));
+        refreshButton.setLayoutX(1100);
+        refreshButton.setLayoutY(50);
+        refreshButton.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        );
+        refreshButton.setOnMouseEntered(e -> refreshButton.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-text-fill: black;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+        refreshButton.setOnMouseExited(e -> refreshButton.setStyle(
+                "-fx-background-color: transparent;" +
+                        "-fx-text-fill: white;" +
+                        "-fx-border-color: white;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-cursor: hand;"
+        ));
+
+        root.getChildren().add(refreshButton);
+
         Scene scene = new Scene(root);
         primaryStage.setTitle("Word War Z - Leaderboard");
         primaryStage.setScene(scene);
@@ -162,6 +198,13 @@ public class LeaderboardView extends Application {
     }
 
     private String truncateUsername(String username) {
-        return (username.length() > 6) ? username.substring(0, 6) + "..." : username;
+        return (username.length() > 9) ? username.substring(0, 6) + "..." : username;
+    }
+
+    // Add this method to set the refresh button action
+    public void setRefreshButtonHandler(Runnable handler) {
+        if (refreshButton != null) {
+            refreshButton.setOnAction(e -> handler.run());
+        }
     }
 }
