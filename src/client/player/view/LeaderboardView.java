@@ -6,6 +6,7 @@ import javafx.application.Platform;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.scene.control.Label;
@@ -14,24 +15,64 @@ import javafx.scene.paint.Color;
 import java.util.List;
 
 public class LeaderboardView extends Application {
-    private VBox[] playerBoxes = new VBox[5];
+    private StackPane[] playerPanes = new StackPane[5];
     private Label[] nameLabels = new Label[5];
     private Label[] winLabels = new Label[5];
+    private ImageView[] tombViews = new ImageView[5];
+    private ImageView[] zombieHandViews = new ImageView[5];
     private boolean initialized = false;
 
     public LeaderboardView() {
         for (int i = 0; i < 5; i++) {
             nameLabels[i] = new Label();
             winLabels[i] = new Label();
-            playerBoxes[i] = new VBox(10); // 10px spacing between name and wins
-            playerBoxes[i].setAlignment(Pos.CENTER); // Center content inside VBox
-            playerBoxes[i].getChildren().addAll(nameLabels[i], winLabels[i]);
+            tombViews[i] = new ImageView();
+            zombieHandViews[i] = new ImageView();
+
+            // Main container for each tombstone
+            StackPane tombContainer = new StackPane();
+            tombContainer.setAlignment(Pos.BOTTOM_CENTER); // Align children to bottom
+
+            // Create a VBox for the labels
+            VBox labelBox = new VBox(2);
+            labelBox.setAlignment(Pos.CENTER);
+            labelBox.getChildren().addAll(nameLabels[i], winLabels[i]);
+
+            // Add tombstone and hand to container (order matters)
+            tombContainer.getChildren().addAll(tombViews[i], zombieHandViews[i]);
+
+            // Main player pane contains tombstone container and labels
+            playerPanes[i] = new StackPane();
+            playerPanes[i].getChildren().addAll(tombContainer, labelBox);
+
+            // Initially hide the hand
+            zombieHandViews[i].setVisible(false);
+            zombieHandViews[i].setTranslateY(20); // Start position below tombstone
+
+            final int index = i;
+            playerPanes[i].setOnMouseEntered(e -> {
+                // Reset and show hand animation
+                zombieHandViews[index].setImage(null);
+                zombieHandViews[index].setImage(new Image("file:res/images/others/zombie hand.gif"));
+                zombieHandViews[index].setVisible(true);
+                zombieHandViews[index].setTranslateY(20); // Reset position
+
+                nameLabels[index].setTextFill(Color.RED);
+                winLabels[index].setTextFill(Color.RED);
+            });
+
+            playerPanes[i].setOnMouseExited(e -> {
+                // Hide hand
+                zombieHandViews[index].setVisible(false);
+
+                nameLabels[index].setTextFill(Color.WHITE);
+                winLabels[index].setTextFill(Color.WHITE);
+            });
         }
     }
 
     @Override
     public void start(Stage stage) throws Exception {
-        // Left blank intentionally — handled externally
     }
 
     public void initializeUI(Stage primaryStage) {
@@ -50,21 +91,45 @@ public class LeaderboardView extends Application {
         // Load font
         Font pressStartFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 12);
 
-        // Define positions for VBoxes
-        int[] xPositions = {120, 320, 570, 800, 1000};
-        int[] yPositions = {500, 500, 500, 500, 500};
+        // Define positions for player panes (4 3 1 2 5 order)
+        int[] xPositions = {100, 350, 570, 800, 1040};
+        int[] yPositions = {550, 500, 450, 500, 550};
+
+        // Load tomb images
+        String[] tombImages = {
+                "file:res/images/others/4th tomb.png",
+                "file:res/images/others/3rd tomb.png",
+                "file:res/images/others/1st tomb.png",
+                "file:res/images/others/2nd tomb.png",
+                "file:res/images/others/5th tomb.png"
+        };
 
         for (int i = 0; i < 5; i++) {
+            // Set tomb image
+            Image tombImage = new Image(tombImages[i]);
+            tombViews[i].setImage(tombImage);
+            tombViews[i].setPreserveRatio(true);
+            tombViews[i].setFitHeight(200);
+
+            // Configure zombie hand
+            zombieHandViews[i].setPreserveRatio(true);
+            zombieHandViews[i].setFitHeight(200); // Smaller than tombstone
+            zombieHandViews[i].setTranslateY(20); // Position below tombstone
+
+            // Style labels
             nameLabels[i].setFont(pressStartFont);
             nameLabels[i].setTextFill(Color.WHITE);
+            nameLabels[i].setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 2, 0, 0, 1);");
 
             winLabels[i].setFont(pressStartFont);
             winLabels[i].setTextFill(Color.WHITE);
+            winLabels[i].setStyle("-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.8), 2, 0, 0, 1);");
 
-            playerBoxes[i].setLayoutX(xPositions[i]);
-            playerBoxes[i].setLayoutY(yPositions[i]);
+            // Position player panes
+            playerPanes[i].setLayoutX(xPositions[i]);
+            playerPanes[i].setLayoutY(yPositions[i]);
 
-            root.getChildren().add(playerBoxes[i]);
+            root.getChildren().add(playerPanes[i]);
         }
 
         Scene scene = new Scene(root);
@@ -76,12 +141,10 @@ public class LeaderboardView extends Application {
     public void updateLeaderboard(List<Player> players) {
         if (!initialized) return;
 
-        // Sort players by wins in descending order (Java 8 style)
         List<Player> sorted = new java.util.ArrayList<>(players);
         sorted.sort((p1, p2) -> Integer.compare(p2.wins, p1.wins));
 
-        // Visual mapping: [5th, 3rd, 1st, 2nd, 4th]
-        int[] visualOrder = {4, 2, 0, 1, 3};
+        int[] visualOrder = {3, 2, 0, 1, 4};
 
         Platform.runLater(() -> {
             for (int i = 0; i < 5; i++) {
@@ -89,7 +152,7 @@ public class LeaderboardView extends Application {
                 if (sortedIndex < sorted.size()) {
                     Player p = sorted.get(sortedIndex);
                     nameLabels[i].setText(truncateUsername(p.username));
-                    winLabels[i].setText(String.valueOf(p.wins));
+                    winLabels[i].setText(p.wins + " Wins");
                 } else {
                     nameLabels[i].setText("");
                     winLabels[i].setText("");
