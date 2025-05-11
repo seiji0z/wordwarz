@@ -15,9 +15,9 @@ public class CreatePlayerView extends VBox {
     private final Font customFont;
     private Button createPlayerBtn;
     private Button editPlayerBtn;
-    private Button confirmBtn;
     private TextField usernameField;
     private PasswordField passwordField;
+    private Button confirmBtn;
 
     public CreatePlayerView(Font customFont) {
         this.customFont = customFont;
@@ -27,7 +27,7 @@ public class CreatePlayerView extends VBox {
     private void initializeUI() {
         // Main container settings
         this.setAlignment(Pos.CENTER);
-        this.setSpacing(30);
+        this.setSpacing(20);
         this.setPadding(new Insets(10));
         this.setMaxWidth(Double.MAX_VALUE);
         this.setMaxHeight(Double.MAX_VALUE);
@@ -58,37 +58,37 @@ public class CreatePlayerView extends VBox {
         navButtonBox.getChildren().addAll(createPlayerBtn, editPlayerBtn);
 
         // Input fields container
-        VBox inputContainer = new VBox(20);
+        VBox inputContainer = new VBox(15);
         inputContainer.setAlignment(Pos.CENTER);
         inputContainer.setMaxWidth(600);
         inputContainer.setPadding(new Insets(20));
 
         // Username field
-        VBox usernameBox = new VBox(8);
+        VBox usernameBox = new VBox(5);
         Label usernameLabel = new Label("Username:");
-        usernameLabel.setTextFill(Color.WHITE);
-        usernameLabel.setFont(Font.font(customFont.getFamily(), 16));
+        usernameLabel.setFont(Font.font(customFont.getFamily(), 14));
+        usernameLabel.setTextFill(Color.WHITE);  // White label
         usernameField = new TextField();
-        usernameField.setFont(customFont);
-        usernameField.setStyle("-fx-text-fill: white; -fx-background-color: rgb(64,64,64);");
-        usernameField.setPrefHeight(40);
+        usernameField.setFont(Font.font(customFont.getFamily(), 14));
+        usernameField.setPrefWidth(250);
+        usernameField.setStyle("-fx-font-family: '" + customFont.getFamily() + "'; -fx-text-fill: black; -fx-background-color: white;");
         usernameBox.getChildren().addAll(usernameLabel, usernameField);
 
         // Password field
-        VBox passwordBox = new VBox(8);
+        VBox passwordBox = new VBox(5);
         Label passwordLabel = new Label("Password:");
-        passwordLabel.setTextFill(Color.WHITE);
-        passwordLabel.setFont(Font.font(customFont.getFamily(), 16));
+        passwordLabel.setFont(Font.font(customFont.getFamily(), 14));
+        passwordLabel.setTextFill(Color.WHITE);  // White label
         passwordField = new PasswordField();
-        passwordField.setFont(customFont);
-        passwordField.setStyle("-fx-text-fill: white; -fx-background-color: rgb(64,64,64);");
-        passwordField.setPrefHeight(40);
+        passwordField.setFont(Font.font(customFont.getFamily(), 14));
+        passwordField.setPrefWidth(250);
+        passwordField.setStyle("-fx-font-family: '" + customFont.getFamily() + "'; -fx-text-fill: black; -fx-background-color: white;");
         passwordBox.getChildren().addAll(passwordLabel, passwordField);
 
         inputContainer.getChildren().addAll(usernameBox, passwordBox);
 
         // Confirm Button
-        confirmBtn = createStyledButton("CONFIRM");
+        confirmBtn = createStyledButton("Create Player");
         confirmBtn.setMaxWidth(300);
         VBox confirmContainer = new VBox(confirmBtn);
         confirmContainer.setAlignment(Pos.CENTER);
@@ -101,10 +101,6 @@ public class CreatePlayerView extends VBox {
                 inputContainer,
                 confirmContainer
         );
-
-        // Bind the width of input fields to the container width
-        usernameField.prefWidthProperty().bind(inputContainer.widthProperty().subtract(40));
-        passwordField.prefWidthProperty().bind(inputContainer.widthProperty().subtract(40));
     }
 
     private Button createStyledButton(String text) {
@@ -145,6 +141,11 @@ public class CreatePlayerView extends VBox {
         alert.setTitle("Error");
         alert.setHeaderText(null);
         alert.setContentText(message);
+
+        // Apply custom font to alert dialog
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
+
         alert.showAndWait();
     }
 
@@ -154,6 +155,11 @@ public class CreatePlayerView extends VBox {
         alert.setTitle("Success");
         alert.setHeaderText(null);
         alert.setContentText(message);
+
+        // Apply custom font to alert dialog
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.setStyle("-fx-font-family: '" + customFont.getFamily() + "';");
+
         alert.showAndWait();
     }
 

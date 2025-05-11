@@ -3,21 +3,30 @@ package client.admin.controller;
 import WordWarZ.*;
 import client.admin.model.AdminDashboardModel;
 import client.admin.view.*;
+import client.login.controller.LoginController;
 import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
+
+import java.io.FileNotFoundException;
 
 public class AdminDashboardController {
     private final AdminDashboardView view;
     private final AdminDashboardModel model;
     private final ORB orb;
     private final String token;
+    private final Stage adminStage;
+    private final LoginController loginController;
 
-    public AdminDashboardController(AdminDashboardView view, AdminDashboardModel model, ORB orb, String token) {
+    public AdminDashboardController(AdminDashboardView view, AdminDashboardModel model,
+                                    ORB orb, String token, Stage adminStage,
+                                    LoginController loginController) {
         this.view = view;
         this.model = model;
         this.orb = orb;
         this.token = token;
+        this.adminStage = adminStage;
+        this.loginController = loginController;
 
         Platform.runLater(() -> {
             initializeView();
@@ -26,7 +35,6 @@ public class AdminDashboardController {
     }
 
     private void initializeView() {
-        Stage adminStage = new Stage();
         view.initializeUI(adminStage, model, orb, token);
     }
 
@@ -34,39 +42,58 @@ public class AdminDashboardController {
         // Main dashboard buttons
         view.getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
         view.getEditGamePlayBtn().setOnAction(e -> handleEditGamePlay());
+        view.getQuitBtn().setOnAction(e -> handleQuit());
 
         // Create Player View handlers
-        CreatePlayerView createView = view.getCreatePlayerView();
-        createView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        createView.getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
-        createView.getConfirmBtn().setOnAction(e -> handleCreatePlayer());
+        view.getCreatePlayerView().getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
+        view.getCreatePlayerView().getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
+        view.getCreatePlayerView().getConfirmBtn().setOnAction(e -> handleCreatePlayer());
 
         // Edit Player View handlers
-        EditPlayerView editView = view.getEditPlayerView();
-        editView.getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        editView.getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
-        editView.getSearchButton().setOnAction(e -> handleSearchPlayers(editView.getSearchField().getText()));
-        editView.getClearBtn().setOnAction(e -> editView.getSearchField().clear());
-        editView.getConfirmUpdateBtn().setOnAction(e -> handleUpdatePlayer());
-
-        editView.getConfirmDeleteBtn().setOnAction(e -> {
-            // Get the selected player directly from the table
-            Player selectedPlayer = editView.getPlayerTable()
+        view.getEditPlayerView().getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
+        view.getEditPlayerView().getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
+        view.getEditPlayerView().getClearBtn().setOnAction(e -> {
+            view.getEditPlayerView().getSearchField().clear();
+            handleReadAllPlayers();
+        });
+        view.getEditPlayerView().getSearchField().textProperty().addListener((obs, oldValue, newValue) -> {
+            handleSearchPlayers(newValue);
+        });
+        view.getEditPlayerView().getConfirmDeleteBtn().setOnAction(e -> {
+            Player selectedPlayer = view.getEditPlayerView().getPlayerTable()
                     .getSelectionModel()
                     .getSelectedItem();
 
             if (selectedPlayer != null) {
-                handleDeletePlayer(); // Your existing delete logic
+                handleDeletePlayer(selectedPlayer);
             } else {
-                editView.showError("No player selected");
+                view.getEditPlayerView().showError("No player selected");
             }
         });
-        editView.getSearchField().textProperty().addListener((obs, oldValue, newValue) -> {
-            handleSearchPlayers(newValue);
+        view.getEditPlayerView().getConfirmUpdateBtn().setOnAction(e -> {
+            Player selectedPlayer = view.getEditPlayerView().getPlayerTable()
+                    .getSelectionModel()
+                    .getSelectedItem();
+            if (selectedPlayer == null) {
+                view.getEditPlayerView().showError("Please select a player to update");
+                return;
+            }
+
+            String newUsername = view.getEditPlayerView().getUsernameField().getText().trim();
+            String newPassword = view.getEditPlayerView().getPasswordField().getText().trim();
+
+            if (view.getEditPlayerView().showUpdateConfirmation(selectedPlayer.username)) {
+                handleUpdatePlayer();
+            }
         });
 
         // Load players automatically when view is shown
         view.setOnShowEditPlayerViewListener(this::handleReadAllPlayers);
+    }
+
+    private void handleQuit() {
+        adminStage.close(); // Close the admin dashboard
+        loginController.showLogin(); // Show login screen again
     }
 
     private void handleEditGamePlay() {
@@ -87,7 +114,7 @@ public class AdminDashboardController {
             model.createPlayer(username, password);
             createView.showSuccess("Player created successfully");
             createView.clearFields();
-            handleReadAllPlayers(); // Refresh the player list
+            handleReadAllPlayers();
         } catch (NotLoggedIn e) {
             createView.showError("Error: Admin not logged in");
         } catch (UsernameAlreadyExists e) {
@@ -97,10 +124,8 @@ public class AdminDashboardController {
 
     private void handleUpdatePlayer() {
         EditPlayerView editView = view.getEditPlayerView();
-        String newUsername = editView.getUsernameField().getText().trim();
-        String newPassword = editView.getPasswordField().getText().trim();
-
         Player selectedPlayer = editView.getPlayerTable().getSelectionModel().getSelectedItem();
+
         if (selectedPlayer == null) {
             editView.showError("Please select a player to update");
             return;
@@ -111,6 +136,8 @@ public class AdminDashboardController {
         }
 
         String currentUsername = selectedPlayer.username;
+        String newUsername = editView.getUsernameField().getText().trim();
+        String newPassword = editView.getPasswordField().getText().trim();
 
         if (newUsername.isEmpty() && newPassword.isEmpty()) {
             editView.showError("Please enter at least one field to update");
@@ -118,14 +145,10 @@ public class AdminDashboardController {
         }
 
         try {
-            if (editView.showUpdateConfirmation(currentUsername)) {
-                model.updatePlayer(currentUsername, newUsername, newPassword);
-                editView.showSuccess("Player updated successfully");
-                editView.getPasswordField().clear();
-                editView.getUsernameField().clear();
-                editView.hideUpdateForm();
-                handleReadAllPlayers(); // Refresh the table
-            }
+            model.updatePlayer(currentUsername, newUsername, newPassword);
+            editView.showSuccess("Player updated successfully");
+            editView.hideUpdateForm();
+            handleReadAllPlayers();
         } catch (NotLoggedIn e) {
             editView.showError("Error: Admin not logged in");
         } catch (PlayerNotFound e) {
@@ -136,28 +159,23 @@ public class AdminDashboardController {
             editView.showError("Unexpected error: " + e.getMessage());
         }
     }
-    private void handleDeletePlayer() {
+
+    private void handleDeletePlayer(Player player) {
         System.out.println("[CONTROLLER] handleDeletePlayer called");
-
         EditPlayerView editView = view.getEditPlayerView();
-        Player selectedPlayer = editView.getPlayerTable().getSelectionModel().getSelectedItem();
 
-        if (selectedPlayer == null) {
+        if (player == null) {
             editView.showError("Please select a player to delete");
             return;
         }
 
-        String username = selectedPlayer.username;
+        String username = player.username;
 
         try {
-
-            // Attempt deletion
             model.deletePlayer(username);
             editView.showSuccess("Player deleted successfully");
             handleReadAllPlayers();
-
         } catch (PlayerNotFound e) {
-            // If player not found, refresh the list and show message
             System.out.println("[CONTROLLER] Player not found - refreshing view");
             editView.showError("Player no longer exists - list refreshed");
             handleReadAllPlayers();

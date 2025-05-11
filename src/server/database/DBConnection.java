@@ -11,9 +11,9 @@ public class DBConnection {
 
     public static void setCon() {
         try {
-            String url = "jdbc:mysql://localhost:3306/wordwarz";
+            String url = "jdbc:mysql://localhost:8889/wordwarz";
             String user = "root";
-            String password = "";
+            String password = "root";
             Class.forName("com.mysql.cj.jdbc.Driver");
 
             con = DriverManager.getConnection(url, user, password);

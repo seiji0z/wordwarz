@@ -26,6 +26,7 @@ public class AdminDashboardView {
     private VBox rightContent;
     private Button editPlayerBtn;
     private Button editGamePlayBtn;
+    private Button quitBtn;
     private CreatePlayerView createPlayerView;
     private EditPlayerView editPlayerView;
     private EditGamePlaySettingsView editGamePlaySettingsView;
@@ -91,8 +92,10 @@ public class AdminDashboardView {
         // Buttons
         editPlayerBtn = createStyledButton("EDIT PLAYER");
         editGamePlayBtn = createStyledButton("EDIT GAME PLAY");
+        quitBtn = createStyledButton("QUIT");
         editPlayerBtn.setPrefSize(250, 100);
         editGamePlayBtn.setPrefSize(250, 100);
+        quitBtn.setPrefSize(250, 100);
 
         // Logo
         ImageView logoView = new ImageView(new Image(LOGO_PATH));
@@ -101,9 +104,9 @@ public class AdminDashboardView {
         logoView.setSmooth(true);
 
         // Button container
-        VBox buttonContainer = new VBox(50);
+        VBox buttonContainer = new VBox(20);
         buttonContainer.setAlignment(Pos.CENTER);
-        buttonContainer.getChildren().addAll(editPlayerBtn, editGamePlayBtn);
+        buttonContainer.getChildren().addAll(editPlayerBtn, editGamePlayBtn, quitBtn);
 
         // Spacer to push logo to bottom
         VBox spacer = new VBox();
@@ -190,6 +193,10 @@ public class AdminDashboardView {
 
     public Button getEditGamePlayBtn() {
         return editGamePlayBtn;
+    }
+
+    public Button getQuitBtn() {
+        return quitBtn;
     }
 
     public CreatePlayerView getCreatePlayerView() {
