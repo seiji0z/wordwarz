@@ -25,7 +25,6 @@ module WordWarZ {
   // client-side interface callbacks
   interface ClientCallback {
     void onQueueUpdated(in long playerCount);
-    void onLeaderboardUpdated(in Leaderboard leaderboard);
     void onGameCountdown(in long secondsLeft);
     void onRoundStarted(in CharSequence wordPlaceholder);
     void onRoundLost(in string word, in string winner);

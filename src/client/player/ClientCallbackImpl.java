@@ -133,10 +133,6 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
     }
 
     @Override
-    public void onLeaderboardUpdated(Player[] leaderboard) {
-    }
-
-    @Override
     public void onForceLogout() {
         System.out.println("[ClientCallbackImpl] Received force logout for token: " + playerToken);
         if (gameController != null) {
