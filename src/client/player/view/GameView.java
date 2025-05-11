@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
@@ -14,16 +15,15 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-
-import javafx.scene.input.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.function.Consumer;
 import java.util.Random;
+import java.util.function.Consumer;
 
 public class GameView {
     private int selectedCharacter;
+    private int randomIndex; // Store this to determine melee vs ranged
     private List<Text> letterTexts = new ArrayList<>();
     private Pane root;
     private Pane overlayPane;
@@ -33,11 +33,21 @@ public class GameView {
     private Image[] humanIdleFrames;
     private Image[] zombieIdleFrames;
     private Image[] humanRunFrames;
+    private Image[] zombieRunFrames; // Added for zombie run animation
+    private Image[] humanAttackFrames;
     private Image[] zombieDeathFrames;
+    private Image[] zombieAttackFrames;
+    private Image[] humanZombificationFrames;
     private Timeline humanIdleAnimation;
     private Timeline zombieIdleAnimation;
     private Timeline humanRunAnimation;
+    private Timeline zombieRunAnimation; // Added for zombie run animation
+    private Timeline humanAttackAnimation;
     private Timeline zombieDeathAnimation;
+    private Timeline zombieAttackAnimation;
+    private Timeline humanZombificationAnimation;
+    private TranslateTransition humanRunTransition;
+    private TranslateTransition zombieRunTransition;
     private Consumer<Character> letterGuessHandler;
 
     private int initialRoundDuration;
@@ -53,6 +63,8 @@ public class GameView {
     private Pane currentRoundOverlay;
     private boolean isStartingOverlayRemoved = false;
     private boolean isRoundDrawnOverlayShown = false;
+    private boolean isGameOver = false;
+    private boolean isZombieMoving = true;
 
     public GameView(Stage primaryStage, int selectedCharacter) {
         this.primaryStage = primaryStage;
@@ -100,7 +112,6 @@ public class GameView {
                 "human4-idle-1.png",
         };
 
-        int randomIndex;
         if (selectedCharacter == 5) {
             randomIndex = new Random().nextInt(humanIdleImageFiles.length);
         } else {
@@ -110,7 +121,6 @@ public class GameView {
 
         String selectedHumanImage = humanIdleImageFiles[randomIndex];
 
-        // Load human idle frames
         humanIdleFrames = new Image[2];
         try {
             humanIdleFrames[0] = new Image("file:res/images/characters/human/idle/" + selectedHumanImage);
@@ -119,7 +129,6 @@ public class GameView {
             System.out.println("Failed to load human idle animation frames: " + e.getMessage());
         }
 
-        // Load human run frames
         humanRunFrames = new Image[4];
         try {
             for (int i = 1; i <= 4; i++) {
@@ -127,6 +136,24 @@ public class GameView {
             }
         } catch (Exception e) {
             System.out.println("Failed to load human run animation frames: " + e.getMessage());
+        }
+
+        humanAttackFrames = new Image[4];
+        try {
+            for (int i = 1; i <= 4; i++) {
+                humanAttackFrames[i - 1] = new Image("file:res/images/characters/human/attack/human" + (randomIndex + 1) + "-attack-" + i + ".png");
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to load human attack animation frames: " + e.getMessage());
+        }
+
+        humanZombificationFrames = new Image[8];
+        try {
+            for (int i = 1; i <= 8; i++) {
+                humanZombificationFrames[i - 1] = new Image("file:res/images/characters/human/zombification/human" + (randomIndex + 1) + "-zombification-" + i + ".png");
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to load human zombification animation frames: " + e.getMessage());
         }
 
         humanView = new ImageView(humanIdleFrames[0]);
@@ -145,7 +172,16 @@ public class GameView {
             System.out.println("Failed to load zombie idle animation frames: " + e.getMessage());
         }
 
-        // Load zombie death frames
+        // Load zombie run frames
+        zombieRunFrames = new Image[4];
+        try {
+            for (int i = 1; i <= 4; i++) {
+                zombieRunFrames[i - 1] = new Image("file:res/images/characters/zombie/run/zombie-run-" + i + ".png");
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to load zombie run animation frames: " + e.getMessage());
+        }
+
         zombieDeathFrames = new Image[4];
         try {
             for (int i = 1; i <= 4; i++) {
@@ -153,6 +189,15 @@ public class GameView {
             }
         } catch (Exception e) {
             System.out.println("Failed to load zombie death animation frames: " + e.getMessage());
+        }
+
+        zombieAttackFrames = new Image[4];
+        try {
+            for (int i = 1; i <= 4; i++) {
+                zombieAttackFrames[i - 1] = new Image("file:res/images/characters/zombie/attack/zombie-attack-" + i + ".png");
+            }
+        } catch (Exception e) {
+            System.out.println("Failed to load zombie attack animation frames: " + e.getMessage());
         }
 
         zombieView = new ImageView(zombieIdleFrames[0]);
@@ -347,6 +392,29 @@ public class GameView {
             return;
         }
 
+        if (humanIdleAnimation != null) {
+            humanIdleAnimation.stop();
+        }
+        if (humanRunAnimation != null) {
+            humanRunAnimation.stop();
+        }
+        if (humanRunTransition != null) {
+            humanRunTransition.stop();
+        }
+        if (humanAttackAnimation != null) {
+            humanAttackAnimation.stop();
+        }
+        if (humanZombificationAnimation != null) {
+            humanZombificationAnimation.stop();
+        }
+
+        humanView.setX(50);
+        humanView.setY(250);
+        humanView.setTranslateX(0); // Reset translation
+        humanView.setImage(humanIdleFrames[0]);
+        humanView.setVisible(true);
+        humanView.getTransforms().clear();
+
         humanIdleAnimation = new Timeline(new KeyFrame(Duration.millis(250), event -> {
             if (humanView.getImage() == humanIdleFrames[0]) {
                 humanView.setImage(humanIdleFrames[1]);
@@ -364,6 +432,22 @@ public class GameView {
             return;
         }
 
+        if (zombieIdleAnimation != null) {
+            zombieIdleAnimation.stop();
+        }
+        if (zombieRunAnimation != null) { // Stop zombie run animation
+            zombieRunAnimation.stop();
+        }
+        if (zombieDeathAnimation != null) {
+            zombieDeathAnimation.stop();
+        }
+        if (zombieAttackAnimation != null) {
+            zombieAttackAnimation.stop();
+        }
+
+        zombieView.setImage(zombieIdleFrames[0]);
+        zombieView.setVisible(true);
+
         zombieIdleAnimation = new Timeline(new KeyFrame(Duration.millis(250), event -> {
             if (zombieView.getImage() == zombieIdleFrames[0]) {
                 zombieView.setImage(zombieIdleFrames[1]);
@@ -375,14 +459,29 @@ public class GameView {
         zombieIdleAnimation.play();
     }
 
-    private void startHumanRunAnimation() {
+    private void startHumanRunAnimation(double targetX) {
         if (humanRunFrames == null || humanRunFrames.length != 4) {
             System.out.println("Human run animation frames not loaded properly.");
             return;
         }
 
-        humanIdleAnimation.stop();
+        if (humanIdleAnimation != null) {
+            humanIdleAnimation.stop();
+        }
+        if (humanRunAnimation != null) {
+            humanRunAnimation.stop();
+        }
+        if (humanRunTransition != null) {
+            humanRunTransition.stop();
+        }
+        if (humanAttackAnimation != null) {
+            humanAttackAnimation.stop();
+        }
+        if (humanZombificationAnimation != null) {
+            humanZombificationAnimation.stop();
+        }
 
+        humanView.setVisible(true); // Ensure visibility
         humanRunAnimation = new Timeline(new KeyFrame(Duration.millis(150), event -> {
             int frameIndex = (int) (System.currentTimeMillis() / 150 % 4);
             humanView.setImage(humanRunFrames[frameIndex]);
@@ -390,11 +489,94 @@ public class GameView {
         humanRunAnimation.setCycleCount(Timeline.INDEFINITE);
         humanRunAnimation.play();
 
-        TranslateTransition runOffScreen = new TranslateTransition(Duration.seconds(3), humanView);
-        runOffScreen.setFromX(humanView.getX());
-        runOffScreen.setToX(1280);
-        runOffScreen.setOnFinished(e -> humanRunAnimation.stop());
-        runOffScreen.play();
+        double currentX = humanView.getX();
+        double durationSeconds = Math.abs(targetX - currentX) / 400.0;
+        humanRunTransition = new TranslateTransition(Duration.seconds(durationSeconds), humanView);
+        humanRunTransition.setFromX(0); // Reset translation
+        humanRunTransition.setToX(targetX - currentX); // Relative movement
+        humanRunTransition.setOnFinished(e -> {
+            humanRunAnimation.stop();
+            humanView.setX(targetX);
+            humanView.setTranslateX(0); // Reset translation
+        });
+        humanRunTransition.play();
+    }
+
+    private void startZombieRunAnimation(double targetX) {
+        if (zombieRunFrames == null || zombieRunFrames.length != 4) {
+            System.out.println("Zombie run animation frames not loaded properly.");
+            return;
+        }
+
+        if (zombieIdleAnimation != null) {
+            zombieIdleAnimation.stop();
+        }
+        if (zombieRunAnimation != null) {
+            zombieRunAnimation.stop();
+        }
+        if (zombieRunTransition != null) {
+            zombieRunTransition.stop();
+        }
+
+        zombieView.setVisible(true); // Ensure visibility
+        zombieRunAnimation = new Timeline(new KeyFrame(Duration.millis(150), event -> {
+            int frameIndex = (int) (System.currentTimeMillis() / 150 % 4);
+            zombieView.setImage(zombieRunFrames[frameIndex]);
+        }));
+        zombieRunAnimation.setCycleCount(Timeline.INDEFINITE);
+        zombieRunAnimation.play();
+
+        double currentX = zombieView.getX();
+        double durationSeconds = Math.abs(targetX - currentX) / 800.0; // Faster run (800 pixels/second)
+        zombieRunTransition = new TranslateTransition(Duration.seconds(durationSeconds), zombieView);
+        zombieRunTransition.setFromX(0); // Reset translation
+        zombieRunTransition.setToX(targetX - currentX); // Relative movement
+        zombieRunTransition.setOnFinished(e -> {
+            zombieRunAnimation.stop();
+            zombieView.setX(targetX);
+            zombieView.setTranslateX(0); // Reset translation
+            // Play attack and zombification animations after reaching the target
+            ParallelTransition attackAnimations = new ParallelTransition(
+                    new Timeline(new KeyFrame(Duration.millis(1), ev -> startZombieAttackAnimation())),
+                    new Timeline(new KeyFrame(Duration.millis(1), ev -> startHumanZombificationAnimation()))
+            );
+            attackAnimations.play();
+        });
+        zombieRunTransition.play();
+    }
+
+    private void startHumanAttackAnimation() {
+        if (humanAttackFrames == null || humanAttackFrames.length != 4) {
+            System.out.println("Human attack animation frames not loaded properly.");
+            return;
+        }
+
+        if (humanIdleAnimation != null) {
+            humanIdleAnimation.stop();
+        }
+        if (humanRunAnimation != null) {
+            humanRunAnimation.stop();
+        }
+        if (humanRunTransition != null) {
+            humanRunTransition.stop();
+        }
+        if (humanAttackAnimation != null) {
+            humanAttackAnimation.stop();
+        }
+        if (humanZombificationAnimation != null) {
+            humanZombificationAnimation.stop();
+        }
+
+        humanView.setVisible(true); // Ensure visibility
+        humanAttackAnimation = new Timeline(
+                new KeyFrame(Duration.millis(0), e -> humanView.setImage(humanAttackFrames[0])),
+                new KeyFrame(Duration.millis(150), e -> humanView.setImage(humanAttackFrames[1])),
+                new KeyFrame(Duration.millis(300), e -> humanView.setImage(humanAttackFrames[2])),
+                new KeyFrame(Duration.millis(450), e -> humanView.setImage(humanAttackFrames[3]))
+        );
+        humanAttackAnimation.setCycleCount(1);
+        humanAttackAnimation.setOnFinished(e -> humanView.setVisible(true)); // Reinforce visibility
+        humanAttackAnimation.play();
     }
 
     private void startZombieDeathAnimation() {
@@ -403,18 +585,103 @@ public class GameView {
             return;
         }
 
-        zombieIdleAnimation.stop();
+        if (zombieIdleAnimation != null) {
+            zombieIdleAnimation.stop();
+        }
+        if (zombieRunAnimation != null) {
+            zombieRunAnimation.stop();
+        }
+        if (zombieDeathAnimation != null) {
+            zombieDeathAnimation.stop();
+        }
+        if (zombieAttackAnimation != null) {
+            zombieAttackAnimation.stop();
+        }
 
-
-        zombieDeathAnimation = new Timeline(new KeyFrame(Duration.millis(200), event -> {
-            int frameIndex = (int) (zombieDeathAnimation.getCurrentTime().toMillis() / 200 % 4);
-            zombieView.setImage(zombieDeathFrames[frameIndex]);
-        }));
-        zombieDeathAnimation.setCycleCount(4); // Run 4 times to show all frames
-        zombieDeathAnimation.setOnFinished(e -> {
-            zombieView.setVisible(false);
-        });
+        zombieDeathAnimation = new Timeline(
+                new KeyFrame(Duration.millis(0), e -> zombieView.setImage(zombieDeathFrames[0])),
+                new KeyFrame(Duration.millis(200), e -> zombieView.setImage(zombieDeathFrames[1])),
+                new KeyFrame(Duration.millis(400), e -> zombieView.setImage(zombieDeathFrames[2])),
+                new KeyFrame(Duration.millis(600), e -> zombieView.setImage(zombieDeathFrames[3]))
+        );
+        zombieDeathAnimation.setCycleCount(1);
+        zombieDeathAnimation.setOnFinished(e -> zombieView.setImage(zombieDeathFrames[3]));
         zombieDeathAnimation.play();
+    }
+
+    private void startZombieAttackAnimation() {
+        if (zombieAttackFrames == null || zombieAttackFrames.length != 4) {
+            System.out.println("Zombie attack animation frames not loaded properly.");
+            return;
+        }
+
+        if (zombieIdleAnimation != null) {
+            zombieIdleAnimation.stop();
+        }
+        if (zombieRunAnimation != null) {
+            zombieRunAnimation.stop();
+        }
+        if (zombieAttackAnimation != null) {
+            zombieAttackAnimation.stop();
+        }
+        if (zombieDeathAnimation != null) {
+            zombieDeathAnimation.stop();
+        }
+
+        zombieView.setVisible(true); // Ensure visibility
+        zombieAttackAnimation = new Timeline(
+                new KeyFrame(Duration.millis(0), e -> zombieView.setImage(zombieAttackFrames[0])),
+                new KeyFrame(Duration.millis(150), e -> zombieView.setImage(zombieAttackFrames[1])),
+                new KeyFrame(Duration.millis(300), e -> zombieView.setImage(zombieAttackFrames[2])),
+                new KeyFrame(Duration.millis(450), e -> zombieView.setImage(zombieAttackFrames[3]))
+        );
+        zombieAttackAnimation.setCycleCount(1);
+        zombieAttackAnimation.setOnFinished(e -> {
+            zombieView.setVisible(true); // Reinforce visibility
+            // Removed transition to idle animation as requested
+        });
+        zombieAttackAnimation.play();
+    }
+
+    private void startHumanZombificationAnimation() {
+        if (humanZombificationFrames == null || humanZombificationFrames.length != 8) {
+            System.out.println("Human zombification animation frames not loaded properly.");
+            return;
+        }
+
+        if (humanIdleAnimation != null) {
+            humanIdleAnimation.stop();
+        }
+        if (humanRunAnimation != null) {
+            humanRunAnimation.stop();
+        }
+        if (humanRunTransition != null) {
+            humanRunTransition.stop();
+        }
+        if (humanAttackAnimation != null) {
+            humanAttackAnimation.stop();
+        }
+        if (humanZombificationAnimation != null) {
+            humanZombificationAnimation.stop();
+        }
+
+        humanView.setVisible(true); // Ensure visibility
+        humanZombificationAnimation = new Timeline(
+                new KeyFrame(Duration.millis(0), e -> humanView.setImage(humanZombificationFrames[0])),
+                new KeyFrame(Duration.millis(375), e -> humanView.setImage(humanZombificationFrames[1])),
+                new KeyFrame(Duration.millis(750), e -> humanView.setImage(humanZombificationFrames[2])),
+                new KeyFrame(Duration.millis(1125), e -> humanView.setImage(humanZombificationFrames[3])),
+                new KeyFrame(Duration.millis(1500), e -> humanView.setImage(humanZombificationFrames[4])),
+                new KeyFrame(Duration.millis(1875), e -> humanView.setImage(humanZombificationFrames[5])),
+                new KeyFrame(Duration.millis(2250), e -> humanView.setImage(humanZombificationFrames[6])),
+                new KeyFrame(Duration.millis(2625), e -> humanView.setImage(humanZombificationFrames[7]))
+        );
+        humanZombificationAnimation.setCycleCount(1);
+        humanZombificationAnimation.setOnFinished(e -> {
+            humanView.setImage(humanZombificationFrames[7]); // Persist last frame
+            humanView.setVisible(true);
+        });
+        humanZombificationAnimation.play();
     }
 
     private void updateTimerDisplay(int seconds) {
@@ -435,12 +702,15 @@ public class GameView {
         this.timeRemaining = duration;
         updateTimerDisplay(timeRemaining);
         zombieView.setX(1000);
+        isZombieMoving = true;
 
         timerTimeline = new Timeline(
                 new KeyFrame(Duration.seconds(1), event -> {
                     timeRemaining--;
                     updateTimerDisplay(timeRemaining);
-                    updateZombiePosition();
+                    if (isZombieMoving) {
+                        updateZombiePosition();
+                    }
 
                     if (timeRemaining <= 0) {
                         timerTimeline.stop();
@@ -559,7 +829,11 @@ public class GameView {
 
             if (remainingGuesses <= 0) {
                 disableAllLetterButtons();
-                showDeathOverlay();
+                isZombieMoving = false; // Prevent updateZombiePosition from interfering
+                double humanX = humanView.getX();
+                double targetX = humanX + 50; // Position 50 pixels away from human
+                startZombieRunAnimation(targetX);
+                showDeathOverlay(); // Show overlay immediately
             }
         });
     }
@@ -699,6 +973,37 @@ public class GameView {
     }
 
     public void showRoundWon(String word) {
+        isZombieMoving = false;
+        startZombieIdleAnimation();
+
+        SequentialTransition attackSequence = new SequentialTransition();
+
+        if (randomIndex != 3) { // Humans 1-3 (melee)
+            double zombiePosition = zombieView.getX();
+            double targetX = zombiePosition - humanView.getFitWidth() * 0.5; // Move closer to zombie
+            startHumanRunAnimation(targetX);
+
+            attackSequence.getChildren().add(
+                    new PauseTransition(Duration.seconds(Math.abs(targetX - humanView.getX()) / 400.0))
+            );
+        }
+
+        attackSequence.getChildren().addAll(
+                new ParallelTransition(
+                        new Timeline(new KeyFrame(Duration.millis(1), e -> {
+                            startHumanAttackAnimation();
+                            humanView.setVisible(true); // Ensure visibility during attack
+                        })),
+                        new Timeline(new KeyFrame(Duration.millis(1), e -> startZombieDeathAnimation()))
+                ),
+                new PauseTransition(Duration.millis(600)),
+                new Timeline(new KeyFrame(Duration.millis(1), e -> {
+                    startHumanRunAnimation(1280);
+                    humanView.setVisible(true); // Ensure visibility for run
+                }))
+        );
+        attackSequence.play();
+
         showRoundEndOverlay("You survived!\nThe word was: " + word, Color.GREEN);
     }
 
@@ -744,6 +1049,15 @@ public class GameView {
         if (timeOutHandler != null) {
             timeOutHandler.run();
         }
+        if (!isGameOver) {
+            isZombieMoving = false; // Stop position updates
+            double humanX = humanView.getX();
+            double zombieX = zombieView.getX() - 50; // Move zombie 50 pixels closer to human
+            zombieView.setX(zombieX);
+            startZombieAttackAnimation();
+            startHumanZombificationAnimation();
+            showDeathOverlay();
+        }
     }
 
     public void setOnTimeOut(Runnable handler) {
@@ -751,6 +1065,10 @@ public class GameView {
     }
 
     public void resetRound() {
+        if (isGameOver) {
+            return;
+        }
+
         Platform.runLater(() -> {
             if (timerTimeline != null) {
                 timerTimeline.stop();
@@ -767,15 +1085,94 @@ public class GameView {
             revealedLetters = new boolean[0];
             updateTimerDisplay(initialRoundDuration);
             startTimer(initialRoundDuration);
+
+            if (humanRunTransition != null) {
+                humanRunTransition.stop();
+            }
+            if (humanRunAnimation != null) {
+                humanRunAnimation.stop();
+            }
+            if (humanIdleAnimation != null) {
+                humanIdleAnimation.stop();
+            }
+            if (humanAttackAnimation != null) {
+                humanAttackAnimation.stop();
+            }
+            if (humanZombificationAnimation != null) {
+                humanZombificationAnimation.stop();
+            }
+            humanView.setX(50); // Reset position
+            humanView.setY(250);
+            humanView.setTranslateX(0); // Reset translation
+            humanView.setImage(humanIdleFrames[0]);
+            humanView.setVisible(true);
+            humanView.getTransforms().clear();
+
+            if (zombieRunTransition != null) {
+                zombieRunTransition.stop();
+            }
+            if (zombieRunAnimation != null) {
+                zombieRunAnimation.stop();
+            }
+            if (zombieIdleAnimation != null) {
+                zombieIdleAnimation.stop();
+            }
+            if (zombieAttackAnimation != null) {
+                zombieAttackAnimation.stop();
+            }
+            if (zombieDeathAnimation != null) {
+                zombieDeathAnimation.stop();
+            }
+            zombieView.setX(1000);
+            zombieView.setImage(zombieIdleFrames[0]);
+            zombieView.setVisible(true);
+            startZombieIdleAnimation();
+
+            startHumanIdleAnimation();
+            removeDeathOverlay();
         });
     }
 
     public void showEndGameOverlay(String message) {
         Platform.runLater(() -> {
-            // Start animations if the player won
+            isGameOver = true;
+
             if (message.contains("You won")) {
-                startHumanRunAnimation();
-                startZombieDeathAnimation();
+                isZombieMoving = false;
+                startZombieIdleAnimation();
+
+                SequentialTransition attackSequence = new SequentialTransition();
+
+                if (randomIndex != 3) { // Humans 1-3 (melee)
+                    double zombiePosition = zombieView.getX();
+                    double targetX = zombiePosition - humanView.getFitWidth() * 0.5; // Move closer to zombie
+                    startHumanRunAnimation(targetX);
+
+                    attackSequence.getChildren().add(
+                            new PauseTransition(Duration.seconds(Math.abs(targetX - humanView.getX()) / 400.0))
+                    );
+                    // Set position explicitly before attack to prevent reset
+                    attackSequence.getChildren().add(
+                            new Timeline(new KeyFrame(Duration.millis(1), e -> {
+                                humanView.setX(targetX); // Lock position at targetX
+                                startHumanAttackAnimation();
+                                humanView.setVisible(true); // Ensure visibility during attack
+                            }))
+                    );
+                    attackSequence.getChildren().add(
+                            new Timeline(new KeyFrame(Duration.millis(1), e -> startZombieDeathAnimation()))
+                    );
+                    attackSequence.getChildren().add(
+                            new PauseTransition(Duration.millis(600)) // Match attack animation duration
+                    );
+                    attackSequence.getChildren().add(
+                            new Timeline(new KeyFrame(Duration.millis(1), e -> {
+                                startHumanRunAnimation(1280);
+                                humanView.setVisible(true); // Ensure visibility for run
+                            }))
+                    );
+                }
+                attackSequence.play();
             }
 
             Pane overlay = new Pane();
@@ -795,6 +1192,7 @@ public class GameView {
 
             Timeline delayTimeline = new Timeline(new KeyFrame(Duration.seconds(3), event -> {
                 root.getChildren().add(overlay);
+                zombieView.setVisible(false);
             }));
 
             delayTimeline.play();
@@ -847,9 +1245,29 @@ public class GameView {
             if (humanRunAnimation != null) {
                 humanRunAnimation.stop();
             }
+            if (zombieRunAnimation != null) {
+                zombieRunAnimation.stop();
+            }
             if (zombieDeathAnimation != null) {
                 zombieDeathAnimation.stop();
             }
+            if (humanRunTransition != null) {
+                humanRunTransition.stop();
+            }
+            if (humanAttackAnimation != null) {
+                humanAttackAnimation.stop();
+            }
+            if (zombieAttackAnimation != null) {
+                zombieAttackAnimation.stop();
+            }
+            if (humanZombificationAnimation != null) {
+                humanZombificationAnimation.stop();
+            }
+            if (zombieRunTransition != null) {
+                zombieRunTransition.stop();
+            }
+
+            zombieView.setVisible(false);
 
             primaryStage.close();
         });
