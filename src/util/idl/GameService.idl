@@ -38,7 +38,7 @@ module WordWarZ {
 
   interface Login {
     // authentication
-    string login(in string username, in string password) raises (InvalidCredentials);
+    string authenticate(in string username, in string password) raises (InvalidCredentials);
     void logout(in string token) raises (NotLoggedIn);
   };
 

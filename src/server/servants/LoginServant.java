@@ -15,7 +15,7 @@ public class LoginServant extends LoginPOA {
     }
 
     @Override
-    public String login(String username, String password) throws InvalidCredentials {
+    public String authenticate(String username, String password) throws InvalidCredentials {
         if (!DBManager.userExists(username)) {
             throw new InvalidCredentials("User not found. Please try again.");
         }
