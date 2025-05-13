@@ -66,6 +66,7 @@ public class GameView {
     private boolean isRoundDrawnOverlayShown = false;
     private boolean isGameOver = false;
     private boolean isZombieMoving = true;
+    private boolean isFirstRound = true;
 
     public GameView(Stage primaryStage, int selectedCharacter) {
         this.primaryStage = primaryStage;
@@ -351,6 +352,13 @@ public class GameView {
     }
 
     public void showOverlayWithTimer(Runnable onOverlayEnd) {
+        if (!isFirstRound) {
+            if (onOverlayEnd != null) {
+                onOverlayEnd.run();
+            }
+            return;
+        }
+
         Platform.runLater(() -> {
             if (overlayPane == null) {
                 overlayPane = new Pane();
@@ -382,7 +390,12 @@ public class GameView {
                         isStartingOverlayRemoved = true;
                     }));
             overlayTimer.play();
+            isFirstRound = false;
         });
+    }
+
+    public void resetFirstRoundFlag() {
+        isFirstRound = true;
     }
 
     private void startHumanIdleAnimation() {
