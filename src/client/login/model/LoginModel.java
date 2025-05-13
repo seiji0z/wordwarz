@@ -19,7 +19,7 @@ public class LoginModel {
     }
 
     public String login(String username, String password) throws Exception {
-        return loginStub.login(username, password);
+        return loginStub.authenticate(username, password);
     }
 
     public void logout(String token) throws Exception {
