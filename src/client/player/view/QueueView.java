@@ -25,7 +25,6 @@ public class QueueView extends Application {
     private Pane root;
     private Text timerText;
     private Text playerCountText;
-    private Pane usernamesPane;
     private Button cancelButton;
     private Text noOpponentText;
     private Text waitingText;

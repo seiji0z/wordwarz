@@ -25,7 +25,7 @@ public class GameController {
         this.orb = orb;
         this.playerToken = token;
         this.model = new GameModel(token, orb);
-        this.view = new GameView(new Stage(), selectedCharacter );
+        this.view = new GameView(new Stage(), selectedCharacter);
 
         setupEventHandlers();
     }
@@ -35,13 +35,13 @@ public class GameController {
     }
 
     public void onGameStart(char[] wordPlaceholder) {
-        if (roundActive  || gameEnding) return; // Prevent concurrent rounds
+        if (roundActive || gameEnding) return; // Prevent concurrent rounds
         roundActive = true;
 
         Platform.runLater(() -> {
             view.showOverlayWithTimer(() -> {
                 try {
-                    model.startRound(); // Ensure proper server round state
+                    // Server has already started the round; use the provided wordPlaceholder
                     view.initializeWordDisplay(wordPlaceholder.length);
 
                     // Start timer and handle timeout
@@ -63,7 +63,6 @@ public class GameController {
         });
     }
 
-    // In GameController
     private void handleLetterGuess(char letter) {
         view.disableLetterButton(letter);
 
@@ -115,7 +114,7 @@ public class GameController {
             if (won) {
                 view.showEndGameOverlay("You won the game!");
 
-                // sync
+                // Sync
                 new Timeline(new KeyFrame(Duration.seconds(3), event -> view.createConfetti())).play();
             } else {
                 view.showEndGameOverlay(winner + " won the game!");
@@ -176,21 +175,9 @@ public class GameController {
                     @Override
                     public void run() {
                         Platform.runLater(() -> {
-                            try {
-                                // 1. Reset view first
-                                view.resetRound();
-
-                                // 2. Start new round and get word length
-                                int wordLength = model.startRound();
-
-                                // 3. Initialize display with new word length
-                                view.initializeWordDisplay(wordLength);
-
-                                // 4. Start timer
-                                view.startTimer(model.getRoundDuration());
-                            } catch (Exception e) {
-                                view.showErrorMessage("Error starting new round: " + e.getMessage());
-                            }
+                            // Reset view and wait for server to start the next round
+                            view.resetRound();
+                            // Server will trigger onRoundStarted, which calls onGameStart
                         });
                     }
                 },
@@ -221,11 +208,25 @@ public class GameController {
     }
 
     public void handlePlayerDisconnected(String username) {
-        // Update UI to show the player has disconnected
-        if (view != null) {
-            view.showPlayerDisconnected(username);
+        // Check if this is the no-opponent signal
+        if ("__NoOpponent__".equals(username)) {
+            handleNoOpponentFound();
         }
+    }
 
-       // TODO : Handle player disconnected, mag-isang naglalaro player after madisconnect lahat ng players
+    public void handleNoOpponentFound() {
+        Platform.runLater(() -> {
+            view.showNoOpponentOverlay("All opponents have disconnected.\nReturning to main menu...");
+
+            new java.util.Timer().schedule(new java.util.TimerTask() {
+                @Override
+                public void run() {
+                    Platform.runLater(() -> {
+                        view.closeApplication();
+                        showMainMenu();
+                    });
+                }
+            }, 3000); // 3 seconds delay before returning to main menu
+        });
     }
 }

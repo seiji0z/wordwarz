@@ -124,6 +124,11 @@ public class Game {
         return eliminatedPlayers.size() == players.size();
     }
 
+    public Set<String> getEliminatedPlayers() {
+        // Return a copy of the eliminated players set to prevent outside modification
+        return new HashSet<>(eliminatedPlayers);
+    }
+
     public void resetForNewRound() {
         this.currentWord = null;
         this.guessedLetters.clear();

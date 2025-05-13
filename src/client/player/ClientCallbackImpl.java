@@ -49,6 +49,9 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     @Override
     public void onGameCountdown(int secondsLeft) {
+        if (secondsLeft == -1) {
+            return;
+        }
         System.out.println("[ClientCallbackImpl] Countdown updated, seconds left: " + secondsLeft + " for token: " + playerToken);
         if (queueView != null) {
             queueView.updateTimer(secondsLeft);
@@ -60,23 +63,20 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
 
     @Override
     public void onRoundStarted(char[] wordPlaceholder) {
-        if (gameStarted) {
-            System.out.println("[ClientCallbackImpl] Game already started, ignoring for token: " + playerToken);
-            return;
-        }
-        gameStarted = true;
-
         System.out.println("[ClientCallbackImpl] Round started for token: " + playerToken);
         Platform.runLater(() -> {
-            if (queueView != null) {
-                queueView.close();
-                queueView = null;
-                queueController.getStage().close(); // Close the queue stage
-            }
-
-            if (gameController == null) {
-                gameController = new GameController(playerToken, orb, selectedCharacter);
-                System.out.println("[ClientCallbackImpl] GameController initialized for token: " + playerToken);
+            if (!gameStarted) {
+                // First round: initialize the game
+                gameStarted = true;
+                if (queueView != null) {
+                    queueView.close();
+                    queueView = null;
+                    queueController.getStage().close(); // Close the queue stage
+                }
+                if (gameController == null) {
+                    gameController = new GameController(playerToken, orb, selectedCharacter);
+                    System.out.println("[ClientCallbackImpl] GameController initialized for token: " + playerToken);
+                }
             }
             gameController.onGameStart(wordPlaceholder);
         });
