@@ -65,7 +65,7 @@ public class QueueView extends Application {
         timerRect.setY(278);
         root.getChildren().add(timerRect);
 
-        timerText = new Text("00:10");
+        timerText = new Text(".....");
         timerText.setFont(customFont);
         timerText.setFill(Color.WHITE);
         timerText.setX(570);

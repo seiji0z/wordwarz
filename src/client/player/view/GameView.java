@@ -99,7 +99,7 @@ public class GameView {
             root.getChildren().add(heart);
         }
 
-        timerText = new Text("00:30");
+        timerText = new Text();
         timerText.setFont(customFont);
         timerText.setFill(Color.WHITE);
         timerText.setX(1045);
