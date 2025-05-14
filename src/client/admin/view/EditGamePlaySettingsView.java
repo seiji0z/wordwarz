@@ -104,4 +104,5 @@ public class EditGamePlaySettingsView extends VBox {
     public TextField getWaitingField() { return waitingField; }
     public TextField getRoundField() { return roundField; }
     public Button getSaveButton() { return saveBtn; }
+    public Font getCustomFont() {return customFont; }
 }

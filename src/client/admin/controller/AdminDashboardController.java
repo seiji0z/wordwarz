@@ -148,11 +148,32 @@ public class AdminDashboardController {
         String newUsername = editView.getUsernameField().getText().trim();
         String newPassword = editView.getPasswordField().getText().trim();
 
-        if (newUsername.isEmpty() && newPassword.isEmpty()) {
-            editView.showError("Please enter at least one field to update");
+        if (newUsername.isEmpty() || newPassword.isEmpty()) {
+            editView.showError("Fields cannot be empty");
             return;
         }
 
+        if (!newUsername.equals(currentUsername)) {
+            // Check if the new username already exists
+            try {
+                Player[] existingPlayers = model.searchPlayers(newUsername);
+                if (existingPlayers != null && existingPlayers.length > 0) {
+                    // Username already exists
+                    editView.showError("Username already taken");
+                    return;
+                }
+            } catch (NotLoggedIn e) {
+                editView.showError("Error: Admin not logged in");
+                return;
+            } catch (PlayerNotFound ignored) {
+                // No player found with the given username - safe to proceed
+            } catch (Exception e) {
+                editView.showError("Unexpected error during username verification: " + e.getMessage());
+                return;
+            }
+        }
+
+        // Proceed with the update
         try {
             model.updatePlayer(currentUsername, newUsername, newPassword);
             editView.showSuccess("Player updated successfully");

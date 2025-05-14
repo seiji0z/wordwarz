@@ -78,6 +78,9 @@ public class EditGamePlaySettingsController {
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
+
+        alert.getDialogPane().setStyle("-fx-font-family: '" + view.getCustomFont().getFamily() + "';");
+
         alert.showAndWait();
     }
 }
