@@ -1023,6 +1023,11 @@ public class GameView {
     }
 
     public void showRoundDrawn(String word) {
+        // First update the word display with the full word
+        char[] wordChars = word.toCharArray();
+        updateWordDisplay(wordChars);
+
+        // Then show the overlay
         isRoundDrawnOverlayShown = true;
         removeDeathOverlay();
         showRoundEndOverlay("Round drawn! No one guessed the word: " + word, Color.YELLOW);

@@ -1,7 +1,6 @@
 package client.player.controller;
 import WordWarZ.CharacterAlreadyGuessed;
 import client.login.controller.LoginController;
-import client.login.view.LoginView;
 import client.player.model.GameModel;
 import client.player.view.GameView;
 import client.player.view.MainMenuView;
