@@ -47,6 +47,6 @@ public class LoginServant extends LoginPOA {
             throw new NotLoggedIn();
         }
         System.out.println("User " + SessionManager.getSession(token).getUsername() + " logged out.");
-        SessionManager.removeSession(token);
+        SessionManager.removeSessionWithoutCleanup(token);
     }
 }

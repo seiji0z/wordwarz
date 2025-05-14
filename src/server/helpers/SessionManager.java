@@ -40,6 +40,16 @@ public class SessionManager {
         }
     }
 
+    public static void removeSessionWithoutCleanup(String token) {
+        Session session = tokenMap.get(token);
+        if (session != null) {
+
+            // Remove from maps
+            tokenMap.remove(token);
+            userToTokenMap.remove(session.getUsername());
+        }
+    }
+
     public static boolean isTokenValid(String token) {
         return tokenMap.containsKey(token);
     }
