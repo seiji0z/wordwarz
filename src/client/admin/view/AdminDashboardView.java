@@ -35,6 +35,7 @@ public class AdminDashboardView {
 
     public void initializeUI(Stage primaryStage, AdminDashboardModel adminModel, ORB orb, String token) {
         primaryStage.setTitle("Admin Dashboard");
+        primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
 
         // Load the custom font
         customFont = Font.loadFont(FONT_PATH, 16);

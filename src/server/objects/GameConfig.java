@@ -26,7 +26,7 @@ public class GameConfig {
     }
 
     public static void updateConfig(int newWaitingTime, int newRoundDuration) throws SQLException {
-        DBManager.updateGameConfig(newWaitingTime, newRoundDuration);
+        DBManager.updateGameConfigurations(newWaitingTime, newRoundDuration);
         waitingTime = newWaitingTime;
         roundDuration = newRoundDuration;
     }

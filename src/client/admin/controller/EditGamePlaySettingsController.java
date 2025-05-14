@@ -50,15 +50,23 @@ public class EditGamePlaySettingsController {
             return;
         }
 
+        int waitingTimeValue = Integer.parseInt(waitingTime);
+        int roundDurationValue = Integer.parseInt(roundDuration);
+
+        if (waitingTimeValue <= 0 || roundDurationValue <= 0) {
+            showAlert("Invalid Input", "Values must be greater than 0.");
+            return;
+        }
+
         try {
-            boolean waitingSuccess = model.updateGameWaitingTime(Integer.parseInt(waitingTime));
-            boolean roundSuccess = model.updateGameRoundDuration(Integer.parseInt(roundDuration));
+            boolean waitingSuccess = model.updateGameWaitingTime(waitingTimeValue);
+            boolean roundSuccess = model.updateGameRoundDuration(roundDurationValue);
 
             if (waitingSuccess && roundSuccess) {
                 showAlert("Success", "Game configurations updated successfully!");
-                loadCurrentSettings(); // Refresh fields with updated values
+                loadCurrentSettings();
             } else {
-                showAlert("Partial Success", "Some configurations might not have been updated.");
+                showAlert("Error", "Failed to update one or more configurations. Please try again.");
             }
         } catch (Exception e) {
             showAlert("Error", "An error occurred while updating configurations: " + e.getMessage());

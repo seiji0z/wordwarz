@@ -1,25 +1,20 @@
 package server.servants;
 
-
 import WordWarZ.*;
 import org.omg.CORBA.ORB;
 import server.database.DBManager;
-
+import server.objects.GameConfig;
 
 import java.sql.SQLException;
 import java.util.List;
 
-
 public class AdminServant extends AdminServicePOA {
 
-
     private ORB orb;
-
 
     public void setORB(ORB orb_val) {
         orb = orb_val;
     }
-
 
     @Override
     public void createPlayer(String username, String password) throws NotLoggedIn, UsernameAlreadyExists {
@@ -27,30 +22,22 @@ public class AdminServant extends AdminServicePOA {
             throw new NotLoggedIn("Username or Password is empty. You must be logged in as Admin.");
         }
 
-
         if (DBManager.userExists(username)) {
             throw new UsernameAlreadyExists("Username already exists. Choose a different username.");
         }
 
-
         boolean created = DBManager.createUser(username, password);
-
 
         if (!created) {
             throw new NotLoggedIn("Failed to create player. Try again.");
         }
 
-
         System.out.println("Player " + username + " created successfully.");
     }
-
 
     @Override
     public void updatePlayer(String username, String newUsername, String newPassword)
             throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
-
-
-
 
         if (username == null || username.isEmpty()) {
             throw new NotLoggedIn("Original username is required");
@@ -58,9 +45,6 @@ public class AdminServant extends AdminServicePOA {
         if (newUsername.isEmpty() && newPassword.isEmpty()) {
             throw new NotLoggedIn("Must update either username or password");
         }
-
-
-
 
         try {
             boolean updated = DBManager.updatePlayer(username, newUsername, newPassword);
@@ -73,9 +57,6 @@ public class AdminServant extends AdminServicePOA {
             throw new PlayerNotFound("Database error updating player");
         }
     }
-
-
-
 
     @Override
     public void deletePlayer(String username) throws NotLoggedIn, PlayerNotFound, PlayerCurrentlyLoggedIn {
@@ -99,10 +80,8 @@ public class AdminServant extends AdminServicePOA {
             System.out.println("Message: " + e.getMessage());
             System.out.println("SQL State: " + e.getSQLState());
             System.out.println("Error Code: " + e.getErrorCode());
-
         }
     }
-
 
     @Override
     public Player getPlayer(String username) throws NotLoggedIn, PlayerNotFound {
@@ -144,22 +123,31 @@ public class AdminServant extends AdminServicePOA {
         }
     }
 
-
-
     @Override
     public void setGameWaitingTime(int seconds) throws NotLoggedIn {
-        int currentRoundDuration = DBManager.getGameRoundDuration();
-        if (!DBManager.updateGameConfigurations(seconds, currentRoundDuration)) {
-            throw new RuntimeException("Failed to update waiting time");
+        if (seconds <= 0) throw new IllegalArgumentException("Invalid waiting time value.");
+        try {
+            boolean updated = DBManager.updateGameConfigurations(seconds, GameConfig.getRoundDuration());
+            if (!updated) {
+                throw new NotLoggedIn("Failed to update waiting time.");
+            }
+            GameConfig.updateConfig(seconds, GameConfig.getRoundDuration());
+        } catch (SQLException e) {
+            throw new NotLoggedIn("Database error while updating waiting time: " + e.getMessage());
         }
     }
 
-
     @Override
     public void setGameRoundDuration(int seconds) throws NotLoggedIn {
-        int currentWaitingTime = DBManager.getGameWaitingTime();
-        if (!DBManager.updateGameConfigurations(currentWaitingTime, seconds)) {
-            throw new RuntimeException("Failed to update round duration");
+        if (seconds <= 0) throw new IllegalArgumentException("Invalid round duration value.");
+        try {
+            boolean updated = DBManager.updateGameConfigurations(GameConfig.getWaitingTime(), seconds);
+            if (!updated) {
+                throw new NotLoggedIn("Failed to update round duration.");
+            }
+            GameConfig.updateConfig(GameConfig.getWaitingTime(), seconds);
+        } catch (SQLException e) {
+            throw new NotLoggedIn("Database error while updating round duration: " + e.getMessage());
         }
     }
 
@@ -173,4 +161,3 @@ public class AdminServant extends AdminServicePOA {
         return DBManager.getGameRoundDuration();
     }
 }
-

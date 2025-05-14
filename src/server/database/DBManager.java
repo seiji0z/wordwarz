@@ -69,16 +69,6 @@ public class DBManager {
         return config;
     }
 
-    public static void updateGameConfig(int newWaitingTime, int newRoundDuration) throws SQLException {
-        String query = "UPDATE gameconfig SET waiting_time = ?, round_duration = ? WHERE config_id = 50001";
-        try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setInt(1, newWaitingTime);
-            stmt.setInt(2, newRoundDuration);
-            stmt.executeUpdate();
-        }
-    }
-
-
     public static boolean isAdmin(String username) {
         String query = "SELECT is_admin FROM user WHERE username = ?";
         try (PreparedStatement stmt = con.prepareStatement(query)) {
@@ -152,9 +142,7 @@ public class DBManager {
             return false;
         }
 
-
         con.setAutoCommit(false);
-
 
         try {
             // Get the user_id first
@@ -162,7 +150,6 @@ public class DBManager {
             if (userId == -1) {
                 throw new SQLException("User ID not found for: " + username);
             }
-
 
             // Update credentials table
             String credentialsQuery = "UPDATE credentials SET username = ?, password = ? WHERE user_id = ?";
@@ -173,7 +160,6 @@ public class DBManager {
                 credStmt.executeUpdate();
             }
 
-
             // Update user table if username changed
             if (!newUsername.isEmpty()) {
                 String userQuery = "UPDATE user SET username = ? WHERE user_id = ?";
@@ -183,8 +169,6 @@ public class DBManager {
                     userStmt.executeUpdate();
                 }
             }
-
-
             con.commit();
             return true;
         } catch (SQLException e) {
@@ -195,7 +179,6 @@ public class DBManager {
             con.setAutoCommit(true);
         }
     }
-
 
     public static boolean deletePlayer(String username) throws SQLException {
         System.out.println("Attempting to delete player: " + username);
@@ -312,8 +295,6 @@ public class DBManager {
         return players;
     }
 
-
-
     /**
      * Updates both game configuration settings in a single transaction
      *
@@ -322,7 +303,7 @@ public class DBManager {
      * @return true if successful, false otherwise
      */
     public static boolean updateGameConfigurations(int waitingTime, int roundDuration) {
-        String query = "INSERT INTO gameconfig (waiting_time, round_duration) VALUES (?, ?)";
+        String query = "UPDATE gameconfig SET waiting_time = ?, round_duration = ? WHERE config_id = 50001";
 
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setInt(1, waitingTime);
@@ -341,7 +322,7 @@ public class DBManager {
      * @return waiting time in seconds, or default 60 if not found
      */
     public static int getGameWaitingTime() {
-        String query = "SELECT waiting_time FROM gameconfig WHERE config_id = 1";
+        String query = "SELECT waiting_time FROM gameconfig WHERE config_id = 50001";
 
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             try (ResultSet rs = stmt.executeQuery()) {
@@ -362,7 +343,7 @@ public class DBManager {
      * @return round duration in seconds
      */
     public static int getGameRoundDuration() {
-        String query = "SELECT round_duration FROM gameconfig WHERE config_id = 1";
+        String query = "SELECT round_duration FROM gameconfig WHERE config_id = 50001";
 
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             try (ResultSet rs = stmt.executeQuery()) {

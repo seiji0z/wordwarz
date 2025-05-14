@@ -8,8 +8,6 @@ import javafx.application.Platform;
 import javafx.stage.Stage;
 import org.omg.CORBA.ORB;
 
-import java.io.FileNotFoundException;
-
 public class AdminDashboardController {
     private final AdminDashboardView view;
     private final AdminDashboardModel model;
