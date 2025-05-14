@@ -16,6 +16,7 @@ public class Game {
     private Set<Character> guessedLetters = new HashSet<>();
     private Map<String, Set<Character>> playerGuesses = new ConcurrentHashMap<>();
     private Set<String> eliminatedPlayers = new HashSet<>();
+    private volatile boolean roundActive = false;
 
     public Game(List<String> players) {
         this.players.addAll(players);
@@ -24,6 +25,14 @@ public class Game {
             wrongGuesses.put(player, 0);
             playerGuesses.put(player, new HashSet<>());
         }
+    }
+
+    public boolean isRoundActive() {
+        return roundActive;
+    }
+
+    public void setRoundActive(boolean active) {
+        roundActive = active;
     }
 
     public String nextWord() {
@@ -40,6 +49,10 @@ public class Game {
     }
 
     public char[] processGuess(String username, char letter) throws CharacterAlreadyGuessed {
+        if (!roundActive) {
+            throw new IllegalStateException("Round is not active.");
+        }
+
         // Track guesses per player
         if (playerGuesses.get(username).contains(letter)) {
             throw new CharacterAlreadyGuessed();

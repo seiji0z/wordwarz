@@ -213,12 +213,10 @@ public class GameServant extends GameServicePOA {
 
         Game session = activeGames.get(username);
         if (session == null || !session.getPlayers().contains(username)) {
-            System.out.println("No game found for username: " + username);
             throw new GameNotFound("No active game found for user " + username);
         }
 
         if (isGameEnding(session)) {
-            System.out.println("Game is ending for username: " + username + ", scores: " + session.getScores());
             throw new GameNotFound("Game is ending for user " + username);
         }
 
@@ -229,6 +227,9 @@ public class GameServant extends GameServicePOA {
         }
 
         System.out.println("Starting round for game with players: " + session.getPlayers() + ", eliminated: " + session.getEliminatedPlayers());
+
+        session.setRoundActive(true);
+
         synchronized (session) {
             if (session.getCurrentWord() == null) {
                 String word = session.nextWord();
@@ -318,6 +319,7 @@ public class GameServant extends GameServicePOA {
         if (!SessionManager.isTokenValid(token)) {
             throw new NotLoggedIn();
         }
+
         String username = SessionManager.getSession(token).getUsername();
         System.out.println("guessLetter called for token: " + token + ", username: " + username + ", letter: " + letter);
 
@@ -325,6 +327,11 @@ public class GameServant extends GameServicePOA {
         if (session == null || !session.getPlayers().contains(username)) {
             System.out.println("No game found for username: " + username);
             throw new GameNotFound("No active game found for user " + username);
+        }
+
+        if (!session.isRoundActive()) {
+            System.out.println("Attempt to guess after round has ended. Ignoring guess.");
+            throw new IllegalStateException("Cannot process guesses after the round has ended.");
         }
 
         System.out.println("Game state before guess - players: " + session.getPlayers() + ", eliminated: " + session.getEliminatedPlayers());
@@ -446,9 +453,10 @@ public class GameServant extends GameServicePOA {
 
         Game game = activeGames.get(username);
         if (game == null || !game.getPlayers().contains(username)) {
-            System.out.println("No game found for username: " + username);
             throw new GameNotFound("No active game found for user " + username);
         }
+
+        game.setRoundActive(false);
 
         // Cancel the periodic connectivity check
         ScheduledFuture<?> checkTask = connectivityChecks.remove(game);
