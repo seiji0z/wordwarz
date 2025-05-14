@@ -32,6 +32,8 @@ public class QueueView extends Application {
     private Timeline loadingAnimation;
     private ImageView loadingImageView;
     private Image[] loadingFrames;
+    private Timeline dotsAnimation;
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -54,45 +56,38 @@ public class QueueView extends Application {
         logoView.setPreserveRatio(true);
         logoView.setFitWidth(300);
         logoView.setX(480);
-        logoView.setY(80);
+        logoView.setY(30);
         root.getChildren().add(logoView);
 
         Rectangle timerRect = new Rectangle(200, 52, Color.BLACK);
         timerRect.setOpacity(0.5);
         timerRect.setX(535);
-        timerRect.setY(338);
+        timerRect.setY(278);
         root.getChildren().add(timerRect);
 
         timerText = new Text("00:10");
         timerText.setFont(customFont);
         timerText.setFill(Color.WHITE);
         timerText.setX(570);
-        timerText.setY(380);
+        timerText.setY(320);
         root.getChildren().add(timerText);
 
-        Rectangle queueRect = new Rectangle(690, 280, Color.BLACK);
+        Rectangle queueRect = new Rectangle(670, 370, Color.BLACK);
         queueRect.setOpacity(0.5);
         queueRect.setX(300);
-        queueRect.setY(400);
+        queueRect.setY(345);
         root.getChildren().add(queueRect);
-
-        waitingText = new Text("WAITING FOR PLAYERS");
-        waitingText.setFont(customFont);
-        waitingText.setFill(Color.WHITE);
-        waitingText.setX(340);
-        waitingText.setY(470);
-        root.getChildren().add(waitingText);
 
         // Load and set up the loading animation frames
         loadingFrames = new Image[8];
         for (int i = 1; i <= 8; i++) {
-            loadingFrames[i - 1] = new Image("file:res/images/characters/zombie/loading/zombie-load-" + i + ".png");
+            loadingFrames[i - 1] = new Image("file:res/images/characters/zombie/loading/loadingzombie" + i + ".png");
         }
         loadingImageView = new ImageView(loadingFrames[0]);
-        loadingImageView.setFitWidth(60);
-        loadingImageView.setFitHeight(60);
-        loadingImageView.setX(830);
-        loadingImageView.setY(410);
+        loadingImageView.setFitWidth(150);
+        loadingImageView.setFitHeight(130);
+        loadingImageView.setX(560);
+        loadingImageView.setY(470);
         root.getChildren().add(loadingImageView);
 
         loadingAnimation = new Timeline(
@@ -104,11 +99,27 @@ public class QueueView extends Application {
         loadingAnimation.setCycleCount(Timeline.INDEFINITE);
         loadingAnimation.play();
 
+        waitingText = new Text("WAITING FOR PLAYERS");
+        waitingText.setFont(customFont);
+        waitingText.setFill(Color.WHITE);
+        waitingText.setX(380);
+        waitingText.setY(420);
+        root.getChildren().add(waitingText);
+
+        dotsAnimation = new Timeline(
+                new KeyFrame(Duration.seconds(0.5), e -> waitingText.setText("WAITING FOR PLAYERS.")),
+                new KeyFrame(Duration.seconds(1.0), e -> waitingText.setText("WAITING FOR PLAYERS..")),
+                new KeyFrame(Duration.seconds(1.5), e -> waitingText.setText("WAITING FOR PLAYERS..."))
+        );
+        dotsAnimation.setCycleCount(Timeline.INDEFINITE);
+        dotsAnimation.play();
+
+
         playerCountText = new Text("Player count: 0");
         playerCountText.setFont(customFont);
         playerCountText.setFill(Color.WHITE);
-        playerCountText.setX(340);
-        playerCountText.setY(520);
+        playerCountText.setX(380);
+        playerCountText.setY(470);
         root.getChildren().add(playerCountText);
 
         cancelButton = new Button("CANCEL QUEUE");
@@ -116,7 +127,7 @@ public class QueueView extends Application {
         cancelButton.setTextFill(Color.WHITE);
         cancelButton.setStyle("-fx-background-color: transparent; -fx-border-color: red; -fx-border-width: 2;");
         cancelButton.setLayoutX(470);
-        cancelButton.setLayoutY(630);
+        cancelButton.setLayoutY(650);
         cancelButton.setOnMouseEntered(e -> cancelButton.setStyle("-fx-background-color: red; -fx-text-fill: black; -fx-border-color: red; -fx-border-width: 2;"));
         cancelButton.setOnMouseExited(e -> cancelButton.setStyle("-fx-background-color: transparent; -fx-text-fill: white; -fx-border-color: red; -fx-border-width: 2;"));
         cancelButton.setOnMousePressed(e -> cancelButton.setStyle("-fx-background-color: darkred; -fx-text-fill: black; -fx-border-color: red; -fx-border-width: 2;"));
@@ -126,7 +137,7 @@ public class QueueView extends Application {
         noOpponentText = new Text("NO OPPONENT FOUND!");
         noOpponentText.setFont(customFont);
         noOpponentText.setFill(Color.RED);
-        noOpponentText.setX(340);
+        noOpponentText.setX(380);
         noOpponentText.setY(570);
         noOpponentText.setVisible(false);
         root.getChildren().add(noOpponentText);
@@ -153,6 +164,21 @@ public class QueueView extends Application {
             String formatted = String.format("00:%02d", secondsLeft);
             timerText.setText(formatted);
             System.out.println("[QueueView] Timer updated to: " + formatted);
+
+            // Check if timer reached zero
+            if (secondsLeft <= 0) {
+                // Stop and remove loading animation
+                if (loadingAnimation != null) {
+                    loadingAnimation.stop();
+                }
+                if (loadingImageView != null && root.getChildren().contains(loadingImageView)) {
+                    root.getChildren().remove(loadingImageView);
+                }
+                // Also stop the dots animation for consistency
+                if (dotsAnimation != null) {
+                    dotsAnimation.stop();
+                }
+            }
         });
     }
 
@@ -167,6 +193,9 @@ public class QueueView extends Application {
         Platform.runLater(() -> {
             if (loadingAnimation != null) {
                 loadingAnimation.stop();
+            }
+            if (loadingImageView != null && root.getChildren().contains(loadingImageView)) {
+                root.getChildren().remove(loadingImageView);
             }
             noOpponentText.setVisible(true);
             System.out.println("[QueueView] Showing 'NO OPPONENT FOUND!' message");
