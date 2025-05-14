@@ -766,8 +766,11 @@ public class GameView {
             root.getChildren().removeIf(node -> node instanceof Rectangle &&
                     node.getUserData() != null && node.getUserData().equals("wordLine"));
 
-            double letterWidth = 60;
-            double gap = 25;
+            // Adjust font size based on word length
+            int fontSize = wordLength > 12 ? 30 : 40; // Reduce font size if word is longer than 10 letters
+            double letterWidth = wordLength > 12 ? 45 : 60; // Reduce width for longer words
+            double gap = wordLength > 12 ? 15 : 25; // Reduce gap for longer words
+
             double startX = (1280 - (wordLength * letterWidth + (wordLength - 1) * gap)) / 2.0;
 
             for (int i = 0; i < wordLength; i++) {
@@ -779,9 +782,9 @@ public class GameView {
                 root.getChildren().add(line);
 
                 Text letterText = new Text();
-                letterText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 40));
+                letterText.setFont(Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", fontSize));
                 letterText.setFill(Color.WHITE);
-                letterText.setX(startX + i * (letterWidth + gap) + letterWidth / 2 - 15);
+                letterText.setX(startX + i * (letterWidth + gap) + letterWidth / 2 - (fontSize / 3)); // Adjust text position based on font size
                 letterText.setY(470 - 16);
                 letterText.setVisible(false);
                 letterText.setUserData("letterText");
