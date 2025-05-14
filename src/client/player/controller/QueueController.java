@@ -6,6 +6,7 @@ import client.player.model.QueueModel;
 import client.player.view.MainMenuView;
 import client.player.view.QueueView;
 import WordWarZ.GameService;
+import WordWarZ.NoOpponentFound;
 import WordWarZ.NotLoggedIn;
 import WordWarZ.PlayerNotInQueue;
 import javafx.scene.control.Alert;
@@ -115,11 +116,7 @@ public class QueueController {
                 System.out.println("[QueueController] QueueView closed for token: " + playerToken);
                 MainMenuView mainMenuView = new MainMenuView();
                 mainMenuView.initializeUI(stage);
-                MainMenuController mainMenuController = new MainMenuController(playerToken, orb, mainMenuView, stage);
-
-                if (callbackImpl != null) {
-                    callbackImpl.setMainMenuController(mainMenuController);
-                }
+                new MainMenuController(playerToken, orb, mainMenuView, stage);
 
                 stage.setTitle("Word War Z - Main Menu");
                 stage.show();

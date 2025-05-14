@@ -183,7 +183,7 @@ public class GameServant extends GameServicePOA {
             WordWarZ.ClientCallback callback = clientCallbacks.get(token);
             if (callback != null) {
                 try {
-                    callback.onPlayerDisconnected("__NoOpponent__");
+                    callback.onQueueUpdated(0);
                     System.out.println("Notified token: " + token + " of no opponent");
                 } catch (Exception e) {
                     System.err.println("Error notifying no opponent for token " + token + ": " + e.getMessage());

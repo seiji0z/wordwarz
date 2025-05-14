@@ -1,6 +1,5 @@
 package server.helpers;
 
-import server.objects.Game;
 import server.objects.GameConfig;
 import server.servants.GameServant;
 import WordWarZ.NoOpponentFound;

@@ -1257,31 +1257,6 @@ public class GameView {
         confettiTimeline.play();
     }
 
-//    public void showPlayerDisconnected(String username) {
-//        Platform.runLater(() -> {
-//            Pane notificationOverlay = new Pane();
-//            notificationOverlay.setStyle("-fx-background-color: rgba(0, 0, 0, 0.7);");
-//            notificationOverlay.setPrefSize(1280, 760);
-//
-//            Font customFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 30);
-//            Text overlayText = new Text("Player " + username + " has disconnected.");
-//            overlayText.setFont(customFont);
-//            overlayText.setFill(Color.YELLOW);
-//            overlayText.setTextAlignment(TextAlignment.CENTER);
-//            overlayText.setWrappingWidth(1000);
-//            overlayText.setX((1280 - overlayText.getLayoutBounds().getWidth()) / 2);
-//            overlayText.setY(350);
-//            notificationOverlay.getChildren().add(overlayText);
-//
-//            root.getChildren().add(notificationOverlay);
-//
-//            Timeline notificationTimer = new Timeline(
-//                    new KeyFrame(Duration.seconds(2), event -> root.getChildren().remove(notificationOverlay))
-//            );
-//            notificationTimer.play();
-//        });
-//    }
-
     public void closeApplication() {
         Platform.runLater(() -> {
             if (timerTimeline != null) {
