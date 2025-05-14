@@ -47,7 +47,9 @@ public class MainMenuController {
         setupEventHandlers();
         registerCallback();
     }
-
+    public MainMenuModel getModel() {
+        return model;
+    }
 
     private void registerCallback() {
         try {
@@ -72,7 +74,6 @@ public class MainMenuController {
             System.out.println("Play button clicked - starting game");
             startGame();
         });
-
         view.setLeaderboardButtonHandler(this::handleLeaderboard);
         view.setHowToPlayButtonHandler(this::handleHowToPlay);
         view.setQuitButtonHandler(this::handleQuit);
@@ -83,7 +84,7 @@ public class MainMenuController {
     private void startGame() {
         System.out.println("Attempting to start game...");
         int selectedChar = view.getSelectedCharacterIndex();
-        new QueueController(playerToken, orb, stage, selectedChar);
+        new QueueController(playerToken, orb, stage, selectedChar, view); // Pass MainMenuView
     }
 
 
@@ -134,6 +135,7 @@ public class MainMenuController {
     }
 
     private void handleSoundToggle(boolean isMuted) {
+        model.setSoundMuted(isMuted);
         System.out.println("Sound is now " + (isMuted ? "muted" : "unmuted"));
     }
 

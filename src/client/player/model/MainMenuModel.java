@@ -8,6 +8,7 @@ public class MainMenuModel {
     private final String playerToken;
     private GameService gameService;
     private Login loginService;
+    private boolean isMuted = false;
 
     public MainMenuModel(String token, ORB orb) {
         this.playerToken = token;
@@ -48,6 +49,14 @@ public class MainMenuModel {
             System.out.println("Error logging out: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public boolean isSoundMuted() {
+        return isMuted;
+    }
+
+    public void setSoundMuted(boolean muted) {
+        this.isMuted = muted;
     }
 
     public GameService getGameService() {

@@ -1,16 +1,14 @@
 package client.player.controller;
 
+import WordWarZ.*;
 import client.login.controller.LoginController;
 import client.player.ClientCallbackImpl;
 import client.player.model.QueueModel;
 import client.player.view.MainMenuView;
 import client.player.view.QueueView;
-import WordWarZ.GameService;
-import WordWarZ.NoOpponentFound;
-import WordWarZ.NotLoggedIn;
-import WordWarZ.PlayerNotInQueue;
 import javafx.scene.control.Alert;
 import org.omg.CORBA.ORB;
+import org.omg.CORBA.Object;
 import org.omg.PortableServer.POA;
 import org.omg.PortableServer.POAHelper;
 import javafx.application.Platform;
@@ -27,15 +25,17 @@ public class QueueController {
     private final ORB orb;
     private final Stage stage;
     private final int selectedCharacter;
+    private final MainMenuView mainMenuView;
     private ClientCallbackImpl callbackImpl;
 
-    public QueueController(String playerToken, ORB orb, Stage stage, int selectedCharacter) {
+    public QueueController(String playerToken, ORB orb, Stage stage, int selectedCharacter, MainMenuView mainMenuView) {
         this.orb = orb;
         this.playerToken = playerToken;
         this.model = new QueueModel(playerToken, orb);
         this.view = new QueueView();
         this.stage = stage;
         this.selectedCharacter = selectedCharacter;
+        this.mainMenuView = mainMenuView;
         System.out.println("[QueueController] Initializing for token: " + playerToken);
 
         initializeListeners();
@@ -55,13 +55,13 @@ public class QueueController {
 
     private void initializeListeners() {
         try {
-            org.omg.CORBA.Object obj = orb.resolve_initial_references("RootPOA");
+            Object obj = orb.resolve_initial_references("RootPOA");
             POA rootPOA = POAHelper.narrow(obj);
             rootPOA.the_POAManager().activate();
 
             callbackImpl = new ClientCallbackImpl(view, stage, playerToken, orb, selectedCharacter, this);
-            org.omg.CORBA.Object callbackObj = rootPOA.servant_to_reference(callbackImpl);
-            WordWarZ.ClientCallback callback = WordWarZ.ClientCallbackHelper.narrow(callbackObj);
+            Object callbackObj = rootPOA.servant_to_reference(callbackImpl);
+            ClientCallback callback = ClientCallbackHelper.narrow(callbackObj);
             GameService gameService = model.getGameService();
 
             gameService.registerCallback(playerToken, callback);
@@ -114,11 +114,15 @@ public class QueueController {
             try {
                 view.close();
                 System.out.println("[QueueController] QueueView closed for token: " + playerToken);
-                MainMenuView mainMenuView = new MainMenuView();
-                mainMenuView.initializeUI(stage);
-                new MainMenuController(playerToken, orb, mainMenuView, stage);
+                mainMenuView.initializeUI(stage); // Reinitialize UI if needed
+                MainMenuController mainMenuController = new MainMenuController(playerToken, orb, mainMenuView, stage);
+
+                if (callbackImpl != null) {
+                    callbackImpl.setMainMenuController(mainMenuController);
+                }
 
                 stage.setTitle("Word War Z - Main Menu");
+                stage.setScene(mainMenuView.getScene()); // Restore the original scene
                 stage.show();
                 System.out.println("[QueueController] MainMenuView opened for token: " + playerToken);
             } catch (Exception e) {

@@ -1,5 +1,6 @@
 package client.player.view;
 
+import client.player.controller.MainMenuController;
 import javafx.animation.Timeline;
 import javafx.animation.KeyFrame;
 import javafx.geometry.Insets;
@@ -29,14 +30,12 @@ public class MainMenuView {
     private StackPane root;
     private StackPane overlayPane;
     private StackPane characterOverlayPane;
-    private StackPane creditsOverlayPane;
     private Button playBtn;
     private Button leaderboardBtn;
     private Button howToPlayBtn;
     private Button quitBtn;
     private Button soundButton;
     private Button creditsBtn;
-    private Button closeCreditsBtn;
     private Button closeHowToPlayBtn;
     private Button characterSelectBtn;
     private Button closeCharacterOverlayBtn;
@@ -153,7 +152,7 @@ public class MainMenuView {
         Image soundOffDefaultImg = new Image("file:res/images/buttons/menu buttons/mute-1.png");
         Image soundOffHoverImg = new Image("file:res/images/buttons/menu buttons/mute-2.png");
 
-        ImageView soundView = new ImageView(!isMuted ? soundOnDefaultImg : soundOffDefaultImg);
+        ImageView soundView = new ImageView(isMuted ? soundOffDefaultImg : soundOnDefaultImg);
         soundView.setPreserveRatio(true);
         soundView.setFitHeight(50);
         soundButton.setGraphic(soundView);
@@ -203,18 +202,6 @@ public class MainMenuView {
                             "-fx-border-width: 2px;" +
                             "-fx-cursor: hand;"
             );
-        });
-        soundButton.setOnAction(e -> {
-            boolean newMutedState = !isMuted;
-            System.out.println("Sound button clicked! Muted: " + newMutedState);
-            isMuted = newMutedState;
-            if (mediaPlayer != null) {
-                mediaPlayer.setMute(isMuted);
-            }
-            soundView.setImage(isMuted ? soundOffDefaultImg : soundOnDefaultImg);
-            if (soundToggleHandler != null) {
-                soundToggleHandler.handle(isMuted);
-            }
         });
 
         // --- HOW TO PLAY BUTTON ---
@@ -610,68 +597,6 @@ public class MainMenuView {
             close();
         });
 
-        // --- CREDITS OVERLAY & BUTTON ---
-        creditsOverlayPane = new StackPane();
-        creditsOverlayPane.setBackground(new Background(new BackgroundFill(
-                new Color(0, 0, 0, 0.8), CornerRadii.EMPTY, Insets.EMPTY)));
-        creditsOverlayPane.setVisible(false);
-
-        Image creditsScreen = new Image("file:res/images/frames/credits.png");
-        ImageView creditsFullScreen = new ImageView(creditsScreen);
-        creditsFullScreen.setFitWidth(1000);
-        creditsFullScreen.setFitHeight(650);
-        creditsFullScreen.setPreserveRatio(false);
-
-        closeCreditsBtn = new Button("CLOSE");
-        closeCreditsBtn.setFont(pressStartFont);
-        closeCreditsBtn.setTextFill(Color.WHITE);
-        closeCreditsBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
-        closeCreditsBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
-        closeCreditsBtn.setPadding(new Insets(10, 80, 10, 80));
-        closeCreditsBtn.setPrefWidth(450);
-        closeCreditsBtn.setPrefHeight(60);
-        closeCreditsBtn.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-border-color: white;" +
-                        "-fx-border-width: 2px;" +
-                        "-fx-cursor: hand;"
-        );
-        closeCreditsBtn.setOnMouseEntered(e -> closeCreditsBtn.setStyle(
-                "-fx-background-color: white;" +
-                        "-fx-text-fill: black;" +
-                        "-fx-border-color: white;" +
-                        "-fx-border-width: 2px;" +
-                        "-fx-cursor: hand;"
-        ));
-        closeCreditsBtn.setOnMouseExited(e -> closeCreditsBtn.setStyle(
-                "-fx-background-color: transparent;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-border-color: white;" +
-                        "-fx-border-width: 2px;" +
-                        "-fx-cursor: hand;"
-        ));
-        closeCreditsBtn.setOnMousePressed(e -> closeCreditsBtn.setStyle(
-                "-fx-background-color: grey;" +
-                        "-fx-text-fill: white;" +
-                        "-fx-border-color: white;" +
-                        "-fx-border-width: 2px;" +
-                        "-fx-cursor: hand;"
-        ));
-        closeCreditsBtn.setOnMouseReleased(e -> closeCreditsBtn.setStyle(
-                "-fx-background-color: white;" +
-                        "-fx-text-fill: black;" +
-                        "-fx-border-color: white;" +
-                        "-fx-border-width: 2px;" +
-                        "-fx-cursor: hand;"
-        ));
-        closeCreditsBtn.setOnAction(e -> creditsOverlayPane.setVisible(false));
-        VBox.setMargin(closeCreditsBtn, new Insets(-30, 0, 0, 0));
-
-        VBox creditsOverlayContent = new VBox(5, creditsFullScreen, closeCreditsBtn);
-        creditsOverlayContent.setAlignment(Pos.CENTER);
-        creditsOverlayPane.getChildren().add(creditsOverlayContent);
-
         creditsBtn = new Button("CREDITS");
         creditsBtn.setFont(pressStartFont);
         creditsBtn.setTextFill(Color.WHITE);
@@ -717,13 +642,10 @@ public class MainMenuView {
         ));
         creditsBtn.setOnAction(e -> {
             System.out.println("Credits button clicked!");
-            creditsOverlayPane.setVisible(true);
             if (creditsButtonHandler != null) {
                 creditsButtonHandler.handle();
             }
         });
-
-
 
         VBox centerBox = new VBox(20);
         centerBox.getChildren().addAll(logoView, playBtn, leaderboardBtn, creditsBtn, quitBtn);
@@ -798,10 +720,11 @@ public class MainMenuView {
             Media media = new Media(musicFile.toURI().toString());
             mediaPlayer = new MediaPlayer(media);
             mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
+            mediaPlayer.setMute(isMuted); // Set initial mute state
             mediaPlayer.play();
         }
 
-        root.getChildren().addAll(mainContent, overlayPane, characterOverlayPane, creditsOverlayPane);
+        root.getChildren().addAll(mainContent, overlayPane, characterOverlayPane);
 
         // Create the scene only once
         if (scene == null) {
@@ -900,6 +823,7 @@ public class MainMenuView {
 
     public void setSoundToggleHandler(SoundToggleHandler handler) {
         this.soundToggleHandler = handler;
+        soundButton.setOnAction(null); // Clear previous handler
         soundButton.setOnAction(e -> {
             boolean newMutedState = !isMuted;
             System.out.println("Sound button clicked! Muted: " + newMutedState);
@@ -912,6 +836,14 @@ public class MainMenuView {
                 soundToggleHandler.handle(isMuted);
             }
         });
+        // Update button state based on model (called by controller)
+        if (handler instanceof MainMenuController) {
+            isMuted = ((MainMenuController) handler).getModel().isSoundMuted();
+            if (mediaPlayer != null) {
+                mediaPlayer.setMute(isMuted);
+            }
+            ((ImageView) soundButton.getGraphic()).setImage(isMuted ? new Image("file:res/images/buttons/menu buttons/mute-1.png") : new Image("file:res/images/buttons/menu buttons/sound on-1.png"));
+        }
     }
 
     public void setCreditsButtonHandler(CreditsButtonHandler handler) {
