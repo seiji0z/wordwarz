@@ -151,11 +151,14 @@ public class DBManager {
                 throw new SQLException("User ID not found for: " + username);
             }
 
+            String currentPassword = getCurrentPassword(username);
+            String passwordToUpdate = (newPassword.equals("`") || newPassword.isEmpty()) ? currentPassword : newPassword;
+
             // Update credentials table
             String credentialsQuery = "UPDATE credentials SET username = ?, password = ? WHERE user_id = ?";
             try (PreparedStatement credStmt = con.prepareStatement(credentialsQuery)) {
                 credStmt.setString(1, newUsername.isEmpty() ? username : newUsername);
-                credStmt.setString(2, newPassword.isEmpty() ? getCurrentPassword(username) : newPassword);
+                credStmt.setString(2, passwordToUpdate);
                 credStmt.setInt(3, userId);
                 credStmt.executeUpdate();
             }

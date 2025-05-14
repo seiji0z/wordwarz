@@ -148,7 +148,7 @@ public class AdminDashboardController {
         String newUsername = editView.getUsernameField().getText().trim();
         String newPassword = editView.getPasswordField().getText().trim();
 
-        if (newUsername.isEmpty() || newPassword.isEmpty()) {
+        if (newUsername.isEmpty() && newPassword.isEmpty()) {
             editView.showError("Fields cannot be empty");
             return;
         }
@@ -175,7 +175,7 @@ public class AdminDashboardController {
 
         // Proceed with the update
         try {
-            model.updatePlayer(currentUsername, newUsername, newPassword);
+            model.updatePlayer(currentUsername, newUsername, newPassword.isEmpty() ? "`" : newPassword);
             editView.showSuccess("Player updated successfully");
             editView.hideUpdateForm();
             handleReadAllPlayers();

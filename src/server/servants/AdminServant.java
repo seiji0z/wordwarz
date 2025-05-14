@@ -47,8 +47,8 @@ public class AdminServant extends AdminServicePOA {
         }
 
         try {
-            boolean updated = DBManager.updatePlayer(username, newUsername, newPassword);
-            if (!updated) {
+            boolean updated = DBManager.updatePlayer(username, newUsername,
+                    newPassword.isEmpty() ? null : newPassword);            if (!updated) {
                 throw new PlayerNotFound("Failed to update player " + username);
             }
             System.out.println("Player " + username + " updated successfully to " + newUsername);
