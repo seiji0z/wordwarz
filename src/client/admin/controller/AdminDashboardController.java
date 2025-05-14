@@ -2,6 +2,7 @@ package client.admin.controller;
 
 import WordWarZ.*;
 import client.admin.model.AdminDashboardModel;
+import client.admin.model.EditGamePlaySettingsModel;
 import client.admin.view.*;
 import client.login.controller.LoginController;
 import javafx.application.Platform;
@@ -15,6 +16,7 @@ public class AdminDashboardController {
     private final String token;
     private final Stage adminStage;
     private final LoginController loginController;
+    private EditGamePlaySettingsController editGamePlaySettingsController;
 
     public AdminDashboardController(AdminDashboardView view, AdminDashboardModel model,
                                     ORB orb, String token, Stage adminStage,
@@ -33,7 +35,16 @@ public class AdminDashboardController {
     }
 
     private void initializeView() {
-        view.initializeUI(adminStage, model, orb, token);
+        view.initializeUI(adminStage);
+
+        // Initialize EditGamePlaySettings components
+        EditGamePlaySettingsModel gamePlayModel = new EditGamePlaySettingsModel(orb);
+        editGamePlaySettingsController = new EditGamePlaySettingsController(
+                gamePlayModel,
+                view.getEditGamePlaySettingsView(),
+                orb,
+                token
+        );
     }
 
     private void setupEventHandlers() {
@@ -97,7 +108,7 @@ public class AdminDashboardController {
     private void handleEditGamePlay() {
         try {
             view.showEditGameplaySettingsView();
-            view.getEditGamePlaySettingsView().getController().loadCurrentSettings();
+            editGamePlaySettingsController.loadCurrentSettings();
         } catch (Exception e) {
             System.err.println("Error loading gameplay settings: " + e.getMessage());
         }

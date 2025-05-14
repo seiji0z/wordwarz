@@ -1,8 +1,5 @@
 package client.admin.view;
 
-import client.admin.controller.EditGamePlaySettingsController;
-import client.admin.model.AdminDashboardModel;
-import client.admin.model.EditGamePlaySettingsModel;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
@@ -15,7 +12,6 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
-import org.omg.CORBA.ORB;
 
 public class AdminDashboardView {
     private static final String BACKGROUND_IMAGE_PATH = "file:res/images/backgrounds/menu bg.png";
@@ -30,10 +26,9 @@ public class AdminDashboardView {
     private CreatePlayerView createPlayerView;
     private EditPlayerView editPlayerView;
     private EditGamePlaySettingsView editGamePlaySettingsView;
-    private EditGamePlaySettingsController editGamePlaySettingsController;
     private Runnable onShowEditPlayerView;
 
-    public void initializeUI(Stage primaryStage, AdminDashboardModel adminModel, ORB orb, String token) {
+    public void initializeUI(Stage primaryStage) {
         primaryStage.setTitle("Admin Dashboard");
         primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
 
@@ -138,13 +133,6 @@ public class AdminDashboardView {
         createPlayerView = new CreatePlayerView(customFont);
         editPlayerView = new EditPlayerView(customFont);
         editGamePlaySettingsView = new EditGamePlaySettingsView(customFont);
-
-        // Initialize EditGamePlaySettingsModel
-        EditGamePlaySettingsModel gamePlayModel = new EditGamePlaySettingsModel(orb);
-
-        // Initialize the EditGamePlaySettingsController
-        editGamePlaySettingsController = new EditGamePlaySettingsController(gamePlayModel, editGamePlaySettingsView, orb, token);
-        editGamePlaySettingsView.setController(editGamePlaySettingsController);
     }
 
     private Button createStyledButton(String text) {
