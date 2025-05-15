@@ -3,6 +3,7 @@ package server.servants;
 import WordWarZ.*;
 import org.omg.CORBA.ORB;
 import server.database.DBManager;
+import server.helpers.SessionManager;
 import server.objects.GameConfig;
 
 import java.sql.SQLException;
@@ -42,8 +43,13 @@ public class AdminServant extends AdminServicePOA {
         if (username == null || username.isEmpty()) {
             throw new NotLoggedIn("Original username is required");
         }
+
         if (newUsername.isEmpty() && newPassword.isEmpty()) {
             throw new NotLoggedIn("Must update either username or password");
+        }
+
+        if (SessionManager.isUserLoggedIn(username)) {
+            throw new PlayerCurrentlyLoggedIn("Player is currently logged in and playing");
         }
 
         try {
@@ -69,6 +75,11 @@ public class AdminServant extends AdminServicePOA {
         if (!DBManager.userExists(username)) {
             throw new PlayerNotFound("Player not found: " + username);
         }
+
+        if (SessionManager.isUserLoggedIn(username)) {
+            throw new PlayerCurrentlyLoggedIn("Player is currently logged in and playing");
+        }
+
         try {
             boolean deleted = DBManager.deletePlayer(username);
             if (!deleted) {
