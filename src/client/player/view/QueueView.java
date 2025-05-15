@@ -72,9 +72,9 @@ public class QueueView extends Application {
         timerText.setY(320);
         root.getChildren().add(timerText);
 
-        Rectangle queueRect = new Rectangle(670, 370, Color.BLACK);
+        Rectangle queueRect = new Rectangle(660, 370, Color.BLACK);
         queueRect.setOpacity(0.5);
-        queueRect.setX(300);
+        queueRect.setX(310);
         queueRect.setY(345);
         root.getChildren().add(queueRect);
 
@@ -102,7 +102,7 @@ public class QueueView extends Application {
         waitingText = new Text("WAITING FOR PLAYERS");
         waitingText.setFont(customFont);
         waitingText.setFill(Color.WHITE);
-        waitingText.setX(380);
+        waitingText.setX(360);
         waitingText.setY(420);
         root.getChildren().add(waitingText);
 
@@ -118,7 +118,7 @@ public class QueueView extends Application {
         playerCountText = new Text("Player count: 0");
         playerCountText.setFont(customFont);
         playerCountText.setFill(Color.WHITE);
-        playerCountText.setX(380);
+        playerCountText.setX(360);
         playerCountText.setY(470);
         root.getChildren().add(playerCountText);
 
@@ -137,7 +137,7 @@ public class QueueView extends Application {
         noOpponentText = new Text("NO OPPONENT FOUND!");
         noOpponentText.setFont(customFont);
         noOpponentText.setFill(Color.RED);
-        noOpponentText.setX(380);
+        noOpponentText.setX(360);
         noOpponentText.setY(570);
         noOpponentText.setVisible(false);
         root.getChildren().add(noOpponentText);

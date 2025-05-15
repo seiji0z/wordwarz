@@ -637,19 +637,24 @@ public class GameServant extends GameServicePOA {
                     .findFirst()
                     .orElse(null);
             if (lastPlayer != null) {
-                notifyNoOpponent(lastPlayer);
+                String lastPlayerToken = SessionManager.getTokenByUsername(lastPlayer);
+                if (lastPlayerToken != null && SessionManager.isTokenValid(lastPlayerToken)) {
+                    WordWarZ.ClientCallback lastPlayerCallback = clientCallbacks.get(lastPlayerToken);
+                    if (lastPlayerCallback != null) {
+                        try {
+                            lastPlayerCallback.onPlayerDisconnected("__NoOpponent__"); // Signal no opponent
+                            System.out.println("Notified last player " + lastPlayer + " of no opponents");
+                        } catch (Exception e) {
+                            System.err.println("Error notifying last player " + lastPlayer + " of no opponents: " + e.getMessage());
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 for (String p : game.getPlayers()) {
                     activeGames.remove(p);
                     System.out.println("Removed game for player: " + p + " due to no opponents");
                 }
                 System.out.println("Game terminated due to no opponents");
-
-                // Cancel the periodic connectivity check
-                ScheduledFuture<?> checkTask = connectivityChecks.remove(game);
-                if (checkTask != null) {
-                    checkTask.cancel(false);
-                    System.out.println("Canceled periodic connectivity check due to no opponents for game with players: " + game.getPlayers());
-                }
             }
         } else if (remainingPlayers == 0) {
             for (String p : game.getPlayers()) {
@@ -657,13 +662,13 @@ public class GameServant extends GameServicePOA {
                 System.out.println("Removed game for player: " + p + " (no players remain)");
             }
             System.out.println("Game terminated as no players remain");
+        }
 
-            // Cancel the periodic connectivity check
-            ScheduledFuture<?> checkTask = connectivityChecks.remove(game);
-            if (checkTask != null) {
-                checkTask.cancel(false);
-                System.out.println("Canceled periodic connectivity check as no players remain for game with players: " + game.getPlayers());
-            }
+        // Cancel the periodic connectivity check
+        ScheduledFuture<?> checkTask = connectivityChecks.remove(game);
+        if (checkTask != null) {
+            checkTask.cancel(false);
+            System.out.println("Canceled periodic connectivity check due to no opponents for game with players: " + game.getPlayers());
         }
     }
 
