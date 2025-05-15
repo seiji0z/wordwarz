@@ -25,14 +25,6 @@ public class MainMenuModel {
         }
     }
 
-    public void startGame() {
-        try {
-            gameService.startGame(playerToken);
-        } catch (Exception e) {
-            System.out.println("Error starting game: " + e.getMessage());
-        }
-    }
-
     public Player[] getLeaderboard() {
         try {
             return gameService.getLeaderboard(playerToken);

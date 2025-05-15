@@ -257,12 +257,12 @@ public class MainMenuView {
         charSelectView = new ImageView(characterHeadImages[0]);
         charSelectView.setPreserveRatio(true);
         charSelectView.setFitWidth(60);
-        charSelectView.setFitHeight(60);
+        charSelectView.setFitHeight(55);
         characterSelectBtn.setGraphic(charSelectView);
         characterSelectBtn.setBackground(new Background(new BackgroundFill(Color.TRANSPARENT, CornerRadii.EMPTY, Insets.EMPTY)));
         characterSelectBtn.setBorder(new Border(new BorderStroke(Color.WHITE, BorderStrokeStyle.SOLID, new CornerRadii(5), new BorderWidths(2))));
         characterSelectBtn.setPadding(new Insets(10, 20, 10, 20));
-        characterSelectBtn.setPrefWidth(80);
+        characterSelectBtn.setPrefWidth(76);
         characterSelectBtn.setPrefHeight(54);
         characterSelectBtn.setStyle(
                 "-fx-background-color: transparent;" +
@@ -910,14 +910,6 @@ public class MainMenuView {
             }
             ((ImageView) soundButton.getGraphic()).setImage(isMuted ? new Image("file:res/images/buttons/menu buttons/mute-1.png") : new Image("file:res/images/buttons/menu buttons/sound on-1.png"));
         }
-    }
-
-    public void setCreditsButtonHandler(CreditsButtonHandler handler) {
-        this.creditsButtonHandler = handler;
-        creditsBtn.setOnAction(e -> {
-            System.out.println("Credits button clicked!");
-            handler.handle();
-        });
     }
 
     public void showHowToPlay() {

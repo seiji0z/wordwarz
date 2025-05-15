@@ -47,15 +47,14 @@ public class CreatePlayerView extends VBox {
         navButtonBox.setPadding(new Insets(20));
 
         // Create navigation buttons
-        createPlayerBtn = createStyledButton("CREATE PLAYER");
         editPlayerBtn = createStyledButton("EDIT PLAYER");
 
         // Style the active button differently
-        createPlayerBtn.setBackground(new Background(new BackgroundFill(
+        editPlayerBtn.setBackground(new Background(new BackgroundFill(
                 Color.rgb(80, 80, 80), new CornerRadii(8), Insets.EMPTY
         )));
 
-        navButtonBox.getChildren().addAll(createPlayerBtn, editPlayerBtn);
+        navButtonBox.getChildren().addAll(editPlayerBtn);
 
         // Input fields container
         VBox inputContainer = new VBox(15);

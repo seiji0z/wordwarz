@@ -54,13 +54,11 @@ public class AdminDashboardController {
         view.getQuitBtn().setOnAction(e -> handleQuit());
 
         // Create Player View handlers
-        view.getCreatePlayerView().getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
         view.getCreatePlayerView().getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
         view.getCreatePlayerView().getConfirmBtn().setOnAction(e -> handleCreatePlayer());
 
         // Edit Player View handlers
         view.getEditPlayerView().getCreatePlayerBtn().setOnAction(e -> view.showCreatePlayerView());
-        view.getEditPlayerView().getEditPlayerBtn().setOnAction(e -> view.showEditPlayerView());
         view.getEditPlayerView().getClearBtn().setOnAction(e -> {
             view.getEditPlayerView().getSearchField().clear();
             handleReadAllPlayers();

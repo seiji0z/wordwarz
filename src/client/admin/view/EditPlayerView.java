@@ -61,9 +61,8 @@ public class EditPlayerView extends VBox {
 
         // Create buttons
         createPlayerBtn = createStyledButton("CREATE PLAYER",14);
-        editPlayerBtn = createStyledButton("EDIT PLAYER",14);
 
-        buttonBox.getChildren().addAll(createPlayerBtn, editPlayerBtn);
+        buttonBox.getChildren().addAll(createPlayerBtn);
 
         // Search bar
         HBox searchBox = new HBox(10);

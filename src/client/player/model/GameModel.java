@@ -22,11 +22,6 @@ public class GameModel {
         }
     }
 
-    public int startRound() throws GameNotFound, NotLoggedIn, NotInGame {
-        System.out.println("[MODEL] Starting round");
-        return gameService.startRound(token);
-    }
-
     public void endRound() throws  NotLoggedIn, NotInGame, GameNotFound {
         gameService.endRound(token);
     }
