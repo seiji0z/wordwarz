@@ -26,7 +26,6 @@ public class GameModel {
         gameService.endRound(token);
     }
 
-    // In GameModel.java
     public void notifyPlayerLost() throws NotLoggedIn, NotInGame, GameNotFound {
         gameService.notifyPlayerLost(token);
     }

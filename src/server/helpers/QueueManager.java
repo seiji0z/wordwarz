@@ -122,7 +122,4 @@ public class QueueManager {
         return waitingPlayers.contains(username);
     }
 
-    public static boolean isCountdownStarted() {
-        return countdownStarted;
-    }
 }
