@@ -44,15 +44,7 @@ public class GameModel {
         return gameService.guessLetter(token, letter);
     }
 
-    public void registerCallback(ClientCallback callback) throws NotLoggedIn {
-        gameService.registerCallback(token, callback);
-    }
-
-    public void endGame() throws GameNotFound, NotLoggedIn, NotInGame, GameNotFinished {
-        gameService.endGame(token);
-    }
-
-    public String displayWins() throws GameNotFound, RoundNotFinished, NotLoggedIn, NotInGame {
+    public int displayWins() throws GameNotFound, RoundNotFinished, NotLoggedIn, NotInGame {
         return gameService.displayWins(token);
     }
 }

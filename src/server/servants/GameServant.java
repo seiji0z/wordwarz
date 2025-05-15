@@ -260,7 +260,6 @@ public class GameServant extends GameServicePOA {
                 }
                 try {
                     callback.onRoundStarted(placeholder);
-                    System.out.println("Notified player " + player + " of round start with placeholder: " + new String(placeholder));
                 } catch (Exception e) {
                     System.err.println("Failed to notify player " + player + " of round start: " + e.getMessage());
                     e.printStackTrace();
@@ -321,7 +320,6 @@ public class GameServant extends GameServicePOA {
         }
 
         String username = SessionManager.getSession(token).getUsername();
-        System.out.println("guessLetter called for token: " + token + ", username: " + username + ", letter: " + letter);
 
         Game session = activeGames.get(username);
         if (session == null || !session.getPlayers().contains(username)) {
@@ -330,13 +328,10 @@ public class GameServant extends GameServicePOA {
         }
 
         if (!session.isRoundActive()) {
-            System.out.println("Attempt to guess after round has ended. Ignoring guess.");
             throw new IllegalStateException("Cannot process guesses after the round has ended.");
         }
 
-        System.out.println("Game state before guess - players: " + session.getPlayers() + ", eliminated: " + session.getEliminatedPlayers());
         char[] wordState = session.processGuess(username, letter);
-        System.out.println("Word state after guess: " + new String(wordState));
 
         if (session.hasWon(username)) {
             System.out.println(username + " has won the round!");
@@ -354,8 +349,6 @@ public class GameServant extends GameServicePOA {
                 System.err.println("Error ending round for " + username + ": " + e.getMessage());
                 throw e;
             }
-        } else {
-            System.out.println("Round continues, players: " + session.getPlayers() + ", eliminated: " + session.getEliminatedPlayers());
         }
 
         return wordState;
@@ -928,8 +921,17 @@ public class GameServant extends GameServicePOA {
     }
 
     @Override
-    public String displayWins(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
-        return "";
+    public int displayWins(String token) throws NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished {
+        if (!SessionManager.isTokenValid(token)) {
+            throw new NotLoggedIn();
+        }
+
+        String username = SessionManager.getSession(token).getUsername();
+        Game game = activeGames.get(username);
+        if (game == null || !game.getPlayers().contains(username)) {
+            throw new GameNotFound("No active game found for user " + username);
+        }
+        return game.getScore(username);
     }
 
     public static void registerActiveGame(String playerToken, Game game) {

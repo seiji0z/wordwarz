@@ -153,6 +153,15 @@ public class AdminDashboardController {
             return;
         }
 
+        if (newPassword.isEmpty()) {
+            newPassword = "`";
+        }
+
+        if (newPassword.length() < 8 && !newPassword.equals("`")) {
+            editView.showError("Password must be greater than 8 characters");
+            return;
+        }
+
         if (!newUsername.equals(currentUsername)) {
             // Check if the new username already exists
             try {

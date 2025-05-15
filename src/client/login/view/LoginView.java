@@ -197,6 +197,7 @@ public class LoginView {
         // --- SCENE SETUP ---
         Scene scene = new Scene(root);
         primaryStage.setTitle("WordWar Z - Login");
+        primaryStage.setResizable(false);
         primaryStage.getIcons().add(new Image("file:res/images/others/word war z logo.png"));
         primaryStage.setScene(scene);
         scene.setOnKeyPressed(event -> {

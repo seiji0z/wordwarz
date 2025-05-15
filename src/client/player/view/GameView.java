@@ -67,6 +67,7 @@ public class GameView {
     private boolean isGameOver = false;
     private boolean isZombieMoving = true;
     private boolean isFirstRound = true;
+    private Text winsText;
 
     public GameView(Stage primaryStage, int selectedCharacter) {
         this.primaryStage = primaryStage;
@@ -98,6 +99,14 @@ public class GameView {
             hearts.add(heart);
             root.getChildren().add(heart);
         }
+
+        Font winsFont = Font.loadFont("file:res/fonts/PressStart2P-Regular.ttf", 25);
+        winsText = new Text("Wins: 0");
+        winsText.setFont(winsFont);
+        winsText.setFill(Color.WHITE);
+        winsText.setX(580);
+        winsText.setY(60);
+        root.getChildren().add(winsText);
 
         timerText = new Text();
         timerText.setFont(customFont);
@@ -856,6 +865,10 @@ public class GameView {
                 disableLetterButton(button);
             }
         }
+    }
+
+    public void updateWins(int wins) {
+        Platform.runLater(() -> winsText.setText("Wins: " + wins));
     }
 
     private void animateHeartDepletion(ImageView heart) {

@@ -34,6 +34,7 @@ public class GameController {
     }
 
     public void onGameStart(char[] wordPlaceholder) {
+        updateWinsDisplay();
         if (roundActive || gameEnding) return; // Prevent concurrent rounds
         roundActive = true;
 
@@ -105,6 +106,15 @@ public class GameController {
         }
     }
 
+    public void updateWinsDisplay() {
+        try {
+            int wins = model.displayWins();
+            view.updateWins(wins);
+        } catch (Exception e) {
+            System.err.println("Failed to fetch or update wins: " + e.getMessage());
+        }
+    }
+
     public void handleGameOver(boolean won, String winner) {
         if (gameEnding) return;
         gameEnding = true;
@@ -155,6 +165,7 @@ public class GameController {
 
     public void handleRoundWon(String word) {
         view.showRoundWon(word);
+        updateWinsDisplay();
         prepareNextRound();
     }
 

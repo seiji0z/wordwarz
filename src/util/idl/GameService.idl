@@ -61,7 +61,7 @@ module WordWarZ {
     void endRound(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
     void notifyPlayerLost(in string token) raises (NotLoggedIn, NotInGame, GameNotFound);
     void endGame(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, GameNotFinished);
-    string displayWins(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
+    long displayWins(in string token) raises (NotLoggedIn, NotInGame, GameNotFound, RoundNotFinished);
 
     // callbacks
     void registerCallback(in string token, in ClientCallback callback) raises (NotLoggedIn);
