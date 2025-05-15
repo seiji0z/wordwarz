@@ -72,7 +72,26 @@ public class QueueManager {
     }
 
     private static synchronized void startGame() throws NoOpponentFound {
-        if (waitingPlayers.size() == 1) {
+        // Verify active players by checking callbacks
+        List<String> activePlayers = new ArrayList<>();
+        for (String username : waitingPlayers) {
+            String token = SessionManager.getTokenByUsername(username);
+            if (token != null && GameServant.clientCallbacks.containsKey(token)) {
+                activePlayers.add(username);
+            } else {
+                System.out.println("Player " + username + " is no longer connected, removing from queue");
+            }
+        }
+
+        waitingPlayers = activePlayers; // Update the queue with only active players
+        broadcastQueueUpdate(); // Notify clients of the updated player count
+
+        if (waitingPlayers.isEmpty()) {
+            countdownStarted = false;
+            cancelCountdown();
+            System.out.println("No active players remain in queue, countdown canceled");
+            return;
+        } else if (waitingPlayers.size() == 1) {
             String username = waitingPlayers.get(0);
             waitingPlayers.clear();
             countdownStarted = false;
@@ -83,10 +102,6 @@ public class QueueManager {
             System.out.println("Starting game with players: " + waitingPlayers);
 
             System.out.println("Attempting to create game. Countdown started: " + countdownStarted + ", Remaining time: " + remainingTime);
-
-            List<String> playerTokens = waitingPlayers.stream()
-                    .map(SessionManager::getTokenByUsername)
-                    .collect(Collectors.toList());
 
             List<String> playersToStart = new ArrayList<>(waitingPlayers);
             waitingPlayers.clear();

@@ -39,10 +39,20 @@ public class ClientCallbackImpl extends ClientCallbackPOA {
         System.out.println("[ClientCallbackImpl] Queue updated, player count: " + playerCount + " for token: " + playerToken);
         if (queueView != null) {
             queueView.updatePlayerCount(playerCount);
-            if (playerCount == 0 && !gameStarted) {
+            if (playerCount == 0) {
                 System.out.println("[ClientCallbackImpl] No opponents, triggering handleNoOpponentFound for token: " + playerToken);
                 queueController.handleNoOpponentFound();
+                gameStarted = false; // Reset gameStarted to prevent further game-related actions
             }
+        } else if (playerCount == 0 && gameStarted) {
+            // If the game has started but we receive a player count of 0, transition back to main menu
+            System.out.println("[ClientCallbackImpl] Game started but no opponents remain, handling no opponent for token: " + playerToken);
+            Platform.runLater(() -> {
+                if (gameController != null) {
+                    gameController.handleNoOpponentFound();
+                }
+            });
+            gameStarted = false; // Reset gameStarted
         }
     }
 
