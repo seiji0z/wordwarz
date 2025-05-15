@@ -1023,19 +1023,22 @@ public class GameView {
             humanView.setVisible(true);
             zombieView.setVisible(true);
 
-            // Start the zombie run towards the human
-            double humanX = humanView.getX();
-            double targetX = humanX + 50; // Position zombie near human for attack
-            startZombieRunAnimation(targetX);
+            // Only play animations if the player still has guesses or isn't already dead
+            if (remainingGuesses > 0 && !root.getChildren().stream().anyMatch(node -> node.getUserData() != null && "deathOverlay".equals(node.getUserData()))) {
+                // Start the zombie run towards the human
+                double humanX = humanView.getX();
+                double targetX = humanX + 50;
+                startZombieRunAnimation(targetX);
 
-            // Calculate duration of run animation
-            double currentX = zombieView.getX();
-            double durationSeconds = Math.abs(targetX - currentX) / 800.0;
+                // Calculate duration of run animation
+                double currentX = zombieView.getX();
+                double durationSeconds = Math.abs(targetX - currentX) / 800.0;
 
-            // Delay the overlay until animations complete
-            double zombieAttackDuration = 0.45; // Duration of zombie attack animation
-            double humanZombificationDuration = 2.625; // Duration of human zombification animation
-            double totalAnimationDuration = durationSeconds + Math.max(zombieAttackDuration, humanZombificationDuration);
+                // Delay the overlay until animations complete
+                double zombieAttackDuration = 0.45;
+                double humanZombificationDuration = 2.625;
+                double totalAnimationDuration = durationSeconds + Math.max(zombieAttackDuration, humanZombificationDuration);
+            }
 
             // Remove any existing death overlay and show the round lost overlay immediately
             removeDeathOverlay();
@@ -1241,6 +1244,26 @@ public class GameView {
                     );
                     attackSequence.getChildren().add(
                             new Timeline(new KeyFrame(Duration.millis(1), e -> startZombieDeathAnimation()))
+                    );
+                    attackSequence.getChildren().add(
+                            new PauseTransition(Duration.millis(600))
+                    );
+                    attackSequence.getChildren().add(
+                            new Timeline(new KeyFrame(Duration.millis(1), e -> {
+                                startHumanRunAnimation(1280);
+                                humanView.setVisible(true);
+                            }))
+                    );
+                } else {
+                    // Human 4: Attack immediately (no run), zombie dies, then run off-screen
+                    attackSequence.getChildren().add(
+                            new ParallelTransition(
+                                    new Timeline(new KeyFrame(Duration.millis(1), e -> {
+                                        startHumanAttackAnimation();
+                                        humanView.setVisible(true);
+                                    })),
+                                    new Timeline(new KeyFrame(Duration.millis(1), e -> startZombieDeathAnimation()))
+                            )
                     );
                     attackSequence.getChildren().add(
                             new PauseTransition(Duration.millis(600))
