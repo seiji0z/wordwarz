@@ -999,8 +999,48 @@ public class GameView {
     }
 
     public void showRoundLost(String winner, String word) {
-        removeDeathOverlay();
-        showRoundEndOverlay("You got eaten by " + winner + "!\nThe word was: " + word, Color.RED);
+        Platform.runLater(() -> {
+            // Stop the timer and any ongoing animations
+            if (timerTimeline != null) {
+                timerTimeline.stop();
+            }
+            isZombieMoving = false;
+            disableAllLetterButtons();
+
+            // Stop any existing animations
+            if (zombieIdleAnimation != null) zombieIdleAnimation.stop();
+            if (zombieRunAnimation != null) zombieRunAnimation.stop();
+            if (zombieRunTransition != null) zombieRunTransition.stop();
+            if (zombieAttackAnimation != null) zombieAttackAnimation.stop();
+            if (zombieDeathAnimation != null) zombieDeathAnimation.stop();
+            if (humanIdleAnimation != null) humanIdleAnimation.stop();
+            if (humanRunAnimation != null) humanRunAnimation.stop();
+            if (humanRunTransition != null) humanRunTransition.stop();
+            if (humanAttackAnimation != null) humanAttackAnimation.stop();
+            if (humanZombificationAnimation != null) humanZombificationAnimation.stop();
+
+            // Ensure characters are visible
+            humanView.setVisible(true);
+            zombieView.setVisible(true);
+
+            // Start the zombie run towards the human
+            double humanX = humanView.getX();
+            double targetX = humanX + 50; // Position zombie near human for attack
+            startZombieRunAnimation(targetX);
+
+            // Calculate duration of run animation
+            double currentX = zombieView.getX();
+            double durationSeconds = Math.abs(targetX - currentX) / 800.0;
+
+            // Delay the overlay until animations complete
+            double zombieAttackDuration = 0.45; // Duration of zombie attack animation
+            double humanZombificationDuration = 2.625; // Duration of human zombification animation
+            double totalAnimationDuration = durationSeconds + Math.max(zombieAttackDuration, humanZombificationDuration);
+
+            // Remove any existing death overlay and show the round lost overlay immediately
+            removeDeathOverlay();
+            showRoundEndOverlay("You got eaten by " + winner + "!\nThe word was: " + word, Color.RED);
+        });
     }
 
     public void showRoundWon(String word) {
