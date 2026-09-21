@@ -1,5 +1,5 @@
 # Word War Z: A Distributed Multi-Language Hangman Game using CORBA
-![WordWarZ](./res/images/others/word war z logo.png)
+![WordWarZ](./res/images/others/word%20war%20z%20logo.png)
 
 ---
 ## Table of Contents
@@ -84,6 +84,10 @@
 | **Player Client**| Python   | Minimalist CLI, CORBA stubs via `omniORB`     |  
 
 ---
+## Acknowledgments
+- Visual assets and sprites used in this game were extracted from the game **Dead Ahead**.
+
+---
 ## Collaborators
 - Adame, Noelle Lorraine
 - Atis, Jan Christian
@@ -91,3 +95,16 @@
 - Bambao, Johana Izabelle
 - Miranda, Frances Julia
 - Terre, Jorge Frederic
+
+---
+## Lessons Learned & Possible Future Improvements
+
+This project was built during our 2nd year for an Integrative Technologies course, where using **CORBA** was a strict academic requirement to learn the fundamentals of distributed systems and language interoperability. 
+
+While the project successfully met all requirements and taught us a lot about multithreading, concurrency, and RPC mechanisms, there are several areas for improvement if we were to rebuild it today:
+
+1. **Modernizing the Architecture:** CORBA is a legacy technology. Today, implementing the networking layer using modern alternatives like **gRPC** (with Protocol Buffers) or **WebSockets** will be more efficient, real-time bidirectional communication between the clients and the server.
+2. **Refactoring "God Objects":** The game logic is currently heavily centralized in single classes (like `GameServant`). It is ideal to refactor this into smaller, single-responsibility services (e.g., separating the Matchmaker Service, Game State Manager, and Connection Monitor).
+3. **Security Enhancements:** 
+   - **Password Hashing:** Currently, passwords are treated as plaintext strings. Integrating a library like `jBCrypt` to hash and salt passwords before storing them in the database would be a security improvement.
+   - **Environment Variables:** Hardcoded configurations (like database credentials in `DBConnection`) would be moved to environment variables or a configuration file.
